@@ -4,13 +4,11 @@ import unicodedata
 from dotenv import load_dotenv  # type: ignore
 from openpyxl import load_workbook  # type: ignore
 
-# --- CONFIGURAÇÕES ---
 load_dotenv()
 TMDB_API_KEY = os.getenv("VITE_TMDB_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 EXCEL_FILE = "data-processor/filmes.xlsx"
-# Aumentei a tolerância para 2 anos (ajuda em filmes de fim de ano ou festivais)
 YEAR_TOLERANCE = 2 
 
 def normalize_txt(text):
@@ -63,7 +61,7 @@ def find_best_match(nome, ano, diretor_excel):
     except:
         return None
 
-    # Fallback: Se não achou com ano, tenta SEM ano (para casos como Frankstein 2025 que a API pode ter data diferente)
+    # Fallback: Se não achou com ano, tenta SEM ano
     if not results and ano:
         url_no_year = f"https://api.themoviedb.org/3/search/movie?api_key={TMDB_API_KEY}&query={nome}&language=pt-BR"
         results = requests.get(url_no_year).json().get('results', [])
@@ -79,16 +77,12 @@ def find_best_match(nome, ano, diretor_excel):
         if diretor_excel:
             tmdb_directors = get_movie_director(movie['id'])
             if check_director_match(tmdb_directors, diretor_excel):
-                # Achamos o diretor! Ignora pequena diferença de ano e retorna esse.
                 return movie
         
         # 2. Se NÃO tem diretor no Excel, vai pelo Ano estrito
         elif check_year_match(movie.get('release_date'), ano):
             return movie
 
-    # --- MUDANÇA CRUCIAL ---
-    # Se tinha diretor no Excel e NENHUM bateu, retorna None.
-    # Não pegamos mais o "primeiro da lista" por chute.
     if diretor_excel:
         return None
         
