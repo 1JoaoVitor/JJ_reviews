@@ -71,6 +71,7 @@ export function AppNavbar({
                <Form
                   className="d-flex"
                   style={{ maxWidth: "300px", width: "100%" }}
+                  onSubmit={(e) => e.preventDefault()}
                >
                   <InputGroup>
                      <InputGroup.Text id="search-icon">🔍</InputGroup.Text>

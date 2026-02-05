@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import axios from "axios";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
-
-// Imports Refatorados
 import type { MovieData, TmdbCrew, TmdbCast, TmdbCountry } from "./types";
 import { MovieCard } from "./components/movie-card";
 import { MovieModal } from "./components/movie-modal";
 import { AppNavbar } from "./components/nav-bar";
+import { Dashboard } from "./components/dashboard.tsx";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
 
@@ -155,6 +154,12 @@ function App() {
          />
 
          <Container className="px-4 pb-5">
+            {/* --- Painel de Estatísticas --- */}
+            {/* Só mostra se não estiver carregando e se não tiver busca ativa (para mostrar estatísticas gerais) */}
+            {!loading && !searchTerm && !onlyNational && (
+               <Dashboard movies={movies} />
+            )}
+
             <div className="d-flex justify-content-between align-items-center mb-4">
                <h5 className="text-muted">
                   {loading
