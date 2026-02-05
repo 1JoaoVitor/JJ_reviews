@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 import axios from "axios";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
+import type { Session } from "@supabase/supabase-js"; // Tipo da sessão
+
 import type { MovieData, TmdbCrew, TmdbCast, TmdbCountry } from "./types";
 import { MovieCard } from "./components/movie-card";
 import { MovieModal } from "./components/movie-modal";
 import { AppNavbar } from "./components/nav-bar";
-import { Dashboard } from "./components/dashboard.tsx";
+import { Dashboard } from "./components/dashboard";
+import { AddMovieModal } from "./components/add-movie-modal";
+import { LoginModal } from "./components/login-modal";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
 
@@ -14,7 +18,9 @@ function App() {
    const [movies, setMovies] = useState<MovieData[]>([]);
    const [loading, setLoading] = useState(true);
 
-   // Estados de Controle
+   // Controle de Usuário (Admin)
+   const [session, setSession] = useState<Session | null>(null);
+
    const [searchTerm, setSearchTerm] = useState("");
    const [onlyNational, setOnlyNational] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
@@ -22,7 +28,33 @@ function App() {
    const [showModal, setShowModal] = useState(false);
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
 
-   // Funções do Modal
+   // Modais de Ação
+   const [showAddModal, setShowAddModal] = useState(false);
+   const [showLoginModal, setShowLoginModal] = useState(false);
+   const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null); // Guardar qual filme estamos editando
+
+   // --- AUTENTICAÇÃO ---
+   useEffect(() => {
+      // 1. Verifica se já está logado ao abrir o site
+      supabase.auth.getSession().then(({ data: { session } }) => {
+         setSession(session);
+      });
+
+      // 2. Escuta mudanças (login/logout) em tempo real
+      const {
+         data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+         setSession(session);
+      });
+
+      return () => subscription.unsubscribe();
+   }, []);
+
+   const handleLogout = async () => {
+      await supabase.auth.signOut();
+   };
+   // --------------------
+
    const handleOpenModal = (movie: MovieData) => {
       setSelectedMovie(movie);
       setShowModal(true);
@@ -33,85 +65,107 @@ function App() {
       setSelectedMovie(null);
    };
 
-   // --- SOLUÇÃO DO AVISO useEffect ---
-   // A função fetchMovies agora é definida DENTRO do useEffect.
-   // Isso garante que ela não tenha dependências faltando.
+   const fetchMovies = useCallback(async () => {
+      setLoading(true);
+      try {
+         const { data: supabaseData, error } = await supabase
+            .from("reviews")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+         if (error) throw error;
+         if (!supabaseData) return;
+
+         const fullMovies = await Promise.all(
+            supabaseData.map(async (movie) => {
+               try {
+                  const tmdbResponse = await axios.get(
+                     `https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&append_to_response=credits`,
+                  );
+
+                  const data = tmdbResponse.data;
+
+                  const directors = data.credits?.crew
+                     ?.filter((person: TmdbCrew) => person.job === "Director")
+                     .map((d: TmdbCrew) => d.name)
+                     .join(", ");
+
+                  const cast = data.credits?.cast
+                     ?.slice(0, 5)
+                     .map((c: TmdbCast) => c.name);
+
+                  const rawCountries = data.production_countries || [];
+
+                  const translatedCountries = rawCountries.map(
+                     (c: TmdbCountry) => {
+                        try {
+                           return regionNames.of(c.iso_3166_1);
+                        } catch {
+                           return c.name;
+                        }
+                     },
+                  );
+
+                  const isBr = rawCountries.some(
+                     (c: TmdbCountry) => c.iso_3166_1 === "BR",
+                  );
+
+                  return {
+                     ...movie,
+                     title: data.title,
+                     poster_path: data.poster_path,
+                     release_date: data.release_date,
+                     overview: data.overview,
+                     director: directors || "Desconhecido",
+                     cast: cast || [],
+                     countries: translatedCountries || [],
+                     isNational: isBr,
+                  };
+               } catch (err) {
+                  console.error(`Erro TMDB ID ${movie.tmdb_id}`, err);
+                  return movie;
+               }
+            }),
+         );
+         setMovies(fullMovies);
+      } catch (error) {
+         console.error("Erro geral:", error);
+      } finally {
+         setLoading(false);
+      }
+   }, []);
+
    useEffect(() => {
-      const fetchMovies = async () => {
-         try {
-            const { data: supabaseData, error } = await supabase
-               .from("reviews")
-               .select("*")
-               .order("created_at", { ascending: false });
-
-            if (error) throw error;
-            if (!supabaseData) return;
-
-            const fullMovies = await Promise.all(
-               supabaseData.map(async (movie) => {
-                  try {
-                     const tmdbResponse = await axios.get(
-                        `https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&append_to_response=credits`,
-                     );
-
-                     const data = tmdbResponse.data;
-
-                     const directors = data.credits?.crew
-                        ?.filter(
-                           (person: TmdbCrew) => person.job === "Director",
-                        )
-                        .map((d: TmdbCrew) => d.name)
-                        .join(", ");
-
-                     const cast = data.credits?.cast
-                        ?.slice(0, 5)
-                        .map((c: TmdbCast) => c.name);
-
-                     const rawCountries = data.production_countries || [];
-
-                     const translatedCountries = rawCountries.map(
-                        (c: TmdbCountry) => {
-                           try {
-                              return regionNames.of(c.iso_3166_1);
-                           } catch {
-                              return c.name;
-                           }
-                        },
-                     );
-
-                     const isBr = rawCountries.some(
-                        (c: TmdbCountry) => c.iso_3166_1 === "BR",
-                     );
-
-                     return {
-                        ...movie,
-                        title: data.title,
-                        poster_path: data.poster_path,
-                        release_date: data.release_date,
-                        overview: data.overview,
-                        director: directors || "Desconhecido",
-                        cast: cast || [],
-                        countries: translatedCountries || [],
-                        isNational: isBr,
-                     };
-                  } catch (err) {
-                     console.error(`Erro TMDB ID ${movie.tmdb_id}`, err);
-                     return movie;
-                  }
-               }),
-            );
-            setMovies(fullMovies);
-         } catch (error) {
-            console.error("Erro geral:", error);
-         } finally {
-            setLoading(false);
-         }
-      };
-
       fetchMovies();
-   }, []); // Array vazio = roda apenas uma vez ao montar a tela
+   }, [fetchMovies]);
 
-   // Lógica de Filtro e Ordenação
+   // --- AÇÕES DE ADMIN ---
+   const handleDeleteMovie = async (movie: MovieData) => {
+      try {
+         const { error } = await supabase
+            .from("reviews")
+            .delete()
+            .eq("id", movie.id);
+         if (error) throw error;
+
+         // Fecha o modal de detalhes e recarrega a lista
+         handleCloseModal();
+         fetchMovies();
+      } catch (error) {
+         alert("Erro ao excluir!");
+         console.error(error);
+      }
+   };
+
+   const handleEditMovie = (movie: MovieData) => {
+      // 1. Fecha o modal de detalhes
+      handleCloseModal();
+      // 2. Define qual filme vamos editar
+      setMovieToEdit(movie);
+      // 3. Abre o modal de formulário
+      setShowAddModal(true);
+   };
+
    const filteredMovies = movies
       .filter((movie) => {
          const searchLower = searchTerm.toLowerCase();
@@ -138,12 +192,11 @@ function App() {
          }
          if (sortOrder === "alpha")
             return (a.title || "").localeCompare(b.title || "");
-         return 0; // default
+         return 0;
       });
 
    return (
       <div className="bg-light" style={{ minHeight: "100vh" }}>
-         {/* Navbar Modularizada */}
          <AppNavbar
             onlyNational={onlyNational}
             setOnlyNational={setOnlyNational}
@@ -154,22 +207,36 @@ function App() {
          />
 
          <Container className="px-4 pb-5">
-            {/* --- Painel de Estatísticas --- */}
-            {/* Só mostra se não estiver carregando e se não tiver busca ativa (para mostrar estatísticas gerais) */}
             {!loading && !searchTerm && !onlyNational && (
                <Dashboard movies={movies} />
             )}
 
             <div className="d-flex justify-content-between align-items-center mb-4">
-               <h5 className="text-muted">
-                  {loading
-                     ? "Carregando..."
-                     : filteredMovies.length === movies.length
-                       ? `Todos os ${movies.length} filmes`
-                       : `Exibindo ${filteredMovies.length} filmes`}
-               </h5>
+               <div className="d-flex align-items-center gap-3">
+                  <h5 className="text-muted mb-0">
+                     {loading
+                        ? "Carregando..."
+                        : filteredMovies.length === movies.length
+                          ? `Todos os ${movies.length} filmes`
+                          : `Exibindo ${filteredMovies.length} filmes`}
+                  </h5>
 
-               {/* Botões Mobile (mantidos aqui por layout, ou poderia ir para um sub-componente) */}
+                  {/* BOTÃO ADICIONAR (Só aparece se tiver sessão/login) */}
+                  {session && (
+                     <Button
+                        variant="primary"
+                        size="sm"
+                        className="fw-bold shadow-sm"
+                        onClick={() => {
+                           setMovieToEdit(null); // Garante que é um NOVO filme
+                           setShowAddModal(true);
+                        }}
+                     >
+                        + Adicionar Filme
+                     </Button>
+                  )}
+               </div>
+
                <ButtonGroup size="sm" className="d-md-none">
                   <Button
                      variant={!onlyNational ? "secondary" : "outline-secondary"}
@@ -204,11 +271,54 @@ function App() {
             )}
          </Container>
 
-         {/* Modal Modularizado */}
+         {/* --- RODAPÉ COM LOGIN --- */}
+         <footer className="text-center py-4 text-muted small">
+            <hr className="mb-3 mx-auto" style={{ maxWidth: "200px" }} />
+            {session ? (
+               <div>
+                  <span className="me-2">Logado como Admin</span>
+                  <button
+                     onClick={handleLogout}
+                     className="btn btn-link btn-sm text-danger p-0"
+                  >
+                     Sair
+                  </button>
+               </div>
+            ) : (
+               <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="btn btn-link btn-sm text-muted p-0"
+                  style={{ textDecoration: "none" }}
+               >
+                  Admin Login
+               </button>
+            )}
+         </footer>
+
+         {/* --- MODAIS --- */}
+
+         {/* Detalhes (Recebe isAdmin para saber se mostra os botões) */}
          <MovieModal
             show={showModal}
             movie={selectedMovie}
             onHide={handleCloseModal}
+            isAdmin={!!session} // Transforma objeto em booleano (true se existir sessão)
+            onEdit={handleEditMovie}
+            onDelete={handleDeleteMovie}
+         />
+
+         {/* Adicionar/Editar (Recebe movieToEdit para saber se preenche os campos) */}
+         <AddMovieModal
+            show={showAddModal}
+            onHide={() => setShowAddModal(false)}
+            onSuccess={() => fetchMovies()}
+            movieToEdit={movieToEdit}
+         />
+
+         {/* Login */}
+         <LoginModal
+            show={showLoginModal}
+            onHide={() => setShowLoginModal(false)}
          />
       </div>
    );

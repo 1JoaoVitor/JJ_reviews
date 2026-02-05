@@ -28,3 +28,10 @@ export interface MovieData {
    countries?: string[];
    isNational?: boolean;
 }
+
+export interface TmdbSearchResult {
+   id: number;
+   title: string;
+   release_date: string;
+   poster_path: string | null;
+}

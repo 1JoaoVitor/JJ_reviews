@@ -2,13 +2,24 @@ import { Modal, Button, Row, Col, Badge } from "react-bootstrap";
 import type { MovieData } from "../types";
 import { getBadgeStyle } from "../utils";
 
-interface MovieModallProps {
+interface MovieModalProps {
    show: boolean;
    movie: MovieData | null;
    onHide: () => void;
+   // NOVAS PROPS
+   isAdmin: boolean;
+   onEdit: (movie: MovieData) => void;
+   onDelete: (movie: MovieData) => void;
 }
 
-export function MovieModal({ show, movie, onHide }: MovieModallProps) {
+export function MovieModal({
+   show,
+   movie,
+   onHide,
+   isAdmin,
+   onEdit,
+   onDelete,
+}: MovieModalProps) {
    if (!movie) return null;
 
    const badgeStyle = getBadgeStyle(movie.recommended);
@@ -21,6 +32,40 @@ export function MovieModal({ show, movie, onHide }: MovieModallProps) {
             </Modal.Title>
          </Modal.Header>
          <Modal.Body className="pt-2">
+            {/* --- BARRA DE ADMIN (Só aparece se estiver logado) --- */}
+            {isAdmin && (
+               <div className="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-4">
+                  <small className="fw-bold text-uppercase">Modo Admin</small>
+                  <div>
+                     <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => onEdit(movie)}
+                     >
+                        ✏️ Editar
+                     </Button>
+                     <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => {
+                           if (
+                              confirm(
+                                 "Tem certeza que deseja excluir este filme?",
+                              )
+                           ) {
+                              onDelete(movie);
+                           }
+                        }}
+                     >
+                        🗑️ Excluir
+                     </Button>
+                  </div>
+               </div>
+            )}
+
+            {/* ... O RESTO DO MODAL CONTINUA IGUAL ... */}
+            {/* (Copie o conteúdo anterior do return a partir daqui: <p className="text-muted... etc) */}
             <p className="text-muted mb-4">
                {movie.director} • {movie.release_date?.split("-")[0]} •{" "}
                {movie.countries?.join(", ")}
