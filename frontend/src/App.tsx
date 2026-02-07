@@ -238,12 +238,10 @@ function App() {
          />
 
          <Container className="px-4 pb-5">
-            {!loading && !searchTerm && !onlyNational && (
-               <Dashboard movies={movies} />
-            )}
+            {!loading && !searchTerm && <Dashboard movies={movies} />}
 
-            <div className="d-flex justify-content-between align-items-center mb-4">
-               <div className="d-flex align-items-center gap-3">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+               <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
                   <h5 className="text-muted mb-0">
                      {loading
                         ? "Carregando..."
@@ -257,29 +255,52 @@ function App() {
                      <Button
                         variant="primary"
                         size="sm"
-                        className="fw-bold shadow-sm"
+                        className="fw-bold shadow-sm ms-3 rounded-pill px-3"
                         onClick={() => {
                            setMovieToEdit(null); // Garante que é um NOVO filme
                            setShowAddModal(true);
                         }}
                      >
-                        + Adicionar Filme
+                        <span className="d-md-none">+ Filme</span>{" "}
+                        <span className="d-none d-md-inline">
+                           + Adicionar Filme
+                        </span>{" "}
                      </Button>
                   )}
                </div>
 
-               <ButtonGroup size="sm" className="d-md-none">
+               <ButtonGroup size="sm" className="d-md-none w-100">
                   <Button
-                     variant={!onlyNational ? "secondary" : "outline-secondary"}
-                     onClick={() => setOnlyNational(false)}
+                     variant={
+                        !onlyNational && !onlyOscar
+                           ? "secondary"
+                           : "outline-secondary"
+                     }
+                     onClick={() => {
+                        setOnlyNational(false);
+                        setOnlyOscar(false);
+                     }}
+                     className="flex-grow-1"
                   >
                      Todos
                   </Button>
                   <Button
                      variant={onlyNational ? "success" : "outline-success"}
-                     onClick={() => setOnlyNational(true)}
+                     onClick={() => {
+                        setOnlyNational(!onlyNational);
+                     }}
+                     className="flex-grow-1"
                   >
                      Nacionais
+                  </Button>
+                  <Button
+                     variant={onlyOscar ? "warning" : "outline-warning"}
+                     onClick={() => {
+                        setOnlyOscar(!onlyOscar);
+                     }}
+                     className="flex-grow-1 btn-outline-oscar"
+                  >
+                     Oscar
                   </Button>
                </ButtonGroup>
             </div>

@@ -43,76 +43,104 @@ export function AppNavbar({
          className="mb-4 shadow-sm px-3"
       >
          <Container fluid>
-            <Navbar.Brand href="#" className="fw-bold fs-3">
-               JJ Reviews
+            <Navbar.Brand
+               href="#"
+               className="fw-bold fs-3 d-flex align-items-center"
+            >
+               {/* Círculo Amarelo com JJ dentro */}
+               <div
+                  className="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2"
+                  style={{
+                     width: "40px",
+                     height: "40px",
+                     fontSize: "0.8em",
+                     fontWeight: "900",
+                  }}
+               >
+                  JJ
+               </div>
+               <span>Reviews</span>
             </Navbar.Brand>
 
-            <div className="d-flex align-items-center gap-3 w-100 justify-content-end">
-               <ButtonGroup className="d-none d-md-flex">
-                  <Button
-                     variant={!onlyNational ? "secondary" : "outline-secondary"}
-                     onClick={() => setOnlyNational(false)}
-                     className="fw-bold"
-                  >
-                     Todos
-                  </Button>
-                  <Button
-                     variant={onlyNational ? "success" : "outline-success"}
-                     onClick={() => setOnlyNational(true)}
-                     className="fw-bold"
-                  >
-                     Nacionais
-                  </Button>
-                  {/* Botão*/}
-                  <Button
-                     variant={onlyOscar ? "warning" : "outline-warning"}
-                     onClick={() => {
-                        setOnlyOscar(!onlyOscar);
-                        setOnlyNational(false); // Desliga o nacional (opcional)
-                     }}
-                     className=""
-                     style={{ position: "relative" }}
-                  >
-                     Oscar
-                     {onlyOscar && (
-                        <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                           <span className="visually-hidden">Filtro ativo</span>
-                        </span>
-                     )}
-                  </Button>
-               </ButtonGroup>
+            <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3 w-100 justify-content-end mt-3 mt-md-0">
+               <div className="d-flex gap-2 w-100 justify-content-between justify-content-md-end">
+                  <ButtonGroup className="d-none d-md-flex">
+                     <Button
+                        variant={
+                           !onlyNational && !onlyOscar
+                              ? "secondary"
+                              : "outline-secondary"
+                        }
+                        onClick={() => {
+                           setOnlyNational(false);
+                           setOnlyOscar(false);
+                        }}
+                        className="fw-bold"
+                     >
+                        Todos
+                     </Button>
+                     <Button
+                        variant={onlyNational ? "success" : "outline-success"}
+                        onClick={() => setOnlyNational(!onlyNational)}
+                        className="fw-bold"
+                     >
+                        Nacionais
+                     </Button>
+                     {/* Botão*/}
+                     <Button
+                        variant={onlyOscar ? "warning" : "outline-warning"}
+                        onClick={() => {
+                           setOnlyOscar(!onlyOscar);
+                           // setOnlyNational(false);
+                        }}
+                        className="btn-outline-oscar"
+                        style={{ position: "relative" }}
+                     >
+                        Oscar
+                        {onlyOscar && (
+                           <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                              <span className="visually-hidden">
+                                 Filtro ativo
+                              </span>
+                           </span>
+                        )}
+                     </Button>
+                  </ButtonGroup>
 
-               {/* Dropdown de Gêneros*/}
-               <Form.Select
-                  className="bg-dark text-white border-secondary"
-                  style={{ maxWidth: "160px", cursor: "pointer" }}
-                  value={selectedGenre}
-                  onChange={(e) => setSelectedGenre(e.target.value)}
-               >
-                  <option value="">Gêneros</option>
-                  {availableGenres.map((genre) => (
-                     <option key={genre} value={genre}>
-                        {genre}
-                     </option>
-                  ))}
-               </Form.Select>
+                  {/* Dropdowns */}
+                  <div className="d-flex gap-2 flex-grow-1 flex-md-grow-0">
+                     {/* Dropdown de Gêneros*/}
+                     <Form.Select
+                        className="bg-dark text-white border-secondary"
+                        style={{ cursor: "pointer" }}
+                        value={selectedGenre}
+                        onChange={(e) => setSelectedGenre(e.target.value)}
+                     >
+                        <option value="">Gêneros</option>
+                        {availableGenres.map((genre) => (
+                           <option key={genre} value={genre}>
+                              {genre}
+                           </option>
+                        ))}
+                     </Form.Select>
 
-               <Form.Select
-                  aria-label="Ordenar por"
-                  className="bg-dark text-white border-secondary"
-                  style={{ maxWidth: "180px", cursor: "pointer" }}
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-               >
-                  <option value="default">Recentes</option>
-                  <option value="rating">Melhores Notas</option>
-                  <option value="date">Lançamento</option>
-                  <option value="alpha">Ordem A-Z</option>
-               </Form.Select>
+                     <Form.Select
+                        aria-label="Ordenar por"
+                        className="bg-dark text-white border-secondary"
+                        style={{ maxWidth: "180px", cursor: "pointer" }}
+                        value={sortOrder}
+                        onChange={(e) => setSortOrder(e.target.value)}
+                     >
+                        <option value="default">Recentes</option>
+                        <option value="rating">Melhores Notas</option>
+                        <option value="date">Lançamento</option>
+                        <option value="alpha">Ordem A-Z</option>
+                     </Form.Select>
+                  </div>
+               </div>
 
                <Form
-                  className="d-flex"
-                  style={{ maxWidth: "300px", width: "100%" }}
+                  className="d-flex custom-search-bar"
                   onSubmit={(e) => e.preventDefault()}
                >
                   <InputGroup>
