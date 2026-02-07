@@ -253,14 +253,14 @@ export function AddMovieModal({
          <Modal.Footer>
             {step === "form" && !movieToEdit && (
                <Button variant="secondary" onClick={() => setStep("search")}>
-                  Voltar
+                  ⬅ Buscar Outro
                </Button>
             )}
             <Button
                variant="link text-decoration-none text-muted"
                onClick={onHide}
             >
-               Cancelar
+               Fechar
             </Button>
             {step === "form" && (
                <Button variant="success" onClick={handleSave} disabled={saving}>
