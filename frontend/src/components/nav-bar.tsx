@@ -16,6 +16,9 @@ interface AppNavbarProps {
    setSortOrder: (val: string) => void;
    searchTerm: string;
    setSearchTerm: (val: string) => void;
+   availableGenres: string[];
+   selectedGenre: string;
+   setSelectedGenre: (val: string) => void;
 }
 
 export function AppNavbar({
@@ -27,6 +30,9 @@ export function AppNavbar({
    setSortOrder,
    searchTerm,
    setSearchTerm,
+   availableGenres,
+   selectedGenre,
+   setSelectedGenre,
 }: AppNavbarProps) {
    return (
       <Navbar
@@ -75,6 +81,21 @@ export function AppNavbar({
                      )}
                   </Button>
                </ButtonGroup>
+
+               {/* Dropdown de Gêneros*/}
+               <Form.Select
+                  className="bg-dark text-white border-secondary"
+                  style={{ maxWidth: "160px", cursor: "pointer" }}
+                  value={selectedGenre}
+                  onChange={(e) => setSelectedGenre(e.target.value)}
+               >
+                  <option value="">Gêneros</option>
+                  {availableGenres.map((genre) => (
+                     <option key={genre} value={genre}>
+                        {genre}
+                     </option>
+                  ))}
+               </Form.Select>
 
                <Form.Select
                   aria-label="Ordenar por"

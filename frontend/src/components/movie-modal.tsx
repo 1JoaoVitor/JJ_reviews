@@ -68,6 +68,18 @@ export function MovieModal({
                {movie.countries?.join(", ")}
             </p>
 
+            <div className="mb-3">
+               {movie.genres?.map((genre, idx) => (
+                  <Badge
+                     key={idx}
+                     bg="dark"
+                     className="me-2 border border-secondary fw-normal"
+                  >
+                     {genre}
+                  </Badge>
+               ))}
+            </div>
+
             <Row>
                <Col md={4} className="mb-3">
                   {movie.poster_path ? (

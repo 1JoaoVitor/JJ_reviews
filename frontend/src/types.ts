@@ -28,6 +28,7 @@ export interface MovieData {
    countries?: string[];
    isNational?: boolean;
    isOscar?: boolean;
+   genres?: string[];
 }
 
 export interface TmdbSearchResult {
@@ -35,4 +36,9 @@ export interface TmdbSearchResult {
    title: string;
    release_date: string;
    poster_path: string | null;
+}
+
+export interface TmdbGenre {
+   id: number;
+   name: string;
 }

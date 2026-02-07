@@ -4,7 +4,13 @@ import axios from "axios";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 
-import type { MovieData, TmdbCrew, TmdbCast, TmdbCountry } from "./types";
+import type {
+   MovieData,
+   TmdbCrew,
+   TmdbCast,
+   TmdbCountry,
+   TmdbGenre,
+} from "./types";
 import { MovieCard } from "./components/movie-card";
 import { MovieModal } from "./components/movie-modal";
 import { AppNavbar } from "./components/nav-bar";
@@ -26,7 +32,7 @@ function App() {
    const [onlyNational, setOnlyNational] = useState(false);
    const [onlyOscar, setOnlyOscar] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
-
+   const [selectedGenre, setSelectedGenre] = useState("");
    const [showModal, setShowModal] = useState(false);
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
 
@@ -95,6 +101,9 @@ function App() {
                      ?.slice(0, 5)
                      .map((c: TmdbCast) => c.name);
 
+                  const genres =
+                     data.genres?.map((g: TmdbGenre) => g.name) || [];
+
                   const rawCountries = data.production_countries || [];
 
                   const translatedCountries = rawCountries.map(
@@ -124,6 +133,7 @@ function App() {
                      director: directors || "Desconhecido",
                      cast: cast || [],
                      countries: translatedCountries || [],
+                     genres: genres,
                      isNational: isBr,
                      isOscar: isOscarNominee,
                   };
@@ -169,6 +179,10 @@ function App() {
       setShowAddModal(true);
    };
 
+   const availableGenres = Array.from(
+      new Set(movies.flatMap((m) => m.genres || [])),
+   ).sort();
+
    const filteredMovies = movies
       .filter((movie) => {
          const searchLower = searchTerm.toLowerCase();
@@ -181,10 +195,17 @@ function App() {
                movie.recommended.toLowerCase().includes(searchLower)) ||
             (movie.director &&
                movie.director.toLowerCase().includes(searchLower)) ||
+            (movie.genres &&
+               movie.genres.some((g) =>
+                  g.toLowerCase().includes(searchLower),
+               )) ||
             (movie.isOscar && "oscar".includes(searchLower));
 
          if (onlyNational && !movie.isNational) return false;
          if (onlyOscar && !movie.isOscar) return false;
+
+         if (selectedGenre && !movie.genres?.includes(selectedGenre))
+            return false;
 
          return matchesSearch;
       })
@@ -211,6 +232,9 @@ function App() {
             setSearchTerm={setSearchTerm}
             onlyOscar={onlyOscar}
             setOnlyOscar={setOnlyOscar}
+            availableGenres={availableGenres}
+            selectedGenre={selectedGenre}
+            setSelectedGenre={setSelectedGenre}
          />
 
          <Container className="px-4 pb-5">
@@ -279,27 +303,54 @@ function App() {
          </Container>
 
          {/* --- RODAPÉ COM LOGIN --- */}
-         <footer className="text-center py-4 text-muted small">
-            <hr className="mb-3 mx-auto" style={{ maxWidth: "200px" }} />
-            {session ? (
-               <div>
-                  <span className="me-2">Logado como Admin</span>
-                  <button
-                     onClick={handleLogout}
-                     className="btn btn-link btn-sm text-danger p-0"
-                  >
-                     Sair
-                  </button>
+         <footer className="text-center py-4 mt-5 bg-white border-top">
+            <Container>
+               <div className="mb-2 text-muted small">
+                  Desenvolvido por <strong>João Vitor E. Souza</strong>
                </div>
-            ) : (
-               <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="btn btn-link btn-sm text-muted p-0"
-                  style={{ textDecoration: "none" }}
-               >
-                  Admin Login
-               </button>
-            )}
+               <div className="mb-3">
+                  <a
+                     href="https://github.com/1JoaoVitor"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="text-decoration-none text-secondary me-3"
+                  >
+                     <i className="bi bi-github"></i> GitHub
+                  </a>
+                  <a
+                     href="https://www.linkedin.com/in/joão-vitor-evangelista-de-souza-a0954526b"
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     className="text-decoration-none text-secondary"
+                  >
+                     LinkedIn
+                  </a>
+               </div>
+
+               {/* Botão de Login */}
+               {session ? (
+                  <div className="small">
+                     <span className="me-2 text-success">
+                        ● Logado como Admin
+                     </span>
+                     <button
+                        onClick={handleLogout}
+                        className="btn btn-link btn-sm text-danger p-0"
+                        style={{ textDecoration: "none" }}
+                     >
+                        Sair
+                     </button>
+                  </div>
+               ) : (
+                  <button
+                     onClick={() => setShowLoginModal(true)}
+                     className="btn btn-link btn-sm text-muted p-0 opacity-50"
+                     style={{ textDecoration: "none", fontSize: "0.8rem" }}
+                  >
+                     Admin
+                  </button>
+               )}
+            </Container>
          </footer>
 
          {/* --- MODAIS --- */}
