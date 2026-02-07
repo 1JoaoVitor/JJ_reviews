@@ -10,6 +10,8 @@ import {
 interface AppNavbarProps {
    onlyNational: boolean;
    setOnlyNational: (val: boolean) => void;
+   onlyOscar: boolean;
+   setOnlyOscar: (val: boolean) => void;
    sortOrder: string;
    setSortOrder: (val: string) => void;
    searchTerm: string;
@@ -19,6 +21,8 @@ interface AppNavbarProps {
 export function AppNavbar({
    onlyNational,
    setOnlyNational,
+   onlyOscar,
+   setOnlyOscar,
    sortOrder,
    setSortOrder,
    searchTerm,
@@ -52,6 +56,23 @@ export function AppNavbar({
                      className="fw-bold"
                   >
                      Nacionais
+                  </Button>
+                  {/* Botão*/}
+                  <Button
+                     variant={onlyOscar ? "warning" : "outline-warning"}
+                     onClick={() => {
+                        setOnlyOscar(!onlyOscar);
+                        setOnlyNational(false); // Desliga o nacional (opcional)
+                     }}
+                     className=""
+                     style={{ position: "relative" }}
+                  >
+                     Oscar
+                     {onlyOscar && (
+                        <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                           <span className="visually-hidden">Filtro ativo</span>
+                        </span>
+                     )}
                   </Button>
                </ButtonGroup>
 

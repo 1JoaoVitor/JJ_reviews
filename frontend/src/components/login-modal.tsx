@@ -27,7 +27,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
          if (error) throw error;
          onHide(); // Fecha o modal ao logar
       } catch (err) {
-         // Verifica se 'err' é um objeto de erro padrão para pegar a mensagem
          if (err instanceof Error) {
             setError("Erro ao logar: " + err.message);
          } else {

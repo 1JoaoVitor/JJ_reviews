@@ -16,7 +16,7 @@ interface AddMovieModalProps {
    show: boolean;
    onHide: () => void;
    onSuccess: () => void;
-   movieToEdit?: MovieData | null; // NOVO: Se vier preenchido, é edição
+   movieToEdit?: MovieData | null; //Se vier preenchido, é edição
 }
 
 export function AddMovieModal({
@@ -39,15 +39,15 @@ export function AddMovieModal({
    const [recommended, setRecommended] = useState("Vale a pena assistir");
    const [saving, setSaving] = useState(false);
 
-   // Efeito: Quando o modal abre, verifica se é Edição ou Adição
+   // Quando o modal abre, verifica se é Edição ou Adição
    useEffect(() => {
       if (show && movieToEdit) {
-         // MODO EDIÇÃO
+         // MODO EDIÇÃO (filme existe)
          setStep("form");
          setRating(movieToEdit.rating);
          setReview(movieToEdit.review);
          setRecommended(movieToEdit.recommended);
-         // Simulamos o objeto da TMDB com os dados que já temos
+         // Simula o objeto da TMDB com os dados que já se tem
          setSelectedMovie({
             id: movieToEdit.tmdb_id,
             title: movieToEdit.title || "",
@@ -55,7 +55,7 @@ export function AddMovieModal({
             release_date: movieToEdit.release_date || "",
          });
       } else if (show) {
-         // MODO NOVO FILME (Reset)
+         // MODO NOVO FILME
          setStep("search");
          setSearchQuery("");
          setSearchResults([]);
@@ -66,7 +66,7 @@ export function AddMovieModal({
       }
    }, [show, movieToEdit]);
 
-   const handleSearch = async (e?: React.FormEvent) => {
+   const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
       if (!searchQuery.trim()) return;
       setLoadingSearch(true);
@@ -93,7 +93,7 @@ export function AddMovieModal({
 
       try {
          if (movieToEdit) {
-            // --- UPDATE (ATUALIZAR) ---
+            // --- UPDATE ---
             const { error } = await supabase
                .from("reviews")
                .update({
@@ -105,7 +105,7 @@ export function AddMovieModal({
 
             if (error) throw error;
          } else {
-            // --- INSERT (CRIAR NOVO) ---
+            // --- INSERT ---
             const { error } = await supabase.from("reviews").insert([
                {
                   tmdb_id: selectedMovie.id,
@@ -239,7 +239,7 @@ export function AddMovieModal({
                   </Form.Group>
 
                   <Form.Group className="mb-3">
-                     <Form.Label className="fw-bold">Sua Análise</Form.Label>
+                     <Form.Label className="fw-bold">Nossa Análise</Form.Label>
                      <Form.Control
                         as="textarea"
                         rows={4}

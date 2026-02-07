@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 import axios from "axios";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
-import type { Session } from "@supabase/supabase-js"; // Tipo da sessão
+import type { Session } from "@supabase/supabase-js";
 
 import type { MovieData, TmdbCrew, TmdbCast, TmdbCountry } from "./types";
 import { MovieCard } from "./components/movie-card";
@@ -11,6 +11,7 @@ import { AppNavbar } from "./components/nav-bar";
 import { Dashboard } from "./components/dashboard";
 import { AddMovieModal } from "./components/add-movie-modal";
 import { LoginModal } from "./components/login-modal";
+import { OSCAR_NOMINEES_IDS } from "./constants";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
 
@@ -23,6 +24,7 @@ function App() {
 
    const [searchTerm, setSearchTerm] = useState("");
    const [onlyNational, setOnlyNational] = useState(false);
+   const [onlyOscar, setOnlyOscar] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
 
    const [showModal, setShowModal] = useState(false);
@@ -35,12 +37,12 @@ function App() {
 
    // --- AUTENTICAÇÃO ---
    useEffect(() => {
-      // 1. Verifica se já está logado ao abrir o site
+      // Verifica se já está logado ao abrir o site
       supabase.auth.getSession().then(({ data: { session } }) => {
          setSession(session);
       });
 
-      // 2. Escuta mudanças (login/logout) em tempo real
+      // Escuta mudanças (login/logout) em tempo real
       const {
          data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -53,7 +55,6 @@ function App() {
    const handleLogout = async () => {
       await supabase.auth.signOut();
    };
-   // --------------------
 
    const handleOpenModal = (movie: MovieData) => {
       setSelectedMovie(movie);
@@ -110,6 +111,10 @@ function App() {
                      (c: TmdbCountry) => c.iso_3166_1 === "BR",
                   );
 
+                  const isOscarNominee = OSCAR_NOMINEES_IDS.includes(
+                     movie.tmdb_id,
+                  );
+
                   return {
                      ...movie,
                      title: data.title,
@@ -120,6 +125,7 @@ function App() {
                      cast: cast || [],
                      countries: translatedCountries || [],
                      isNational: isBr,
+                     isOscar: isOscarNominee,
                   };
                } catch (err) {
                   console.error(`Erro TMDB ID ${movie.tmdb_id}`, err);
@@ -158,11 +164,8 @@ function App() {
    };
 
    const handleEditMovie = (movie: MovieData) => {
-      // 1. Fecha o modal de detalhes
       handleCloseModal();
-      // 2. Define qual filme vamos editar
       setMovieToEdit(movie);
-      // 3. Abre o modal de formulário
       setShowAddModal(true);
    };
 
@@ -177,9 +180,11 @@ function App() {
             (movie.recommended &&
                movie.recommended.toLowerCase().includes(searchLower)) ||
             (movie.director &&
-               movie.director.toLowerCase().includes(searchLower));
+               movie.director.toLowerCase().includes(searchLower)) ||
+            (movie.isOscar && "oscar".includes(searchLower));
 
          if (onlyNational && !movie.isNational) return false;
+         if (onlyOscar && !movie.isOscar) return false;
 
          return matchesSearch;
       })
@@ -204,6 +209,8 @@ function App() {
             setSortOrder={setSortOrder}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            onlyOscar={onlyOscar}
+            setOnlyOscar={setOnlyOscar}
          />
 
          <Container className="px-4 pb-5">

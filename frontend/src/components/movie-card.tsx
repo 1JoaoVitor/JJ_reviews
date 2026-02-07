@@ -1,5 +1,5 @@
 import { Card } from "react-bootstrap";
-import type { MovieData } from "../types"; // Importamos do nosso arquivo central
+import type { MovieData } from "../types";
 import { getBadgeStyle } from "../utils";
 
 interface MovieCardProps {
@@ -35,7 +35,6 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   Sem Capa
                </div>
             )}
-            {/* Nota sem emoji */}
             <div
                style={{
                   position: "absolute",
@@ -72,6 +71,14 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                      style={{ fontSize: "0.7em" }}
                   >
                      NACIONAL
+                  </span>
+               )}
+               {movie.isOscar && (
+                  <span
+                     className="ms-2 badge bg-warning text-dark border border-warning"
+                     style={{ fontSize: "0.7em" }}
+                  >
+                     OSCAR 26
                   </span>
                )}
             </p>

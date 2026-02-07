@@ -19,7 +19,7 @@ export function Dashboard({ movies }: DashboardProps) {
    ).length;
    const nonUSPercentage = ((nonUSCount / totalMovies) * 100).toFixed(0);
 
-   // 4iretor Mais Assistido (Minha sugestão)
+   // Diretor Mais Assistido
    const directorCounts: Record<string, number> = {};
 
    movies.forEach((movie) => {
@@ -64,7 +64,7 @@ export function Dashboard({ movies }: DashboardProps) {
                   style={{ backgroundColor: "#fff3cd" }}
                >
                   <h3
-                     className="fw-bold mb-0 text-warning"
+                     className="fw-bold mb-0"
                      style={{ textShadow: "1px 1px 0 #dac17c" }}
                   >
                      {averageRating}
@@ -73,13 +73,13 @@ export function Dashboard({ movies }: DashboardProps) {
                </Card>
             </Col>
 
-            {/* Card 3: Mundo Afora (Não EUA) */}
+            {/* Card 3: Não EUA */}
             <Col>
                <Card
                   className="h-100 border-0 shadow-sm text-center py-3"
                   style={{ backgroundColor: "#d1e7dd" }}
                >
-                  <h3 className="fw-bold mb-0 text-success">{nonUSCount}</h3>
+                  <h3 className="fw-bold mb-0">{nonUSCount}</h3>
                   <small className="text-muted">
                      Fora dos EUA ({nonUSPercentage}%)
                   </small>
@@ -95,7 +95,7 @@ export function Dashboard({ movies }: DashboardProps) {
                   <div className="d-flex align-items-center justify-content-center h-100 px-2">
                      <div>
                         <h6
-                           className="fw-bold mb-1 text-primary text-truncate"
+                           className="fw-bold mb-1 text-truncate"
                            style={{ maxWidth: "150px", margin: "0 auto" }}
                         >
                            {maxCount > 1 ? topDirector : "Vários"}

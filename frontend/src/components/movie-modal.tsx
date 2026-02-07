@@ -6,7 +6,6 @@ interface MovieModalProps {
    show: boolean;
    movie: MovieData | null;
    onHide: () => void;
-   // NOVAS PROPS
    isAdmin: boolean;
    onEdit: (movie: MovieData) => void;
    onDelete: (movie: MovieData) => void;
@@ -32,7 +31,7 @@ export function MovieModal({
             </Modal.Title>
          </Modal.Header>
          <Modal.Body className="pt-2">
-            {/* --- BARRA DE ADMIN (Só aparece se estiver logado) --- */}
+            {/* --- BARRA DE ADMIN (Só logado) --- */}
             {isAdmin && (
                <div className="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-4">
                   <small className="fw-bold text-uppercase">Modo Admin</small>
@@ -64,8 +63,6 @@ export function MovieModal({
                </div>
             )}
 
-            {/* ... O RESTO DO MODAL CONTINUA IGUAL ... */}
-            {/* (Copie o conteúdo anterior do return a partir daqui: <p className="text-muted... etc) */}
             <p className="text-muted mb-4">
                {movie.director} • {movie.release_date?.split("-")[0]} •{" "}
                {movie.countries?.join(", ")}
@@ -103,7 +100,7 @@ export function MovieModal({
                         {movie.rating}
                      </div>
                      <div>
-                        <h5 className="mb-0 fw-bold">Sua Avaliação</h5>
+                        <h5 className="mb-0 fw-bold">Nossa Avaliação</h5>
                         <small className="text-muted">Escala de 0 a 10</small>
                      </div>
 
@@ -123,7 +120,7 @@ export function MovieModal({
 
                   <div className="mb-4">
                      <h5 className="fw-bold border-bottom pb-2">
-                        O que você achou:
+                        O que achamos:
                      </h5>
                      <p
                         className="fs-5"

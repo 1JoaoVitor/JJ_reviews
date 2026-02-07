@@ -27,6 +27,7 @@ export interface MovieData {
    cast?: string[];
    countries?: string[];
    isNational?: boolean;
+   isOscar?: boolean;
 }
 
 export interface TmdbSearchResult {
