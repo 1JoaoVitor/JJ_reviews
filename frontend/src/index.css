@@ -16,3 +16,42 @@
    gap: 1.5rem;
    width: 100%;
 }
+
+/* Barra de Pesquisa */
+.custom-search-bar {
+   width: 100%;
+}
+
+/* Quando a tela for maior que 768px (Desktop/Tablet) */
+@media (min-width: 768px) {
+   .custom-search-bar {
+      max-width: 300px;
+   }
+   .movie-poster-container {
+      height: 400px;
+   }
+}
+
+/* Altura da Capa do Filme */
+.movie-poster-container {
+   height: 250px; /* No celular: Mais baixinho para caber mais na tela */
+   overflow: hidden;
+   background-color: #222;
+   position: relative;
+}
+
+/* Botão Oscar */
+@media (max-width: 768px) {
+   .btn-outline-oscar {
+      color: #aa7d0a;
+      border-color: #b8860b;
+   }
+}
+
+.btn-outline-oscar:hover,
+.btn-outline-oscar:active,
+.btn-check:checked + .btn-outline-oscar {
+   background-color: #ffc107;
+   color: #000;
+   border-color: #ffc107;
+}

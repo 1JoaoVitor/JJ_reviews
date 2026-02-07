@@ -44,7 +44,7 @@ export function Dashboard({ movies }: DashboardProps) {
 
    return (
       <div className="mb-5">
-         <h5 className="text-muted mb-3">Seu Resumo</h5>
+         <h5 className="text-muted mb-3">Resumo</h5>
          <Row xs={2} md={4} className="g-3">
             {/* Card 1: Total */}
             <Col>
