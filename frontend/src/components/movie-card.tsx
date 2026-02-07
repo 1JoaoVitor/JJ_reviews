@@ -16,14 +16,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
          style={{ cursor: "pointer" }}
          onClick={() => onClick(movie)}
       >
-         <div
-            style={{
-               height: "400px",
-               overflow: "hidden",
-               backgroundColor: "#222",
-               position: "relative",
-            }}
-         >
+         <div className="movie-poster-container">
             {movie.poster_path ? (
                <Card.Img
                   variant="top"
