@@ -30,6 +30,13 @@ export interface MovieData {
    isNational?: boolean;
    isOscar?: boolean;
    genres?: string[];
+   providers?: TmdbProvider[];
+}
+
+export interface TmdbProvider {
+   provider_id: number;
+   provider_name: string;
+   logo_path: string;
 }
 
 export interface TmdbSearchResult {

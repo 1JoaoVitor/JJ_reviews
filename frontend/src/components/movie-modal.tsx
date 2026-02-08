@@ -88,11 +88,37 @@ export function MovieModal({
                      <img
                         src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
                         alt={movie.title}
-                        className="img-fluid rounded shadow w-100"
+                        className="img-fluid rounded shadow w-100 mb-3"
                      />
                   ) : (
-                     <div className="bg-secondary text-white p-5 rounded text-center">
+                     <div className="bg-secondary text-white p-5 rounded text-center mb-3">
                         Sem Imagem
+                     </div>
+                  )}
+
+                  {/* --- Onde Assistir --- */}
+                  {movie.providers && movie.providers.length > 0 ? (
+                     <div className="bg-light p-3 rounded border">
+                        <h6 className="fw-bold text-muted small mb-2 text-uppercase">
+                           Onde Assistir:
+                        </h6>
+                        <div className="d-flex flex-wrap gap-2 justify-content-start">
+                           {movie.providers.map((provider) => (
+                              <img
+                                 key={provider.provider_id}
+                                 src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
+                                 alt={provider.provider_name}
+                                 title={provider.provider_name}
+                                 className="rounded shadow-sm"
+                                 style={{ width: "45px", height: "45px" }}
+                              />
+                           ))}
+                        </div>
+                     </div>
+                  ) : (
+                     /* Caso não tenha em streaming nenhum */
+                     <div className="text-center text-muted small mt-2">
+                        Indisponível em streamings no Brasil.
                      </div>
                   )}
                </Col>

@@ -89,10 +89,13 @@ function App() {
             supabaseData.map(async (movie) => {
                try {
                   const tmdbResponse = await axios.get(
-                     `https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&append_to_response=credits`,
+                     `https://api.themoviedb.org/3/movie/${movie.tmdb_id}?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&append_to_response=credits,watch/providers`,
                   );
 
                   const data = tmdbResponse.data;
+
+                  const watchProviders =
+                     data["watch/providers"]?.results?.BR?.flatrate || [];
 
                   const directors = data.credits?.crew
                      ?.filter((person: TmdbCrew) => person.job === "Director")
@@ -138,6 +141,7 @@ function App() {
                      genres: genres,
                      isNational: isBr,
                      isOscar: isOscarNominee,
+                     providers: watchProviders,
                   };
                } catch (err) {
                   console.error(`Erro TMDB ID ${movie.tmdb_id}`, err);
