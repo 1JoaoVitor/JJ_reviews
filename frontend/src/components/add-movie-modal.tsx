@@ -7,6 +7,7 @@ import {
    ListGroup,
    Image,
    Spinner,
+   ButtonGroup,
 } from "react-bootstrap";
 import axios from "axios";
 import { supabase } from "../supabaseClient";
@@ -38,15 +39,19 @@ export function AddMovieModal({
    const [review, setReview] = useState("");
    const [recommended, setRecommended] = useState("Vale a pena assistir");
    const [saving, setSaving] = useState(false);
+   const [formStatus, setFormStatus] = useState<"watched" | "watchlist">(
+      "watched",
+   );
 
    // Quando o modal abre, verifica se é Edição ou Adição
    useEffect(() => {
       if (show && movieToEdit) {
          // MODO EDIÇÃO (filme existe)
          setStep("form");
-         setRating(movieToEdit.rating);
-         setReview(movieToEdit.review);
-         setRecommended(movieToEdit.recommended);
+         setRating(movieToEdit.rating ?? 5);
+         setReview(movieToEdit.review || "");
+         setRecommended(movieToEdit.recommended || "Vale a pena assistir");
+         setFormStatus(movieToEdit.status || "watched");
          // Simula o objeto da TMDB com os dados que já se tem
          setSelectedMovie({
             id: movieToEdit.tmdb_id,
@@ -63,6 +68,7 @@ export function AddMovieModal({
          setRating(5);
          setReview("");
          setRecommended("Vale a pena assistir");
+         setFormStatus("watched");
       }
    }, [show, movieToEdit]);
 
@@ -92,28 +98,22 @@ export function AddMovieModal({
       setSaving(true);
 
       try {
+         const payload = {
+            tmdb_id: selectedMovie.id,
+            rating: formStatus === "watched" ? rating : null, // Nulo se watchlist
+            review: formStatus === "watched" ? review : null,
+            recommended: formStatus === "watched" ? recommended : null,
+            status: formStatus, // Salva o status escolhido
+         };
+
          if (movieToEdit) {
-            // --- UPDATE ---
             const { error } = await supabase
                .from("reviews")
-               .update({
-                  rating: rating,
-                  review: review,
-                  recommended: recommended,
-               })
-               .eq("id", movieToEdit.id); // Busca pelo ID do banco (não do TMDB)
-
+               .update(payload)
+               .eq("id", movieToEdit.id);
             if (error) throw error;
          } else {
-            // --- INSERT ---
-            const { error } = await supabase.from("reviews").insert([
-               {
-                  tmdb_id: selectedMovie.id,
-                  rating: rating,
-                  review: review,
-                  recommended: recommended,
-               },
-            ]);
+            const { error } = await supabase.from("reviews").insert([payload]);
             if (error) throw error;
          }
 
@@ -195,58 +195,100 @@ export function AddMovieModal({
             {/* FORMULÁRIO (Usado tanto para criar quanto editar) */}
             {step === "form" && (
                <Form>
-                  <Form.Group className="mb-3">
-                     <Form.Label className="fw-bold">
-                        Sua Nota (0 a 10)
-                     </Form.Label>
-                     <div className="d-flex align-items-center gap-3">
-                        <Form.Range
-                           min={0}
-                           max={10}
-                           step={0.5}
-                           value={rating}
-                           onChange={(e) => setRating(Number(e.target.value))}
-                        />
-                        <span
-                           className="h4 fw-bold text-warning border p-2 rounded bg-dark mb-0"
-                           style={{ minWidth: "60px", textAlign: "center" }}
+                  {/* SELETOR DE STATUS */}
+                  <div className="d-flex justify-content-center mb-4">
+                     <ButtonGroup>
+                        <Button
+                           variant={
+                              formStatus === "watched"
+                                 ? "success"
+                                 : "outline-secondary"
+                           }
+                           onClick={() => setFormStatus("watched")}
                         >
-                           {rating}
-                        </span>
+                           Já Assistimos
+                        </Button>
+                        <Button
+                           variant={
+                              formStatus === "watchlist"
+                                 ? "primary"
+                                 : "outline-secondary"
+                           }
+                           onClick={() => setFormStatus("watchlist")}
+                        >
+                           Queremos Ver
+                        </Button>
+                     </ButtonGroup>
+                  </div>
+
+                  {/* CAMPOS (Só aparecem se 'watched') */}
+                  {formStatus === "watched" ? (
+                     <>
+                        <Form.Group className="mb-3">
+                           <Form.Label className="fw-bold">
+                              Sua Nota (0 a 10)
+                           </Form.Label>
+                           <div className="d-flex align-items-center gap-3">
+                              <Form.Range
+                                 min={0}
+                                 max={10}
+                                 step={0.5}
+                                 value={rating || 0}
+                                 onChange={(e) =>
+                                    setRating(Number(e.target.value))
+                                 }
+                              />
+                              <span className="h4 fw-bold text-warning border p-2 rounded bg-dark mb-0">
+                                 {rating}
+                              </span>
+                           </div>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                           <Form.Label className="fw-bold">Veredito</Form.Label>
+                           <Form.Select
+                              value={recommended}
+                              onChange={(e) => setRecommended(e.target.value)}
+                           >
+                              <option value="Assista com certeza">
+                                 Assista com certeza
+                              </option>
+                              <option value="Vale a pena assistir">
+                                 Vale a pena assistir
+                              </option>
+                              <option value="tem filmes melhores, mas é legal">
+                                 Tem filmes melhores
+                              </option>
+                              <option value="não tão bom">Não tão bom</option>
+                              <option value="Não perca seu tempo">
+                                 Não perca seu tempo
+                              </option>
+                           </Form.Select>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                           <Form.Label className="fw-bold">
+                              Sua Análise
+                           </Form.Label>
+                           <Form.Control
+                              as="textarea"
+                              rows={4}
+                              value={review}
+                              onChange={(e) => setReview(e.target.value)}
+                           />
+                        </Form.Group>
+                     </>
+                  ) : (
+                     <div className="alert alert-primary text-center">
+                        <h5 className="alert-heading">
+                           Salvar na Lista de Desejos?
+                        </h5>
+                        <p>
+                           Este filme ficará na aba "Watchlist" para ser
+                           avalidado mais tarde.{" "}
+                        </p>
                      </div>
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                     <Form.Label className="fw-bold">Veredito</Form.Label>
-                     <Form.Select
-                        value={recommended}
-                        onChange={(e) => setRecommended(e.target.value)}
-                     >
-                        <option value="Assista com certeza">
-                           Assista com certeza
-                        </option>
-                        <option value="Vale a pena assistir">
-                           Vale a pena assistir
-                        </option>
-                        <option value="tem filmes melhores, mas é legal">
-                           Tem filmes melhores
-                        </option>
-                        <option value="não tão bom">Não tão bom</option>
-                        <option value="Não perca seu tempo">
-                           Não perca seu tempo
-                        </option>
-                     </Form.Select>
-                  </Form.Group>
-
-                  <Form.Group className="mb-3">
-                     <Form.Label className="fw-bold">Nossa Análise</Form.Label>
-                     <Form.Control
-                        as="textarea"
-                        rows={4}
-                        value={review}
-                        onChange={(e) => setReview(e.target.value)}
-                     />
-                  </Form.Group>
+                  )}
                </Form>
             )}
          </Modal.Body>

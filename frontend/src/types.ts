@@ -15,7 +15,7 @@ export interface TmdbCountry {
 export interface MovieData {
    id: number;
    tmdb_id: number;
-   rating: number;
+   rating: number | null;
    review: string;
    recommended: string;
    created_at: string;
@@ -26,6 +26,7 @@ export interface MovieData {
    director?: string;
    cast?: string[];
    countries?: string[];
+   status?: "watched" | "watchlist";
    isNational?: boolean;
    isOscar?: boolean;
    genres?: string[];
