@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import html2canvas from "html2canvas";
 import { supabase } from "./supabaseClient";
 import axios from "axios";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
@@ -17,6 +18,7 @@ import { AppNavbar } from "./components/nav-bar";
 import { Dashboard } from "./components/dashboard";
 import { AddMovieModal } from "./components/add-movie-modal";
 import { LoginModal } from "./components/login-modal";
+import { ShareCard } from "./components/share-card";
 import { OSCAR_NOMINEES_IDS } from "./constants";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
@@ -25,9 +27,7 @@ function App() {
    const [movies, setMovies] = useState<MovieData[]>([]);
    const [loading, setLoading] = useState(true);
 
-   // Controle de Usuário (Admin)
    const [session, setSession] = useState<Session | null>(null);
-
    const [searchTerm, setSearchTerm] = useState("");
    const [onlyNational, setOnlyNational] = useState(false);
    const [onlyOscar, setOnlyOscar] = useState(false);
@@ -35,12 +35,13 @@ function App() {
    const [selectedGenre, setSelectedGenre] = useState("");
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [viewMode, setViewMode] = useState<"watched" | "watchlist">("watched");
-
-   // Modais de Ação
    const [showModal, setShowModal] = useState(false);
    const [showAddModal, setShowAddModal] = useState(false);
    const [showLoginModal, setShowLoginModal] = useState(false);
-   const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null); // Guardar qual filme estamos editando
+   const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
+   const shareRef = useRef<HTMLDivElement>(null);
+   const [sharingMovie, setSharingMovie] = useState<MovieData | null>(null);
+   const [isSharing, setIsSharing] = useState(false);
 
    // --- AUTENTICAÇÃO ---
    useEffect(() => {
@@ -178,6 +179,70 @@ function App() {
       handleCloseModal();
       setMovieToEdit(movie);
       setShowAddModal(true);
+   };
+
+   const handleShare = async (movie: MovieData) => {
+      setSharingMovie(movie);
+      setIsSharing(true);
+
+      setTimeout(async () => {
+         if (shareRef.current) {
+            try {
+               const canvas = await html2canvas(shareRef.current, {
+                  useCORS: true,
+                  scale: 1,
+                  backgroundColor: null,
+               });
+
+               const isMobile = /Android|iPhone|iPad|iPod/i.test(
+                  navigator.userAgent,
+               );
+
+               // Se for Celular E suportar share, abre a gaveta nativa
+               if (isMobile && navigator.canShare && navigator.share) {
+                  canvas.toBlob(async (blob) => {
+                     if (!blob) return;
+                     const file = new File(
+                        [blob],
+                        `review-${movie.tmdb_id}.png`,
+                        {
+                           type: "image/png",
+                        },
+                     );
+                     if (navigator.canShare({ files: [file] })) {
+                        try {
+                           await navigator.share({
+                              files: [file],
+                              title: `Review de ${movie.title}`,
+                           });
+                        } catch (err) {
+                           console.log(
+                              "Compartilhamento cancelado no mobile",
+                              err,
+                           );
+                        }
+                     }
+                  }, "image/png");
+               }
+               //  Se for PC (ou não suportar share), FAZ O DOWNLOAD
+               else {
+                  const image = canvas.toDataURL("image/png");
+                  const link = document.createElement("a");
+                  link.href = image;
+                  link.download = `review-${movie.title}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+               }
+            } catch (error) {
+               console.error("Erro ao gerar imagem", error);
+               alert("Erro ao criar a imagem.");
+            } finally {
+               setIsSharing(false);
+               setSharingMovie(null);
+            }
+         }
+      }, 1000);
    };
 
    const availableGenres = Array.from(
@@ -456,6 +521,7 @@ function App() {
             isAdmin={!!session} // Transforma objeto em booleano (true se existir sessão)
             onEdit={handleEditMovie}
             onDelete={handleDeleteMovie}
+            onShare={handleShare}
          />
 
          {/* Adicionar/Editar (Recebe movieToEdit para saber se preenche os campos) */}
@@ -471,6 +537,21 @@ function App() {
             show={showLoginModal}
             onHide={() => setShowLoginModal(false)}
          />
+         {/* COMPONENTE INVISÍVEL PARA GERAR IMAGEM */}
+         {sharingMovie && <ShareCard ref={shareRef} movie={sharingMovie} />}
+
+         {/* Loading de Compartilhamento */}
+         {isSharing && (
+            <div
+               className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-75"
+               style={{ zIndex: 9999 }}
+            >
+               <div className="text-white text-center">
+                  <Spinner animation="border" className="mb-3" />
+                  <h3>Gerando imagem...</h3>
+               </div>
+            </div>
+         )}
       </div>
    );
 }
