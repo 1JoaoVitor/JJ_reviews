@@ -116,7 +116,7 @@ export function AppNavbar({
                         value={selectedGenre}
                         onChange={(e) => setSelectedGenre(e.target.value)}
                      >
-                        <option value="">Gêneros</option>
+                        <option value="">Todos</option>
                         {availableGenres.map((genre) => (
                            <option key={genre} value={genre}>
                               {genre}

@@ -8,15 +8,27 @@ interface DashboardProps {
 export function Dashboard({ movies }: DashboardProps) {
    if (movies.length === 0) return null;
 
-   const totalMovies = movies.length;
+   const ratedMovies = movies.filter(
+      (m) => m.rating !== null && m.rating !== undefined,
+   );
 
-   const totalRating = movies.reduce((acc, movie) => acc + movie.rating, 0);
-   const averageRating = (totalRating / totalMovies).toFixed(1);
+   const totalMovies = ratedMovies.length;
+
+   const totalRating = ratedMovies.reduce(
+      (acc, movie) => acc + (movie.rating || 0),
+      0,
+   );
+
+   const averageRating =
+      ratedMovies.length > 0
+         ? (totalRating / ratedMovies.length).toFixed(1)
+         : "0.0";
 
    // Filmes fora dos EUA
    const nonUSCount = movies.filter(
       (m) => !m.countries?.includes("Estados Unidos"),
    ).length;
+
    const nonUSPercentage = ((nonUSCount / totalMovies) * 100).toFixed(0);
 
    // Diretor Mais Assistido

@@ -33,10 +33,11 @@ function App() {
    const [onlyOscar, setOnlyOscar] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
    const [selectedGenre, setSelectedGenre] = useState("");
-   const [showModal, setShowModal] = useState(false);
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
+   const [viewMode, setViewMode] = useState<"watched" | "watchlist">("watched");
 
    // Modais de Ação
+   const [showModal, setShowModal] = useState(false);
    const [showAddModal, setShowAddModal] = useState(false);
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null); // Guardar qual filme estamos editando
@@ -185,7 +186,11 @@ function App() {
 
    const filteredMovies = movies
       .filter((movie) => {
+         const movieStatus = movie.status || "watched";
+         if (movieStatus !== viewMode) return false;
+
          const searchLower = searchTerm.toLowerCase();
+
          const matchesSearch =
             !searchTerm ||
             (movie.title && movie.title.toLowerCase().includes(searchLower)) ||
@@ -199,6 +204,10 @@ function App() {
                movie.genres.some((g) =>
                   g.toLowerCase().includes(searchLower),
                )) ||
+            (movie.cast &&
+               movie.cast.some((actor) =>
+                  actor.toLowerCase().includes(searchLower),
+               )) ||
             (movie.isOscar && "oscar".includes(searchLower));
 
          if (onlyNational && !movie.isNational) return false;
@@ -210,7 +219,12 @@ function App() {
          return matchesSearch;
       })
       .sort((a, b) => {
-         if (sortOrder === "rating") return b.rating - a.rating;
+         if (sortOrder === "default") return b.id - a.id;
+         if (sortOrder === "rating") {
+            const ratingA = a.rating ?? 0; // O ?? significa: "Se o valor da esquerda for nulo ou indefinido, use o da direita".
+            const ratingB = b.rating ?? 0;
+            return ratingB - ratingA;
+         }
          if (sortOrder === "date") {
             const dateA = new Date(a.release_date || "1900-01-01").getTime();
             const dateB = new Date(b.release_date || "1900-01-01").getTime();
@@ -237,6 +251,26 @@ function App() {
             setSelectedGenre={setSelectedGenre}
          />
 
+         {/* --- ABAS DE NAVEGAÇÃO */}
+         <div className="d-flex justify-content-center mb-4 d-md-none">
+            <div className="bg-white p-1 rounded-pill shadow-sm border d-inline-flex">
+               <Button
+                  variant={viewMode === "watched" ? "primary" : "light"}
+                  className="rounded-pill px-4 fw-bold"
+                  onClick={() => setViewMode("watched")}
+               >
+                  Já Vimos
+               </Button>
+               <Button
+                  variant={viewMode === "watchlist" ? "primary" : "light"}
+                  className="rounded-pill px-4 fw-bold"
+                  onClick={() => setViewMode("watchlist")}
+               >
+                  Watchlist
+               </Button>
+            </div>
+         </div>
+
          <Container className="px-4 pb-5">
             {!loading && !searchTerm && <Dashboard movies={movies} />}
 
@@ -247,8 +281,46 @@ function App() {
                         ? "Carregando..."
                         : filteredMovies.length === movies.length
                           ? `Todos os ${movies.length} filmes`
-                          : `Exibindo ${filteredMovies.length} filmes`}
+                          : filteredMovies.length === 1
+                            ? "Exibindo 1 filme"
+                            : `Exibindo ${filteredMovies.length} filmes`}
                   </h5>
+
+                  <ButtonGroup
+                     size="sm"
+                     className="d-none d-md-inline-flex shadow-sm"
+                  >
+                     <Button
+                        variant={
+                           viewMode === "watched"
+                              ? "secondary"
+                              : "outline-secondary"
+                        }
+                        onClick={() => setViewMode("watched")}
+                        className={
+                           viewMode === "watched"
+                              ? "fw-bold border-secondary"
+                              : "text-muted border-secondary"
+                        }
+                     >
+                        Já Vimos
+                     </Button>
+                     <Button
+                        variant={
+                           viewMode === "watchlist"
+                              ? "secondary"
+                              : "outline-secondary"
+                        }
+                        onClick={() => setViewMode("watchlist")}
+                        className={
+                           viewMode === "watchlist"
+                              ? "fw-bold border-secondary"
+                              : "text-muted border-secondary"
+                        }
+                     >
+                        Watchlist
+                     </Button>
+                  </ButtonGroup>
 
                   {/* BOTÃO ADICIONAR (Só aparece se tiver sessão/login) */}
                   {session && (
