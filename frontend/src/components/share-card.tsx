@@ -89,6 +89,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   <h2
                      style={{
                         fontSize: "35px",
+                        fontStyle: "italic",
                         fontWeight: "bold",
                         color: "#ffc107",
                         letterSpacing: "4px",
@@ -182,6 +183,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      <div
                         style={{
                            fontSize: "40px",
+                           fontStyle: "italic",
                            textAlign: "center",
                            backgroundColor: badgeStyle.bg,
                            color: badgeStyle.color,
@@ -209,7 +211,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      fontWeight: "500",
                   }}
                >
-                  app.cine-reviews-jj.vercel.app
+                  https://jj-reviews.vercel.app
                </div>
             </div>
          </div>
