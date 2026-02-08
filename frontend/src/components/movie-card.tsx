@@ -28,6 +28,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   Sem Capa
                </div>
             )}
+            {/* NOTA OU STATUS */}
             <div
                style={{
                   position: "absolute",
@@ -41,7 +42,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   fontSize: "0.9rem",
                }}
             >
-               Nota: {movie.rating}
+               {movie.rating !== null ? `Nota: ${movie.rating}` : "Na Fila"}
             </div>
          </div>
 
@@ -52,7 +53,6 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             >
                {movie.title || `Filme #${movie.tmdb_id}`}
             </Card.Title>
-
             <p className="text-muted small mb-1 text-truncate">
                Dir: {movie.director}
             </p>
@@ -75,21 +75,31 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   </span>
                )}
             </p>
-
             <hr className="my-2" />
 
-            <div className="mt-auto text-center">
-               <span
-                  className="badge rounded-pill w-100 py-2"
-                  style={{
-                     backgroundColor: badgeStyle.bg,
-                     color: badgeStyle.color,
-                     fontWeight: "500",
-                  }}
-               >
-                  {movie.recommended || "Avaliado"}
-               </span>
-            </div>
+            {movie.recommended && (
+               <div className="mt-auto text-center">
+                  <span
+                     className="badge rounded-pill w-100 py-2"
+                     style={{
+                        backgroundColor: badgeStyle.bg,
+                        color: badgeStyle.color,
+                        fontWeight: "500",
+                     }}
+                  >
+                     {movie.recommended}
+                  </span>
+               </div>
+            )}
+
+            {/* SE FOR WATCHLIST, MOSTRA BOTÃO DE AÇÃO */}
+            {movie.rating === null && (
+               <div className="mt-auto text-center">
+                  <span className="badge bg-secondary w-100 py-2">
+                     Aguardando...
+                  </span>
+               </div>
+            )}
          </Card.Body>
       </Card>
    );
