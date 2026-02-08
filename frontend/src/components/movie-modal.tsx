@@ -7,6 +7,7 @@ interface MovieModalProps {
    movie: MovieData | null;
    onHide: () => void;
    isAdmin: boolean;
+   onShare: (movie: MovieData) => void;
    onEdit: (movie: MovieData) => void;
    onDelete: (movie: MovieData) => void;
 }
@@ -18,6 +19,7 @@ export function MovieModal({
    isAdmin,
    onEdit,
    onDelete,
+   onShare,
 }: MovieModalProps) {
    if (!movie) return null;
 
@@ -176,6 +178,15 @@ export function MovieModal({
             </Row>
          </Modal.Body>
          <Modal.Footer className="border-0">
+            {movie && (
+               <Button
+                  variant="success"
+                  onClick={() => onShare(movie)}
+                  className="d-flex align-items-center gap-2 me-auto" // me-auto joga ele para a esquerda
+               >
+                  Compartilhar
+               </Button>
+            )}
             <Button variant="secondary" onClick={onHide}>
                Fechar
             </Button>
