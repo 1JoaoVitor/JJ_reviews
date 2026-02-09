@@ -129,12 +129,13 @@ export function MovieModal({
                         style={{
                            backgroundColor: "#ffc107",
                            color: "#000",
-                           width: "80px",
-                           height: "80px",
+                           width: "70px",
+                           height: "70px",
                            borderRadius: "15px",
                            fontWeight: "bold",
                            fontSize: "1.8rem",
                            border: "2px solid #e0a800",
+                           flexShrink: 0,
                         }}
                      >
                         {movie.rating}

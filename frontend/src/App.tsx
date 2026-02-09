@@ -407,7 +407,6 @@ function App() {
                      </Button>
                   </ButtonGroup>
 
-                  {/* BOTÃO ADICIONAR (Só aparece se tiver sessão/login) */}
                   <ButtonGroup>
                      {/* ---  BOTÃO ROLETA --- */}
                      {viewMode === "watchlist" &&
@@ -415,11 +414,11 @@ function App() {
                            <Button
                               variant="warning"
                               size="sm"
-                              className="ms-2 fw-bold shadow-sm d-flex align-items-center gap-2"
+                              className="ms-2 fw-bold shadow-sm d-flex align-items-center justify-content-center"
                               onClick={() => setShowRoulette(true)}
                               title="Sortear um filme aleatório"
                            >
-                              {" "}
+                              <span className="fs-6 d-md-none">🎲</span>
                               <span className="d-none d-md-inline">
                                  Sortear
                               </span>
