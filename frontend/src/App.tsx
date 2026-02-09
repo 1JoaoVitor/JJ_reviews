@@ -20,6 +20,7 @@ import { AddMovieModal } from "./components/add-movie-modal";
 import { LoginModal } from "./components/login-modal";
 import { ShareCard } from "./components/share-card";
 import { OSCAR_NOMINEES_IDS } from "./constants";
+import { RouletteModal } from "./components/roulette-modal";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
 
@@ -42,6 +43,7 @@ function App() {
    const shareRef = useRef<HTMLDivElement>(null);
    const [sharingMovie, setSharingMovie] = useState<MovieData | null>(null);
    const [isSharing, setIsSharing] = useState(false);
+   const [showRoulette, setShowRoulette] = useState(false);
 
    // --- AUTENTICAÇÃO ---
    useEffect(() => {
@@ -392,22 +394,41 @@ function App() {
                   </ButtonGroup>
 
                   {/* BOTÃO ADICIONAR (Só aparece se tiver sessão/login) */}
-                  {session && (
-                     <Button
-                        variant="primary"
-                        size="sm"
-                        className="fw-bold shadow-sm ms-3 rounded-pill px-3"
-                        onClick={() => {
-                           setMovieToEdit(null); // Garante que é um NOVO filme
-                           setShowAddModal(true);
-                        }}
-                     >
-                        <span className="d-md-none">+ Filme</span>{" "}
-                        <span className="d-none d-md-inline">
-                           + Adicionar Filme
-                        </span>{" "}
-                     </Button>
-                  )}
+                  <ButtonGroup>
+                     {/* ---  BOTÃO ROLETA --- */}
+                     {viewMode === "watchlist" &&
+                        movies.some((m) => m.status === "watchlist") && (
+                           <Button
+                              variant="warning"
+                              size="sm"
+                              className="ms-2 fw-bold shadow-sm d-flex align-items-center gap-2"
+                              onClick={() => setShowRoulette(true)}
+                              title="Sortear um filme aleatório"
+                           >
+                              {" "}
+                              <span className="d-none d-md-inline">
+                                 Sortear
+                              </span>
+                           </Button>
+                        )}
+
+                     {session && (
+                        <Button
+                           variant="primary"
+                           size="sm"
+                           className="fw-bold shadow-sm ms-3 rounded-pill px-3"
+                           onClick={() => {
+                              setMovieToEdit(null); // Garante que é um NOVO filme
+                              setShowAddModal(true);
+                           }}
+                        >
+                           <span className="d-md-none">+ Filme</span>{" "}
+                           <span className="d-none d-md-inline">
+                              + Adicionar Filme
+                           </span>{" "}
+                        </Button>
+                     )}
+                  </ButtonGroup>
                </div>
 
                <ButtonGroup size="sm" className="d-md-none w-100">
@@ -556,6 +577,16 @@ function App() {
                </div>
             </div>
          )}
+
+         <RouletteModal
+            show={showRoulette}
+            onHide={() => setShowRoulette(false)}
+            watchlist={movies.filter((m) => m.status === "watchlist")}
+            onMovieSelect={(movie) => {
+               setShowRoulette(false);
+               handleOpenModal(movie);
+            }}
+         />
       </div>
    );
 }
