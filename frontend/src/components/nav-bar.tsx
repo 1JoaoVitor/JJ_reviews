@@ -19,6 +19,7 @@ interface AppNavbarProps {
    availableGenres: string[];
    selectedGenre: string;
    setSelectedGenre: (val: string) => void;
+   onStartBattle: () => void;
 }
 
 export function AppNavbar({
@@ -33,6 +34,7 @@ export function AppNavbar({
    availableGenres,
    selectedGenre,
    setSelectedGenre,
+   onStartBattle,
 }: AppNavbarProps) {
    return (
       <Navbar
@@ -64,6 +66,15 @@ export function AppNavbar({
 
             <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3 w-100 justify-content-end mt-3 mt-md-0">
                <div className="d-flex gap-2 w-100 justify-content-between justify-content-md-end">
+                  {/* BOTÃO BATALHA  */}
+                  <Button
+                     variant="dark"
+                     className="me-3 fw-bold d-none d-md-block" // Escondido no mobile p/ não quebrar layout agora
+                     onClick={onStartBattle}
+                  >
+                     ⚔️ Batalha
+                  </Button>
+
                   <ButtonGroup className="d-none d-md-flex">
                      <Button
                         variant={

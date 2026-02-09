@@ -21,6 +21,7 @@ import { LoginModal } from "./components/login-modal";
 import { ShareCard } from "./components/share-card";
 import { OSCAR_NOMINEES_IDS } from "./constants";
 import { RouletteModal } from "./components/roulette-modal";
+import { MovieBattle } from "./components/movie-battle";
 
 const regionNames = new Intl.DisplayNames(["pt-BR"], { type: "region" });
 
@@ -44,6 +45,7 @@ function App() {
    const [sharingMovie, setSharingMovie] = useState<MovieData | null>(null);
    const [isSharing, setIsSharing] = useState(false);
    const [showRoulette, setShowRoulette] = useState(false);
+   const [isBattleMode, setIsBattleMode] = useState(false);
 
    // --- AUTENTICAÇÃO ---
    useEffect(() => {
@@ -306,6 +308,17 @@ function App() {
          return 0;
       });
 
+   if (isBattleMode) {
+      return (
+         <div className="bg-light" style={{ minHeight: "100vh" }}>
+            <MovieBattle
+               allMovies={movies}
+               onExit={() => setIsBattleMode(false)}
+            />
+         </div>
+      );
+   }
+
    return (
       <div className="bg-light" style={{ minHeight: "100vh" }}>
          <AppNavbar
@@ -320,6 +333,7 @@ function App() {
             availableGenres={availableGenres}
             selectedGenre={selectedGenre}
             setSelectedGenre={setSelectedGenre}
+            onStartBattle={() => setIsBattleMode(true)}
          />
 
          {/* --- ABAS DE NAVEGAÇÃO */}
