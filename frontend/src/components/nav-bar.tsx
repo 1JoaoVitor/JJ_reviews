@@ -69,10 +69,12 @@ export function AppNavbar({
                   {/* BOTÃO BATALHA  */}
                   <Button
                      variant="dark"
-                     className="me-3 fw-bold d-none d-md-block" // Escondido no mobile p/ não quebrar layout agora
+                     className="me-3 fw-bold"
                      onClick={onStartBattle}
+                     size="sm"
                   >
-                     ⚔️ Batalha
+                     <span className="fs-6">⚔️</span>
+                     <span className="d-none d-md-inline ms-2">Batalha</span>
                   </Button>
 
                   <ButtonGroup className="d-none d-md-flex">
