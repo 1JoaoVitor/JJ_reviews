@@ -1,0 +1,31 @@
+/* ─── Dashboard ─── */
+
+.statCard {
+   text-align: center;
+   padding: 1rem 0;
+}
+
+.statCardTotal {
+   background-color: var(--color-dashboard-total);
+}
+
+.statCardAverage {
+   background-color: var(--color-dashboard-average);
+}
+
+.statCardInternational {
+   background-color: var(--color-dashboard-international);
+}
+
+.statCardDirector {
+   background-color: var(--color-dashboard-director);
+}
+
+.averageValue {
+   text-shadow: 1px 1px 0 #dac17c;
+}
+
+.directorName {
+   max-width: 150px;
+   margin: 0 auto;
+}

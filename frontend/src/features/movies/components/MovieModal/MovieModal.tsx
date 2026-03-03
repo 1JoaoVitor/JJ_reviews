@@ -1,6 +1,7 @@
 import { Modal, Button, Row, Col, Badge } from "react-bootstrap";
-import type { MovieData } from "../types";
-import { getBadgeStyle } from "../utils";
+import type { MovieData } from "@/types";
+import { getBadgeStyle } from "@/utils/badges";
+import styles from "./MovieModal.module.css";
 
 interface MovieModalProps {
    show: boolean;
@@ -32,8 +33,9 @@ export function MovieModal({
                {movie.title}
             </Modal.Title>
          </Modal.Header>
+
          <Modal.Body className="pt-2">
-            {/* --- BARRA DE ADMIN (Só logado) --- */}
+            {/* Barra de admin */}
             {isAdmin && (
                <div className="alert alert-secondary d-flex justify-content-between align-items-center py-2 mb-4">
                   <small className="fw-bold text-uppercase">Modo Admin</small>
@@ -50,11 +52,7 @@ export function MovieModal({
                         variant="outline-danger"
                         size="sm"
                         onClick={() => {
-                           if (
-                              confirm(
-                                 "Tem certeza que deseja excluir este filme?",
-                              )
-                           ) {
+                           if (confirm("Tem certeza que deseja excluir este filme?")) {
                               onDelete(movie);
                            }
                         }}
@@ -72,11 +70,7 @@ export function MovieModal({
 
             <div className="mb-3">
                {movie.genres?.map((genre, idx) => (
-                  <Badge
-                     key={idx}
-                     bg="dark"
-                     className="me-2 border border-secondary fw-normal"
-                  >
+                  <Badge key={idx} bg="dark" className="me-2 border border-secondary fw-normal">
                      {genre}
                   </Badge>
                ))}
@@ -96,7 +90,6 @@ export function MovieModal({
                      </div>
                   )}
 
-                  {/* --- Onde Assistir --- */}
                   {movie.providers && movie.providers.length > 0 ? (
                      <div className="bg-light p-3 rounded border">
                         <h6 className="fw-bold text-muted small mb-2 text-uppercase">
@@ -109,49 +102,33 @@ export function MovieModal({
                                  src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
                                  alt={provider.provider_name}
                                  title={provider.provider_name}
-                                 className="rounded shadow-sm"
-                                 style={{ width: "45px", height: "45px" }}
+                                 className={`rounded shadow-sm ${styles.providerLogo}`}
                               />
                            ))}
                         </div>
                      </div>
                   ) : (
-                     /* Caso não tenha em streaming nenhum */
                      <div className="text-center text-muted small mt-2">
                         Indisponível em streamings no Brasil.
                      </div>
                   )}
                </Col>
+
                <Col md={8}>
                   <div className="d-flex align-items-center gap-3 mb-4">
-                     <div
-                        className="d-flex align-items-center justify-content-center shadow-sm"
-                        style={{
-                           backgroundColor: "#ffc107",
-                           color: "#000",
-                           width: "70px",
-                           height: "70px",
-                           borderRadius: "15px",
-                           fontWeight: "bold",
-                           fontSize: "1.8rem",
-                           border: "2px solid #e0a800",
-                           flexShrink: 0,
-                        }}
-                     >
+                     <div className={`shadow-sm ${styles.ratingBox}`}>
                         {movie.rating}
                      </div>
                      <div>
                         <h5 className="mb-0 fw-bold">Nossa Avaliação</h5>
                         <small className="text-muted">Escala de 0 a 10</small>
                      </div>
-
                      <div className="ms-auto">
                         <span
-                           className="badge rounded-pill px-4 py-2"
+                           className={`badge rounded-pill px-4 py-2 ${styles.recommendBadge}`}
                            style={{
                               backgroundColor: badgeStyle.bg,
                               color: badgeStyle.color,
-                              fontSize: "1rem",
                            }}
                         >
                            {movie.recommended}
@@ -160,13 +137,8 @@ export function MovieModal({
                   </div>
 
                   <div className="mb-4">
-                     <h5 className="fw-bold border-bottom pb-2">
-                        O que achamos:
-                     </h5>
-                     <p
-                        className="fs-5"
-                        style={{ whiteSpace: "pre-line", lineHeight: "1.6" }}
-                     >
+                     <h5 className="fw-bold border-bottom pb-2">O que achamos:</h5>
+                     <p className={`fs-5 ${styles.reviewText}`}>
                         "{movie.review || "Sem análise detalhada."}"
                      </p>
                   </div>
@@ -178,12 +150,7 @@ export function MovieModal({
                         </h6>
                         <div className="d-flex flex-wrap gap-2">
                            {movie.cast.map((actor, idx) => (
-                              <Badge
-                                 key={idx}
-                                 bg="light"
-                                 text="dark"
-                                 className="border"
-                              >
+                              <Badge key={idx} bg="light" text="dark" className="border">
                                  {actor}
                               </Badge>
                            ))}
@@ -204,12 +171,13 @@ export function MovieModal({
                </Col>
             </Row>
          </Modal.Body>
+
          <Modal.Footer className="border-0">
             {movie && (
                <Button
                   variant="success"
                   onClick={() => onShare(movie)}
-                  className="d-flex align-items-center gap-2 me-auto" // me-auto joga ele para a esquerda
+                  className="d-flex align-items-center gap-2 me-auto"
                >
                   Compartilhar
                </Button>

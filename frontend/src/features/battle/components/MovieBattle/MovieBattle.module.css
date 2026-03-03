@@ -1,0 +1,48 @@
+/* ─── MovieBattle ─── */
+
+.battleContainer {
+   max-width: 900px;
+}
+
+.disabledButton {
+   opacity: 0.4;
+}
+
+.progressBar {
+   height: 6px;
+   max-width: 300px;
+   margin: 0 auto;
+}
+
+/* ─── BattleCard ─── */
+.battleCard {
+   cursor: pointer;
+   transition: transform var(--transition-fast);
+}
+
+.battleCard:hover {
+   transform: translateY(-5px);
+   box-shadow: var(--shadow-card-hover) !important;
+}
+
+.battlePosterContainer {
+   position: relative;
+   height: 400px;
+   background-color: var(--color-bg-dark);
+}
+
+.battlePosterImage {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+}
+
+.battleGradient {
+   background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
+}
+
+/* ─── Champion ─── */
+.championImage {
+   width: 300px;
+   border: 5px solid var(--color-warning);
+}

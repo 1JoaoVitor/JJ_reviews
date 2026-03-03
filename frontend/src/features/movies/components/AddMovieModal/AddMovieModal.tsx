@@ -9,15 +9,15 @@ import {
    Spinner,
    ButtonGroup,
 } from "react-bootstrap";
-import axios from "axios";
-import { supabase } from "../supabaseClient";
-import type { TmdbSearchResult, MovieData } from "../types";
+import { supabase } from "@/lib/supabase";
+import { searchMovies } from "@/features/movies/services/tmdbService";
+import type { TmdbSearchResult, MovieData } from "@/types";
 
 interface AddMovieModalProps {
    show: boolean;
    onHide: () => void;
    onSuccess: () => void;
-   movieToEdit?: MovieData | null; //Se vier preenchido, é edição
+   movieToEdit?: MovieData | null;
 }
 
 export function AddMovieModal({
@@ -31,28 +31,20 @@ export function AddMovieModal({
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
    const [loadingSearch, setLoadingSearch] = useState(false);
 
-   // Dados do Formulário
-   const [selectedMovie, setSelectedMovie] = useState<TmdbSearchResult | null>(
-      null,
-   );
+   const [selectedMovie, setSelectedMovie] = useState<TmdbSearchResult | null>(null);
    const [rating, setRating] = useState(5);
    const [review, setReview] = useState("");
    const [recommended, setRecommended] = useState("Vale a pena assistir");
    const [saving, setSaving] = useState(false);
-   const [formStatus, setFormStatus] = useState<"watched" | "watchlist">(
-      "watched",
-   );
+   const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
-   // Quando o modal abre, verifica se é Edição ou Adição
    useEffect(() => {
       if (show && movieToEdit) {
-         // MODO EDIÇÃO (filme existe)
          setStep("form");
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
          setFormStatus(movieToEdit.status || "watched");
-         // Simula o objeto da TMDB com os dados que já se tem
          setSelectedMovie({
             id: movieToEdit.tmdb_id,
             title: movieToEdit.title || "",
@@ -60,7 +52,6 @@ export function AddMovieModal({
             release_date: movieToEdit.release_date || "",
          });
       } else if (show) {
-         // MODO NOVO FILME
          setStep("search");
          setSearchQuery("");
          setSearchResults([]);
@@ -77,10 +68,8 @@ export function AddMovieModal({
       if (!searchQuery.trim()) return;
       setLoadingSearch(true);
       try {
-         const response = await axios.get(
-            `https://api.themoviedb.org/3/search/movie?api_key=${import.meta.env.VITE_TMDB_API_KEY}&language=pt-BR&query=${searchQuery}`,
-         );
-         setSearchResults(response.data.results.slice(0, 5));
+         const results = await searchMovies(searchQuery);
+         setSearchResults(results);
       } catch (error) {
          console.error(error);
       } finally {
@@ -98,6 +87,19 @@ export function AddMovieModal({
       setSaving(true);
 
       try {
+<<<<<<< Updated upstream:frontend/src/components/add-movie-modal.tsx
+=======
+         const {
+            data: { user },
+            error: userError,
+         } = await supabase.auth.getUser();
+
+         if (userError || !user) {
+            alert("Você precisa estar logado para adicionar filmes.");
+            return;
+         }
+
+>>>>>>> Stashed changes:frontend/src/features/movies/components/AddMovieModal/AddMovieModal.tsx
          const payload = {
             tmdb_id: selectedMovie.id,
             rating: formStatus === "watched" ? rating : null, // Nulo se watchlist
@@ -136,8 +138,8 @@ export function AddMovieModal({
                   : "Adicionar Novo Filme"}
             </Modal.Title>
          </Modal.Header>
+
          <Modal.Body>
-            {/* BUSCA (Só aparece se NÃO for edição) */}
             {step === "search" && (
                <>
                   <Form onSubmit={handleSearch} className="mb-4">
@@ -148,16 +150,8 @@ export function AddMovieModal({
                            onChange={(e) => setSearchQuery(e.target.value)}
                            autoFocus
                         />
-                        <Button
-                           variant="primary"
-                           type="submit"
-                           disabled={loadingSearch}
-                        >
-                           {loadingSearch ? (
-                              <Spinner size="sm" animation="border" />
-                           ) : (
-                              "Buscar"
-                           )}
+                        <Button variant="primary" type="submit" disabled={loadingSearch}>
+                           {loadingSearch ? <Spinner size="sm" animation="border" /> : "Buscar"}
                         </Button>
                      </InputGroup>
                   </Form>
@@ -192,28 +186,18 @@ export function AddMovieModal({
                </>
             )}
 
-            {/* FORMULÁRIO (Usado tanto para criar quanto editar) */}
             {step === "form" && (
                <Form>
-                  {/* SELETOR DE STATUS */}
                   <div className="d-flex justify-content-center mb-4">
                      <ButtonGroup>
                         <Button
-                           variant={
-                              formStatus === "watched"
-                                 ? "success"
-                                 : "outline-secondary"
-                           }
+                           variant={formStatus === "watched" ? "success" : "outline-secondary"}
                            onClick={() => setFormStatus("watched")}
                         >
                            Já Assistimos
                         </Button>
                         <Button
-                           variant={
-                              formStatus === "watchlist"
-                                 ? "primary"
-                                 : "outline-secondary"
-                           }
+                           variant={formStatus === "watchlist" ? "primary" : "outline-secondary"}
                            onClick={() => setFormStatus("watchlist")}
                         >
                            Queremos Ver
@@ -221,22 +205,17 @@ export function AddMovieModal({
                      </ButtonGroup>
                   </div>
 
-                  {/* CAMPOS (Só aparecem se 'watched') */}
                   {formStatus === "watched" ? (
                      <>
                         <Form.Group className="mb-3">
-                           <Form.Label className="fw-bold">
-                              Sua Nota (0 a 10)
-                           </Form.Label>
+                           <Form.Label className="fw-bold">Sua Nota (0 a 10)</Form.Label>
                            <div className="d-flex align-items-center gap-3">
                               <Form.Range
                                  min={0}
                                  max={10}
                                  step={0.5}
                                  value={rating || 0}
-                                 onChange={(e) =>
-                                    setRating(Number(e.target.value))
-                                 }
+                                 onChange={(e) => setRating(Number(e.target.value))}
                               />
                               <span className="h4 fw-bold text-warning border p-2 rounded bg-dark mb-0">
                                  {rating}
@@ -250,26 +229,16 @@ export function AddMovieModal({
                               value={recommended}
                               onChange={(e) => setRecommended(e.target.value)}
                            >
-                              <option value="Assista com certeza">
-                                 Assista com certeza
-                              </option>
-                              <option value="Vale a pena assistir">
-                                 Vale a pena assistir
-                              </option>
-                              <option value="tem filmes melhores, mas é legal">
-                                 Tem filmes melhores
-                              </option>
+                              <option value="Assista com certeza">Assista com certeza</option>
+                              <option value="Vale a pena assistir">Vale a pena assistir</option>
+                              <option value="tem filmes melhores, mas é legal">Tem filmes melhores</option>
                               <option value="não tão bom">Não tão bom</option>
-                              <option value="Não perca seu tempo">
-                                 Não perca seu tempo
-                              </option>
+                              <option value="Não perca seu tempo">Não perca seu tempo</option>
                            </Form.Select>
                         </Form.Group>
 
                         <Form.Group className="mb-3">
-                           <Form.Label className="fw-bold">
-                              Sua Análise
-                           </Form.Label>
+                           <Form.Label className="fw-bold">Sua Análise</Form.Label>
                            <Form.Control
                               as="textarea"
                               rows={4}
@@ -280,28 +249,23 @@ export function AddMovieModal({
                      </>
                   ) : (
                      <div className="alert alert-primary text-center">
-                        <h5 className="alert-heading">
-                           Salvar na Lista de Desejos?
-                        </h5>
+                        <h5 className="alert-heading">Salvar na Lista de Desejos?</h5>
                         <p>
-                           Este filme ficará na aba "Watchlist" para ser
-                           avalidado mais tarde.{" "}
+                           Este filme ficará na aba "Watchlist" para ser avaliado mais tarde.
                         </p>
                      </div>
                   )}
                </Form>
             )}
          </Modal.Body>
+
          <Modal.Footer>
             {step === "form" && !movieToEdit && (
                <Button variant="secondary" onClick={() => setStep("search")}>
                   ⬅ Buscar Outro
                </Button>
             )}
-            <Button
-               variant="link text-decoration-none text-muted"
-               onClick={onHide}
-            >
+            <Button variant="link text-decoration-none text-muted" onClick={onHide}>
                Fechar
             </Button>
             {step === "form" && (

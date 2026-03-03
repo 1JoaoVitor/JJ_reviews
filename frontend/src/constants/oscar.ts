@@ -1,7 +1,8 @@
-// Lista de IDs (TMDB) dos filmes indicados ao Oscar 2026
-// Você pega esses números na URL do filme no site themoviedb.org
-// Ex: themoviedb.org/movie/550-fight-club -> O ID é 550
-
+/**
+ * Lista de IDs (TMDB) dos filmes indicados ao Oscar 2026.
+ * Os IDs vêm da URL do filme em themoviedb.org.
+ * Ex: themoviedb.org/movie/550-fight-club -> ID = 550
+ */
 export const OSCAR_NOMINEES_IDS = [
    858024, // Hamnet
    1317288, // Marty Supreme

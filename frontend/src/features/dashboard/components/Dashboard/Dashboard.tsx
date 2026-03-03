@@ -1,5 +1,6 @@
 import { Card, Row, Col } from "react-bootstrap";
-import type { MovieData } from "../types";
+import type { MovieData } from "@/types";
+import styles from "./Dashboard.module.css";
 
 interface DashboardProps {
    movies: MovieData[];
@@ -24,18 +25,14 @@ export function Dashboard({ movies }: DashboardProps) {
          ? (totalRating / ratedMovies.length).toFixed(1)
          : "0.0";
 
-   // Filmes fora dos EUA
    const nonUSCount = movies.filter(
       (m) => !m.countries?.includes("Estados Unidos"),
    ).length;
 
    const nonUSPercentage = ((nonUSCount / totalMovies) * 100).toFixed(0);
 
-   // Diretor Mais Assistido
    const directorCounts: Record<string, number> = {};
-
    movies.forEach((movie) => {
-      // Pegam só o primeiro diretor para simplificar
       const mainDirector =
          movie.director?.split(",")[0].trim() || "Desconhecido";
       if (mainDirector !== "Desconhecido") {
@@ -43,10 +40,8 @@ export function Dashboard({ movies }: DashboardProps) {
       }
    });
 
-   // Descobre qual diretor tem o maior número
    let topDirector = "-";
    let maxCount = 0;
-
    Object.entries(directorCounts).forEach(([director, count]) => {
       if (count > maxCount) {
          topDirector = director;
@@ -58,39 +53,24 @@ export function Dashboard({ movies }: DashboardProps) {
       <div className="mb-5">
          <h5 className="text-muted mb-3">Resumo</h5>
          <Row xs={2} md={4} className="g-3">
-            {/* Card 1: Total */}
             <Col>
-               <Card
-                  className="h-100 border-0 shadow-sm text-center py-3"
-                  style={{ backgroundColor: "#e9ecef" }}
-               >
+               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardTotal}`}>
                   <h3 className="fw-bold mb-0">{totalMovies}</h3>
                   <small className="text-muted">Filmes Assistidos</small>
                </Card>
             </Col>
 
-            {/* Card 2: Média */}
             <Col>
-               <Card
-                  className="h-100 border-0 shadow-sm text-center py-3"
-                  style={{ backgroundColor: "#fff3cd" }}
-               >
-                  <h3
-                     className="fw-bold mb-0"
-                     style={{ textShadow: "1px 1px 0 #dac17c" }}
-                  >
+               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardAverage}`}>
+                  <h3 className={`fw-bold mb-0 ${styles.averageValue}`}>
                      {averageRating}
                   </h3>
                   <small className="text-muted">Média Geral</small>
                </Card>
             </Col>
 
-            {/* Card 3: Não EUA */}
             <Col>
-               <Card
-                  className="h-100 border-0 shadow-sm text-center py-3"
-                  style={{ backgroundColor: "#d1e7dd" }}
-               >
+               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardInternational}`}>
                   <h3 className="fw-bold mb-0">{nonUSCount}</h3>
                   <small className="text-muted">
                      Fora dos EUA ({nonUSPercentage}%)
@@ -98,24 +78,15 @@ export function Dashboard({ movies }: DashboardProps) {
                </Card>
             </Col>
 
-            {/* Card 4: Top Diretor */}
             <Col>
-               <Card
-                  className="h-100 border-0 shadow-sm text-center py-3"
-                  style={{ backgroundColor: "#cfe2ff" }}
-               >
+               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardDirector}`}>
                   <div className="d-flex align-items-center justify-content-center h-100 px-2">
                      <div>
-                        <h6
-                           className="fw-bold mb-1 text-truncate"
-                           style={{ maxWidth: "150px", margin: "0 auto" }}
-                        >
+                        <h6 className={`fw-bold mb-1 text-truncate ${styles.directorName}`}>
                            {maxCount > 1 ? topDirector : "Vários"}
                         </h6>
                         <small className="text-muted">
-                           {maxCount > 1
-                              ? `${maxCount} filmes`
-                              : "Diretor Favorito"}
+                           {maxCount > 1 ? `${maxCount} filmes` : "Diretor Favorito"}
                         </small>
                      </div>
                   </div>
