@@ -1,0 +1,71 @@
+/*
+ * Estilos globais do JJ Reviews.
+ * Apenas estilos verdadeiramente globais ficam aqui.
+ * Estilos de componentes devem usar CSS Modules (*.module.css).
+ */
+
+/* ─── Reset & Base ─── */
+*,
+*::before,
+*::after {
+   box-sizing: border-box;
+}
+
+body {
+   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", sans-serif;
+   background-color: var(--color-bg-page);
+   color: var(--color-text-primary);
+   margin: 0;
+   -webkit-font-smoothing: antialiased;
+   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Grid de Filmes (usado em múltiplos contextos) ─── */
+.movie-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+   gap: 1.5rem;
+   width: 100%;
+}
+
+/* ─── Barra de pesquisa responsiva ─── */
+.custom-search-bar {
+   width: 100%;
+}
+
+@media (min-width: 768px) {
+   .custom-search-bar {
+      max-width: 300px;
+   }
+}
+
+/* ─── Poster container responsivo ─── */
+.movie-poster-container {
+   height: 250px;
+   overflow: hidden;
+   background-color: var(--color-bg-dark);
+   position: relative;
+}
+
+@media (min-width: 768px) {
+   .movie-poster-container {
+      height: 400px;
+   }
+}
+
+/* ─── Botão Oscar custom ─── */
+@media (max-width: 768px) {
+   .btn-outline-oscar {
+      color: #aa7d0a;
+      border-color: #b8860b;
+   }
+}
+
+.btn-outline-oscar:hover,
+.btn-outline-oscar:active,
+.btn-check:checked + .btn-outline-oscar {
+   background-color: var(--color-warning);
+   color: #000;
+   border-color: var(--color-warning);
+}

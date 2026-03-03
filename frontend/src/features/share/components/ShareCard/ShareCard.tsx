@@ -1,6 +1,14 @@
 import { forwardRef } from "react";
-import type { MovieData } from "../types";
-import { getBadgeStyle } from "../utils";
+import type { MovieData } from "@/types";
+import { getBadgeStyle } from "@/utils/badges";
+
+/**
+ * ShareCard — Componente invisível usado para gerar imagem de compartilhamento.
+ *
+ * ATENÇÃO: Este componente usa inline styles propositalmente.
+ * O html2canvas precisa de estilos inline para funcionar de forma confiável.
+ * NÃO mover para CSS Modules.
+ */
 
 interface ShareCardProps {
    movie: MovieData;
@@ -31,7 +39,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                flexDirection: "column",
             }}
          >
-            {/* Fundo */}
+            {/* Fundo desfocado */}
             <div
                style={{
                   position: "absolute",
@@ -47,7 +55,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                }}
             />
 
-            {/* Máscara Preta */}
+            {/* Máscara escura */}
             <div
                style={{
                   position: "absolute",
@@ -60,7 +68,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                }}
             />
 
-            {/* Conteúdo Real */}
+            {/* Conteúdo */}
             <div
                style={{
                   position: "relative",
@@ -76,7 +84,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   boxSizing: "border-box",
                }}
             >
-               {/* --- TOPO --- */}
+               {/* Topo */}
                <div
                   style={{
                      display: "flex",
@@ -114,7 +122,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   />
                </div>
 
-               {/* --- MEIO --- */}
+               {/* Meio */}
                <div
                   style={{
                      display: "flex",
@@ -150,7 +158,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      {movie.director && `• ${movie.director}`}
                   </p>
 
-                  {/* NOTA */}
+                  {/* Nota */}
                   {movie.rating !== null && (
                      <div
                         style={{
@@ -178,7 +186,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      </div>
                   )}
 
-                  {/* VEREDITO */}
+                  {/* Veredito */}
                   {movie.recommended && (
                      <div
                         style={{
@@ -202,7 +210,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   )}
                </div>
 
-               {/* --- RODAPÉ --- */}
+               {/* Rodapé */}
                <div
                   style={{
                      marginTop: "auto",

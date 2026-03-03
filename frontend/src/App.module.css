@@ -1,0 +1,33 @@
+/* ─── App-level styles ─── */
+
+.page {
+   min-height: 100vh;
+   background-color: var(--color-bg-page);
+}
+
+/* ─── Abas mobile (watched/watchlist) ─── */
+.mobileTabsWrapper {
+   display: flex;
+   justify-content: center;
+   margin-bottom: 1.5rem;
+}
+
+.mobileTabsInner {
+   background-color: var(--color-bg-card);
+   padding: 0.25rem;
+   border-radius: var(--radius-pill);
+   box-shadow: var(--shadow-sm);
+   border: 1px solid #dee2e6;
+   display: inline-flex;
+}
+
+/* ─── Welcome card (não logado) ─── */
+.welcomeCard {
+   text-align: center;
+   margin-top: 3rem;
+   padding: 3rem;
+   background-color: var(--color-bg-card);
+   border-radius: var(--radius-md);
+   box-shadow: var(--shadow-sm);
+   border: 1px solid #dee2e6;
+}

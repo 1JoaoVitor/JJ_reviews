@@ -1,0 +1,33 @@
+/* ─── MovieModal ─── */
+
+.providerLogo {
+   width: 45px;
+   height: 45px;
+}
+
+/* Box amarelo da nota */
+.ratingBox {
+   background-color: var(--color-warning);
+   color: #000;
+   width: 70px;
+   height: 70px;
+   border-radius: var(--radius-lg);
+   font-weight: bold;
+   font-size: 1.8rem;
+   border: 2px solid var(--color-warning-dark);
+   flex-shrink: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+/* Badge pill da recomendação */
+.recommendBadge {
+   font-size: 1rem;
+}
+
+/* Texto da review */
+.reviewText {
+   white-space: pre-line;
+   line-height: 1.6;
+}

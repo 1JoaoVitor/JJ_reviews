@@ -1,0 +1,60 @@
+/*
+ * Design Tokens — Variáveis globais do projeto JJ Reviews.
+ * Todas as cores, espaçamentos e sombras reutilizáveis ficam aqui.
+ * Componentes devem usar var(--nome) em vez de valores hardcoded.
+ */
+
+:root {
+   /* ─── Cores principais ─── */
+   --color-primary: #0d6efd;
+   --color-primary-dark: #0a58ca;
+   --color-dark: #212529;
+   --color-warning: #ffc107;
+   --color-warning-dark: #e0a800;
+   --color-success: #198754;
+   --color-danger: #dc3545;
+
+   /* ─── Cores de fundo ─── */
+   --color-bg-page: #f8f9fa;
+   --color-bg-card: #ffffff;
+   --color-bg-dark: #222222;
+   --color-bg-overlay: rgba(0, 0, 0, 0.75);
+
+   /* ─── Cores de texto ─── */
+   --color-text-primary: #212529;
+   --color-text-muted: #6c757d;
+   --color-text-light: #ffffff;
+
+   /* ─── Cores dos badges de recomendação ─── */
+   --color-badge-great: #198754;
+   --color-badge-good: #20c997;
+   --color-badge-ok: #ffc107;
+   --color-badge-bad: #fd7e14;
+   --color-badge-terrible: #dc3545;
+   --color-badge-default: #6c757d;
+
+   /* ─── Cores dos cards do Dashboard ─── */
+   --color-dashboard-total: #e9ecef;
+   --color-dashboard-average: #fff3cd;
+   --color-dashboard-international: #d1e7dd;
+   --color-dashboard-director: #cfe2ff;
+
+   /* ─── Sombras ─── */
+   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+   --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.2);
+   --shadow-card-hover: 0 10px 20px rgba(0, 0, 0, 0.2);
+
+   /* ─── Border radius ─── */
+   --radius-sm: 6px;
+   --radius-md: 10px;
+   --radius-lg: 15px;
+   --radius-pill: 50rem;
+
+   /* ─── Transições ─── */
+   --transition-fast: 0.2s ease-in-out;
+   --transition-normal: 0.3s ease;
+
+   /* ─── Breakpoints (referência, usados em @media) ─── */
+   /* sm: 576px | md: 768px | lg: 992px | xl: 1200px */
+}

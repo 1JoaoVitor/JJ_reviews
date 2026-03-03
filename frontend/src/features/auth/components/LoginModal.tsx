@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
-import { supabase } from "../supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 interface LoginModalProps {
    show: boolean;
@@ -8,6 +8,10 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ show, onHide }: LoginModalProps) {
+<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
+=======
+   const [isLogin, setIsLogin] = useState(true);
+>>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
    const [loading, setLoading] = useState(false);
@@ -19,6 +23,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
       setError("");
 
       try {
+<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
          const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
@@ -26,6 +31,17 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
 
          if (error) throw error;
          onHide(); // Fecha o modal ao logar
+=======
+         if (isLogin) {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            onHide();
+         } else {
+            const { error } = await supabase.auth.signUp({ email, password });
+            if (error) throw error;
+            onHide();
+         }
+>>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
       } catch (err) {
          if (err instanceof Error) {
             setError("Erro ao logar: " + err.message);
@@ -42,9 +58,17 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
          <Modal.Header closeButton>
             <Modal.Title>Acesso Admin</Modal.Title>
          </Modal.Header>
+<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
          <Modal.Body>
             {error && <Alert variant="danger">{error}</Alert>}
             <Form onSubmit={handleLogin}>
+=======
+
+         <Modal.Body className="p-4">
+            {error && <Alert variant="danger">{error}</Alert>}
+
+            <Form onSubmit={handleSubmit}>
+>>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
                <Form.Group className="mb-3">
                   <Form.Label>Email</Form.Label>
                   <Form.Control
@@ -54,14 +78,21 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                      autoFocus
                   />
                </Form.Group>
+<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
                <Form.Group className="mb-3">
                   <Form.Label>Senha</Form.Label>
+=======
+
+               <Form.Group className="mb-4">
+                  <Form.Label className="fw-bold">Senha</Form.Label>
+>>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
                   <Form.Control
                      type="password"
                      value={password}
                      onChange={(e) => setPassword(e.target.value)}
                   />
                </Form.Group>
+<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
                <Button
                   variant="dark"
                   type="submit"
@@ -70,6 +101,32 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                >
                   {loading ? "Entrando..." : "Entrar"}
                </Button>
+=======
+
+               <Button
+                  variant="dark"
+                  type="submit"
+                  className="w-100 mb-3 py-2 fw-bold"
+                  disabled={loading}
+               >
+                  {loading ? "Aguarde..." : isLogin ? "Entrar" : "Cadastrar"}
+               </Button>
+
+               <div className="text-center border-top pt-3 mt-2">
+                  <Button
+                     variant="link"
+                     onClick={() => {
+                        setIsLogin(!isLogin);
+                        setError("");
+                     }}
+                     className="text-muted text-decoration-none small"
+                  >
+                     {isLogin
+                        ? "Não tem uma conta? Cadastre-se aqui"
+                        : "Já tem uma conta? Faça login"}
+                  </Button>
+               </div>
+>>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
             </Form>
          </Modal.Body>
       </Modal>
