@@ -8,10 +8,7 @@ interface LoginModalProps {
 }
 
 export function LoginModal({ show, onHide }: LoginModalProps) {
-<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
-=======
    const [isLogin, setIsLogin] = useState(true);
->>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
    const [loading, setLoading] = useState(false);
@@ -23,15 +20,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
       setError("");
 
       try {
-<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
-         const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-         });
-
-         if (error) throw error;
-         onHide(); // Fecha o modal ao logar
-=======
          if (isLogin) {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) throw error;
@@ -41,7 +29,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
             if (error) throw error;
             onHide();
          }
->>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
       } catch (err) {
          if (err instanceof Error) {
             setError("Erro ao logar: " + err.message);
@@ -56,21 +43,15 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
    return (
       <Modal show={show} onHide={onHide} centered size="sm">
          <Modal.Header closeButton>
-            <Modal.Title>Acesso Admin</Modal.Title>
+            <Modal.Title>{isLogin ? "Login" : "Cadastro"}</Modal.Title>
          </Modal.Header>
-<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
-         <Modal.Body>
-            {error && <Alert variant="danger">{error}</Alert>}
-            <Form onSubmit={handleLogin}>
-=======
 
          <Modal.Body className="p-4">
             {error && <Alert variant="danger">{error}</Alert>}
 
-            <Form onSubmit={handleSubmit}>
->>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
+            <Form onSubmit={handleLogin}>
                <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label className="fw-bold">Email</Form.Label>
                   <Form.Control
                      type="email"
                      value={email}
@@ -78,30 +59,15 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                      autoFocus
                   />
                </Form.Group>
-<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
-               <Form.Group className="mb-3">
-                  <Form.Label>Senha</Form.Label>
-=======
 
                <Form.Group className="mb-4">
                   <Form.Label className="fw-bold">Senha</Form.Label>
->>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
                   <Form.Control
                      type="password"
                      value={password}
                      onChange={(e) => setPassword(e.target.value)}
                   />
                </Form.Group>
-<<<<<<< Updated upstream:frontend/src/components/login-modal.tsx
-               <Button
-                  variant="dark"
-                  type="submit"
-                  className="w-100"
-                  disabled={loading}
-               >
-                  {loading ? "Entrando..." : "Entrar"}
-               </Button>
-=======
 
                <Button
                   variant="dark"
@@ -126,7 +92,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                         : "Já tem uma conta? Faça login"}
                   </Button>
                </div>
->>>>>>> Stashed changes:frontend/src/features/auth/components/LoginModal.tsx
             </Form>
          </Modal.Body>
       </Modal>

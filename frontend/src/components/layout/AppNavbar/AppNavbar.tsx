@@ -6,11 +6,8 @@ import {
    Form,
    InputGroup,
 } from "react-bootstrap";
-<<<<<<< Updated upstream:frontend/src/components/nav-bar.tsx
-=======
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
->>>>>>> Stashed changes:frontend/src/components/layout/AppNavbar/AppNavbar.tsx
 
 interface AppNavbarProps {
    onlyNational: boolean;
@@ -25,14 +22,11 @@ interface AppNavbarProps {
    selectedGenre: string;
    setSelectedGenre: (val: string) => void;
    onStartBattle: () => void;
-<<<<<<< Updated upstream:frontend/src/components/nav-bar.tsx
-=======
    session: Session | null;
    onLogout: () => void;
    onLoginClick: () => void;
    username: string;
    onProfileClick: () => void;
->>>>>>> Stashed changes:frontend/src/components/layout/AppNavbar/AppNavbar.tsx
 }
 
 export function AppNavbar({
@@ -48,6 +42,11 @@ export function AppNavbar({
    selectedGenre,
    setSelectedGenre,
    onStartBattle,
+   session,
+   onLogout,
+   onLoginClick,
+   username,
+   onProfileClick,
 }: AppNavbarProps) {
    return (
       <Navbar bg="dark" variant="dark" expand="lg" sticky="top" className="mb-4 shadow-sm px-3">
@@ -61,15 +60,6 @@ export function AppNavbar({
 
             <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3 w-100 justify-content-end mt-3 mt-md-0">
                <div className="d-flex gap-2 w-100 justify-content-between justify-content-md-end">
-<<<<<<< Updated upstream:frontend/src/components/nav-bar.tsx
-                  {/* BOTÃO BATALHA  */}
-                  <Button
-                     variant="dark"
-                     className="me-3 fw-bold"
-                     onClick={onStartBattle}
-                     size="sm"
-                  >
-=======
                   {/* Botões de usuário */}
                   {session ? (
                      <div className="d-flex align-items-center gap-2">
@@ -93,7 +83,6 @@ export function AppNavbar({
 
                   {/* Batalha */}
                   <Button variant="dark" className="me-3 fw-bold" onClick={onStartBattle} size="sm">
->>>>>>> Stashed changes:frontend/src/components/layout/AppNavbar/AppNavbar.tsx
                      <span className="fs-6">⚔️</span>
                      <span className="d-none d-md-inline ms-2">Batalha</span>
                   </Button>
