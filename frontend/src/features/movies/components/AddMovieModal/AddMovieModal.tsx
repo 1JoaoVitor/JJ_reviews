@@ -87,8 +87,6 @@ export function AddMovieModal({
       setSaving(true);
 
       try {
-<<<<<<< Updated upstream:frontend/src/components/add-movie-modal.tsx
-=======
          const {
             data: { user },
             error: userError,
@@ -99,7 +97,6 @@ export function AddMovieModal({
             return;
          }
 
->>>>>>> Stashed changes:frontend/src/features/movies/components/AddMovieModal/AddMovieModal.tsx
          const payload = {
             tmdb_id: selectedMovie.id,
             rating: formStatus === "watched" ? rating : null, // Nulo se watchlist
