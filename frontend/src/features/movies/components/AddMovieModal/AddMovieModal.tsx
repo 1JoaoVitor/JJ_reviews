@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal, Form, Spinner, Alert } from "react-bootstrap";
 import { Search, ArrowLeft } from "lucide-react";
+import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { supabase } from "@/lib/supabase";
 import { searchMovies } from "@/features/movies/services/tmdbService";
 import type { TmdbSearchResult, MovieData } from "@/types";
@@ -223,16 +224,11 @@ export function AddMovieModal({
                      <>
                         <Form.Group className="mb-3">
                            <Form.Label className={styles.formLabel}>Sua Nota (0 a 10)</Form.Label>
-                           <div className={styles.ratingDisplay}>
-                              <Form.Range
-                                 min={0}
-                                 max={10}
-                                 step={0.5}
-                                 value={rating || 0}
-                                 onChange={(e) => setRating(Number(e.target.value))}
-                              />
-                              <span className={styles.ratingValue}>{rating}</span>
-                           </div>
+                           <StarRating 
+                              value={rating || 0} 
+                              onChange={setRating} 
+                              max={10} 
+                           />
                         </Form.Group>
 
                         <Form.Group className="mb-3">
