@@ -1,8 +1,11 @@
 import { Modal, Row, Col } from "react-bootstrap";
 import { Pencil, Trash2, Share2 } from "lucide-react";
+import { StarRating } from "@/components/ui/StarRating/StarRating";
+import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
+import { useState } from "react";
 
 interface MovieModalProps {
    show: boolean;
@@ -11,7 +14,7 @@ interface MovieModalProps {
    isAdmin: boolean;
    onShare: (movie: MovieData) => void;
    onEdit: (movie: MovieData) => void;
-   onDelete: (movie: MovieData) => void;
+   onDelete: (movie: MovieData) => Promise<void> | void;
 }
 
 export function MovieModal({
@@ -23,11 +26,14 @@ export function MovieModal({
    onDelete,
    onShare,
 }: MovieModalProps) {
+   const badgeStyle = getBadgeStyle(movie?.recommended ?? "");
+   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+   const [isDeleting, setIsDeleting] = useState(false);
+
    if (!movie) return null;
 
-   const badgeStyle = getBadgeStyle(movie.recommended);
-
    return (
+      <>
       <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down">
          <Modal.Header closeButton className="border-0 pb-0">
             <Modal.Title className="fw-bold" style={{ fontSize: "1.75rem" }}>
@@ -46,11 +52,7 @@ export function MovieModal({
                      </button>
                      <button
                         className={`${styles.adminBtn} ${styles.adminBtnDanger}`}
-                        onClick={() => {
-                           if (confirm("Tem certeza que deseja excluir este filme?")) {
-                              onDelete(movie);
-                           }
-                        }}
+                        onClick={() => setShowDeleteConfirm(true)}
                      >
                         <Trash2 size={14} /> Excluir
                      </button>
@@ -116,12 +118,18 @@ export function MovieModal({
 
                <Col md={8}>
                   {/* Rating + Recommendation */}
-                  <div className="d-flex align-items-center gap-3 mb-4">
-                     <div className={styles.ratingBox}>{movie.rating}</div>
+                  <div className="d-flex align-items-center gap-4 mb-4 flex-wrap">
                      <div>
-                        <h5 className={styles.ratingLabel}>Nossa Avaliação</h5>
-                        <small className={styles.ratingSublabel}>Escala de 0 a 10</small>
+                        <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
+                           Sua Avaliação
+                        </h5>
+                        {movie.rating !== null ? (
+                           <StarRating value={movie.rating} readOnly={true} />
+                        ) : (
+                           <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
+                        )}
                      </div>
+
                      {movie.recommended && (
                         <div className="ms-auto">
                            <span
@@ -142,7 +150,7 @@ export function MovieModal({
 
                   {/* Review */}
                   <div className="mb-4">
-                     <h5 className={styles.sectionTitle}>O que achamos</h5>
+                     <h5 className={styles.sectionTitle}>Review</h5>
                      <p className={styles.reviewText}>
                         &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
                      </p>
@@ -188,5 +196,24 @@ export function MovieModal({
             </div>
          </Modal.Footer>
       </Modal>
+
+      <ConfirmModal
+         show={showDeleteConfirm}
+         onHide={() => setShowDeleteConfirm(false)}
+         onConfirm={async () => {
+            setIsDeleting(true);
+            try {
+               await onDelete(movie);
+            } finally {
+               setIsDeleting(false);
+               setShowDeleteConfirm(false);
+            }
+         }}
+         title="Excluir Filme"
+         message={`Tem certeza que deseja excluir "${movie.title}"? Essa ação não pode ser desfeita.`}
+         confirmText="Sim, excluir"
+         isProcessing={isDeleting}
+      />
+      </>
    );
 }

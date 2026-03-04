@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Container, Spinner } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Container} from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
-import { Dices, Plus } from "lucide-react";
+import { Toaster } from "react-hot-toast";
+import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -20,6 +21,8 @@ import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
+import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -41,8 +44,16 @@ export default function App() {
 }
 
 function MainApp() {
-   const { session, username, avatarUrl, logout, updateUsername } = useAuth();
-   const { movies, loading, fetchMovies } = useMovies(!!session);
+   const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
+   const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
+
+   const isPageLoading = authLoading || moviesLoading;
+
+   // Scroll to top on mount (F5 / navegação)
+   useEffect(() => {
+      window.scrollTo(0, 0);
+   }, []);
+
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
 
@@ -102,6 +113,19 @@ function MainApp() {
 
    return (
       <div className={styles.page}>
+         
+         <Toaster 
+            position="bottom-right" 
+            toastOptions={{
+               style: {
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-subtle)',
+               },
+               success: { iconTheme: { primary: 'var(--gold)', secondary: '#000' } }
+            }} 
+         />
+
          <AppNavbar
             onlyNational={filters.onlyNational}
             setOnlyNational={filters.setOnlyNational}
@@ -121,6 +145,8 @@ function MainApp() {
             username={username}
             avatarUrl={avatarUrl}
             onProfileClick={() => setShowProfileModal(true)}
+            showFilters={!!session} 
+            showBattle={!!session}
          />
 
 
@@ -131,7 +157,7 @@ function MainApp() {
                      className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`}
                      onClick={() => filters.setViewMode("watched")}
                   >
-                     Já Vimos
+                     Assistidos
                   </button>
                   <button
                      className={`${styles.mobileTab} ${filters.viewMode === "watchlist" ? styles.mobileTabActive : ""}`}
@@ -147,12 +173,12 @@ function MainApp() {
          <Container className="px-4 pb-5">
             {session && (
                <>
-               {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
+               {!isPageLoading && !filters.searchTerm && <Dashboard movies={movies} />}
 
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
                      <span className={styles.movieCount}>
-                        {loading
+                        {isPageLoading
                            ? "Carregando..."
                            : filters.filteredMovies.length === movies.length
                            ? `Todos os ${movies.length} filmes`
@@ -166,7 +192,7 @@ function MainApp() {
                            className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
                            onClick={() => filters.setViewMode("watched")}
                         >
-                           Já Vimos
+                           Assistidos
                         </button>
                         <button
                            className={`${styles.viewBtn} ${filters.viewMode === "watchlist" ? styles.viewBtnActive : ""}`}
@@ -229,29 +255,59 @@ function MainApp() {
                </>
             )}
 
-            {loading && movies.length === 0 ? (
+            {isPageLoading && movies.length === 0 ? (
                <div className={styles.loadingState}>
-                  <Spinner animation="border" role="status" />
-                  <p className="mt-2">Carregando...</p>
+                  {[...Array(8)].map((_, i) => (
+                     <MovieCardSkeleton key={i} />
+                  ))}
                </div>
-            ) : !session ? (
-               <div className={styles.welcomeCard}>
-                  <h3 className={styles.welcomeTitle}>Bem-vindo ao JJ Reviews!</h3>
-                  <p className={styles.welcomeText}>
-                     Faça login ou crie sua conta para começar a montar o seu diário de filmes e avaliações.
-                  </p>
-                  <button
-                     className={styles.welcomeBtn}
-                     onClick={() => setShowLoginModal(true)}
-                  >
-                     Fazer Login / Cadastrar
-                  </button>
+               ) : !session ? (
+               <div className={styles.landingContainer}>
+                  <div className={styles.heroSection}>
+                     <h1 className={styles.heroTitle}>Sua jornada cinematográfica<br/>começa aqui.</h1>
+                     <p className={styles.heroSubtitle}>
+                        O JJ Reviews é a sua plataforma pessoal para avaliar filmes, montar sua Watchlist, descobrir seu próximo filme e muito mais!
+                     </p>
+                     <button
+                        className={styles.heroBtn}
+                        onClick={() => setShowLoginModal(true)}
+                     >
+                        Criar minha conta grátis
+                     </button>
+                  </div>
+
+                  <div className={styles.featuresGrid}>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Star size={28} /></div>
+                        <h3>Avalie e Critique</h3>
+                        <p>Dê suas notas e escreva o seu veredito. Construa uma biblioteca visual com tudo o que você já assistiu.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Bookmark size={28} /></div>
+                        <h3>Sua Watchlist</h3>
+                        <p>Nunca mais esqueça o nome de um filme. Salve para ver depois e use a Roleta quando não souber o que escolher.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Swords size={28} /></div>
+                        <h3>Modo Batalha</h3>
+                        <p>Coloque seus filmes frente a frente num torneio mata-mata para definir o seu favorito de verdade.</p>
+                     </div>
+                  </div>
                </div>
             ) : filters.filteredMovies.length === 0 ? (
-               <div className={styles.emptyState}>
-                  <h5>Nenhum filme encontrado na sua lista.</h5>
-                  <p>Que tal adicionar o seu primeiro filme?</p>
-               </div>
+               <EmptyState 
+                  title="Nenhum filme por aqui"
+                  message={
+                     filters.searchTerm
+                        ? `Não encontrámos nenhum resultado para "${filters.searchTerm}".`
+                        : "Você ainda não adicionou nenhum filme à sua lista. Que tal começar a sua jornada cinematográfica agora?"
+                  }
+                  actionText="Adicionar Filme"
+                  onAction={() => {
+                     setMovieToEdit(null);
+                     setShowAddModal(true);
+                  }}
+               />
             ) : (
                <div className="movie-grid">
                   {filters.filteredMovies.map((movie) => (

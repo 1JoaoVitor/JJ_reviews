@@ -3,6 +3,8 @@
 .page {
    min-height: 100vh;
    background-color: var(--bg-page);
+   display: flex;
+   flex-direction: column;
 }
 
 /* ─── Abas mobile (watched/watchlist) ─── */
@@ -64,9 +66,6 @@
 @media (min-width: 767px) {
    .viewToggle {
       display: inline-flex;
-   }
-   .page {
-      padding-bottom: 80px; /* Dá espaço para a BottomNav não cobrir o rodapé */
    }
 }
 
@@ -173,47 +172,133 @@
    color: var(--bg-page);
 }
 
-/* ─── Welcome card (não logado) ─── */
-.welcomeCard {
+/* ─── Landing Page (Não logado) ─── */
+.landingContainer {
+   position: relative;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   margin-top: 2rem;
+   padding-bottom: 4rem;
+   animation: fadeIn 0.8s ease-out;
+}
+
+.landingContainer::before {
+   content: "";
+   position: absolute;
+   top: -10%;
+   left: 50%;
+   transform: translateX(-50%);
+   width: 800px;
+   height: 800px;
+   background: radial-gradient(circle, rgba(232, 177, 0, 0.08) 0%, rgba(0,0,0,0) 60%);
+   z-index: -1;
+   pointer-events: none;
+}
+
+.heroSection {
    text-align: center;
-   margin-top: 3rem;
-   padding: 3rem 2rem;
+   max-width: 800px;
+   padding: 4rem 1rem;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+}
+
+.heroTitle {
+   font-weight: 900;
+   font-size: clamp(2.5rem, 5vw, 4rem);
+   line-height: 1.1;
+   margin-bottom: 1.5rem;
+   letter-spacing: -1px;
+   background: linear-gradient(to right, #ffffff, var(--gold));
+   -webkit-background-clip: text;
+   -webkit-text-fill-color: transparent;
+   background-clip: text;
+}
+
+.heroSubtitle {
+   color: var(--text-secondary);
+   font-size: var(--font-xl);
+   max-width: 600px;
+   margin-bottom: 2.5rem;
+   line-height: 1.6;
+}
+
+.heroBtn {
+   padding: 1rem 3rem;
+   border: none;
+   border-radius: var(--radius-pill);
+   background: var(--gold);
+   color: var(--bg-page);
+   font-weight: 800;
+   font-size: var(--font-lg);
+   cursor: pointer;
+   transition: all var(--transition-fast);
+   box-shadow: 0 10px 30px rgba(232, 177, 0, 0.3);
+}
+
+.heroBtn:hover {
+   background: var(--gold-hover);
+   transform: translateY(-3px);
+   box-shadow: 0 15px 40px rgba(232, 177, 0, 0.4);
+}
+
+.featuresGrid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+   gap: 2rem;
+   width: 100%;
+   max-width: 1100px;
+   margin-top: 2rem;
+   padding: 0 1rem;
+}
+
+.featureCard {
    background: var(--bg-surface);
    border: 1px solid var(--border-subtle);
    border-radius: var(--radius-lg);
+   padding: 2.5rem 2rem;
+   text-align: center;
+   transition: transform var(--transition-normal), border-color var(--transition-normal);
 }
 
-.welcomeTitle {
+.featureCard:hover {
+   transform: translateY(-5px);
+   border-color: var(--gold-dim);
+}
+
+.featureIcon {
+   width: 64px;
+   height: 64px;
+   border-radius: 50%;
+   background: linear-gradient(135deg, var(--bg-elevated), var(--bg-surface));
+   border: 1px solid var(--border-medium);
+   color: var(--gold);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   margin: 0 auto 1.5rem;
+   box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+.featureCard h3 {
    font-weight: 800;
-   font-size: var(--font-2xl);
+   font-size: var(--font-xl);
    color: var(--text-primary);
-   margin-bottom: 0.75rem;
+   margin-bottom: 1rem;
 }
 
-.welcomeText {
-   color: var(--text-secondary);
-   font-size: var(--font-lg);
-   margin-bottom: 1.5rem;
-   max-width: 500px;
-   margin-left: auto;
-   margin-right: auto;
+.featureCard p {
+   color: var(--text-muted);
+   line-height: 1.6;
+   margin: 0;
+   font-size: var(--font-base);
 }
 
-.welcomeBtn {
-   padding: 0.85rem 2.5rem;
-   border: none;
-   border-radius: var(--radius-md);
-   background: var(--gold);
-   color: var(--bg-page);
-   font-weight: 700;
-   font-size: var(--font-lg);
-   cursor: pointer;
-   transition: background 0.2s, transform 0.15s;
-}
-
-.welcomeBtn:hover {
-   background: var(--gold-hover);
-   transform: translateY(-2px);
+@keyframes fadeIn {
+   from { opacity: 0; transform: translateY(20px); }
+   to { opacity: 1; transform: translateY(0); }
 }
 
 /* ─── Empty state ─── */

@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { Modal, Form, Alert, Spinner } from "react-bootstrap";
+import { Modal, Form, Spinner } from "react-bootstrap";
+import toast from "react-hot-toast";
 import { User, Link2 } from "lucide-react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
+
 import { supabase } from "@/lib/supabase";
 import getCroppedImg from "@/utils/cropImage";
 import type { Session } from "@supabase/supabase-js";
@@ -20,8 +22,6 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
    const [username, setUsername] = useState(currentUsername);
    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
    const [loading, setLoading] = useState(false);
-   const [error, setError] = useState("");
-   const [success, setSuccess] = useState("");
 
    const [imageSrc, setImageSrc] = useState<string | null>(null);
    const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -51,8 +51,6 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
       if (show && session?.user.id) {
          setUsername(currentUsername);
          fetchProfileData();
-         setError("");
-         setSuccess("");
          setImageSrc(null);
       }
    }, [show, currentUsername, session]);
@@ -74,8 +72,6 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
 
       try {
          setUploading(true);
-         setError("");
-
          const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
          if (!croppedImageBlob) throw new Error("Erro ao processar imagem.");
 
@@ -98,13 +94,12 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
 
          setAvatarUrl(publicUrl);
          setImageSrc(null);
-         setSuccess("Foto de perfil atualizada com sucesso!");
-         setTimeout(() => setSuccess(""), 3000);
+         toast.success("Foto de perfil atualizada com sucesso!");
       } catch (err) {
          if (err instanceof Error) {
-            setError(err.message);
+            toast.error(err.message);
          } else {
-            setError("Erro ao fazer upload da imagem.");
+            toast.error("Erro ao fazer upload da imagem.");
          }
       } finally {
          setUploading(false);
@@ -114,8 +109,6 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
    const handleSaveUsername = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!session?.user.id) return;
-      setError("");
-      setSuccess("");
       setLoading(true);
 
       try {
@@ -124,17 +117,16 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
             if (error.code === "23505") throw new Error("Este nome de usuário já está em uso.");
             throw error;
          }
-         setSuccess("Perfil atualizado com sucesso!");
+         toast.success("Perfil atualizado com sucesso!");
          onUpdate(username);
          setTimeout(() => {
             onHide();
-            setSuccess("");
          }, 1500);
       } catch (err) {
          if (err instanceof Error) {
-            setError(err.message);
+            toast.error(err.message);
          } else {
-            setError("Erro ao salvar perfil.");
+            toast.error("Erro ao salvar perfil.");
          }
       } finally {
          setLoading(false);
@@ -144,8 +136,7 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
    const handleShareProfile = () => {
       const profileUrl = `${window.location.origin}/perfil/${currentUsername}`;
       navigator.clipboard.writeText(profileUrl);
-      setSuccess("Link copiado! Cole no WhatsApp ou onde desejar.");
-      setTimeout(() => setSuccess(""), 3000);
+      toast.success("Link copiado, compartilhe com seus amigos!");
    };
 
    return (
@@ -154,8 +145,6 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
             <Modal.Title className="fw-bold">Meu Perfil</Modal.Title>
          </Modal.Header>
          <Modal.Body className="p-4 pt-2">
-            {error && <Alert variant="danger">{error}</Alert>}
-            {success && <Alert variant="success">{success}</Alert>}
 
             {/* Crop mode */}
             {imageSrc ? (

@@ -1,0 +1,50 @@
+.starContainer {
+   display: flex;
+   flex-direction: column;
+   gap: 0.5rem;
+}
+
+@media (min-width: 576px) {
+   .starContainer {
+      flex-direction: row;
+      align-items: center;
+      gap: 1rem;
+   }
+}
+
+.starsWrapper {
+   display: flex;
+   gap: 0.15rem;
+   cursor: pointer;
+   touch-action: none;
+}
+
+.starBtn {
+   background: none;
+   border: none;
+   padding: 0;
+   cursor: pointer;
+   color: var(--border-medium); /* Cor de estrela apagada */
+   transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.starBtn:hover {
+   transform: scale(1.2);
+}
+
+.starBtn.active {
+   color: var(--gold); /* Acende em dourado */
+}
+
+.ratingNumber {
+   font-weight: 800;
+   font-size: 1.5rem;
+   color: var(--text-primary);
+   min-width: 70px; /* Evita que o layout pule quando muda o número */
+}
+
+.ratingMax {
+   font-size: 0.9rem;
+   color: var(--text-muted);
+   font-weight: 600;
+}
