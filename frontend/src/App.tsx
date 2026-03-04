@@ -121,6 +121,8 @@ function MainApp() {
             username={username}
             avatarUrl={avatarUrl}
             onProfileClick={() => setShowProfileModal(true)}
+            showFilters={!!session} 
+            showBattle={!!session}
          />
 
 
@@ -131,7 +133,7 @@ function MainApp() {
                      className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`}
                      onClick={() => filters.setViewMode("watched")}
                   >
-                     Já Vimos
+                     Assistidos
                   </button>
                   <button
                      className={`${styles.mobileTab} ${filters.viewMode === "watchlist" ? styles.mobileTabActive : ""}`}
@@ -166,7 +168,7 @@ function MainApp() {
                            className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
                            onClick={() => filters.setViewMode("watched")}
                         >
-                           Já Vimos
+                           Assistidos
                         </button>
                         <button
                            className={`${styles.viewBtn} ${filters.viewMode === "watchlist" ? styles.viewBtnActive : ""}`}

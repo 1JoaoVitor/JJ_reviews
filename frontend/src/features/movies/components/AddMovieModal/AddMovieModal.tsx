@@ -104,7 +104,7 @@ export function AddMovieModal({
                .maybeSingle();
 
             if (existingMovie) {
-               const statusNome = existingMovie.status === "watched" ? "Já Vimos" : "Watchlist";
+               const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
                setError(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
                setSaving(false);
                return;
@@ -207,14 +207,14 @@ export function AddMovieModal({
                            className={`${styles.statusBtn} ${formStatus === "watched" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watched")}
                         >
-                           Já Assistimos
+                           Já Assisti
                         </button>
                         <button
                            type="button"
                            className={`${styles.statusBtn} ${formStatus === "watchlist" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watchlist")}
                         >
-                           Queremos Ver
+                           Quero Ver
                         </button>
                      </div>
                   </div>

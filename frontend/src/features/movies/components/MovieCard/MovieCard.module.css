@@ -10,6 +10,9 @@
       transform var(--transition-fast),
       border-color var(--transition-fast),
       box-shadow var(--transition-fast);
+   display: flex;
+   flex-direction: column;
+   height: 100%;
 }
 
 .card:hover {
@@ -93,6 +96,7 @@
    display: flex;
    flex-direction: column;
    gap: 0.25rem;
+   flex-grow: 1;
 }
 
 .title {
