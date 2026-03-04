@@ -10,6 +10,7 @@ export function useAuth() {
    const [session, setSession] = useState<Session | null>(null);
    const [username, setUsername] = useState("");
    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+   const [loading, setLoading] = useState(true);
 
    const fetchProfile = useCallback(async (userId: string) => {
       try {
@@ -32,6 +33,7 @@ export function useAuth() {
       supabase.auth.getSession().then(({ data: { session } }) => {
          setSession(session);
          if (session) fetchProfile(session.user.id);
+         setLoading(false);
       });
 
       const {
@@ -49,13 +51,14 @@ export function useAuth() {
       return () => subscription.unsubscribe();
    }, [fetchProfile]);
 
-   const logout = useCallback(() => {
-      supabase.auth.signOut();
+   const logout = useCallback(async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/"; 
    }, []);
 
    const updateUsername = useCallback((newUsername: string) => {
       setUsername(newUsername);
    }, []);
 
-   return { session, username, avatarUrl, logout, updateUsername, fetchProfile };
+   return { session, username, avatarUrl, logout, updateUsername, fetchProfile, loading };
 }

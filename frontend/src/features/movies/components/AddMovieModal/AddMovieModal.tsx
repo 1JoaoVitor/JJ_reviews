@@ -82,7 +82,6 @@ export function AddMovieModal({
    const handleSave = async () => {
       if (!selectedMovie) return;
       setSaving(true);
-      toast.error("Você precisa estar logado para adicionar filmes.");
 
       try {
          const {
@@ -118,6 +117,7 @@ export function AddMovieModal({
             review: formStatus === "watched" ? review : null,
             recommended: formStatus === "watched" ? recommended : null,
             status: formStatus,
+            user_id: user.id,
          };
 
          if (movieToEdit) {
