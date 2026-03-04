@@ -23,6 +23,7 @@ import { PublicProfile } from "@/features/publicProfile";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
+import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -66,6 +67,7 @@ function MainApp() {
    const [showRoulette, setShowRoulette] = useState(false);
    const [isBattleMode, setIsBattleMode] = useState(false);
    const [showProfileModal, setShowProfileModal] = useState(false);
+   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
    // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
@@ -141,7 +143,7 @@ function MainApp() {
             onStartBattle={() => setIsBattleMode(true)}
             onLoginClick={() => setShowLoginModal(true)}
             session={session}
-            onLogout={logout}
+            onLogout={() => setShowLogoutConfirm(true)}
             username={username}
             avatarUrl={avatarUrl}
             onProfileClick={() => setShowProfileModal(true)}
@@ -358,6 +360,18 @@ function MainApp() {
 
          {isSharing && <LoadingOverlay message="Gerando imagem..." />}
 
+         <ConfirmModal
+            show={showLogoutConfirm}
+            onHide={() => setShowLogoutConfirm(false)}
+            onConfirm={() => {
+               setShowLogoutConfirm(false);
+               logout();
+            }}
+            title="Sair da conta"
+            message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar seus filmes."
+            confirmText="Sim, sair"
+         />
+
          <RouletteModal
             show={showRoulette}
             onHide={() => setShowRoulette(false)}
@@ -380,7 +394,7 @@ function MainApp() {
             }}
             onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
-            onLogout={logout}
+            onLogout={() => setShowLogoutConfirm(true)}
          />
       </div>
    );

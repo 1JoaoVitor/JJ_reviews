@@ -4,11 +4,11 @@
    position: fixed;
    bottom: 0;
    left: 0;
-   width: 100%;
+   width: 100%; 
+   box-sizing: border-box;
    background-color: var(--bg-surface);
    border-top: 1px solid var(--border-subtle);
-   z-index: 1040;
-   padding-bottom: env(safe-area-inset-bottom); /* Respeita a barra do iPhone */
+   z-index: 1030;
 }
 
 @media (max-width: 767px) {
@@ -16,7 +16,8 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      height: 65px;
+      height: calc(65px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
    }
 }
 
@@ -29,9 +30,10 @@
    color: var(--text-muted);
    background: transparent;
    border: none;
-   font-size: 0.65rem;
+   font-size: 0.60rem;
    font-weight: 600;
-   width: 100%;
+   flex: 1;
+   min-width: 0;
    height: 100%;
    transition: color var(--transition-fast);
 }
