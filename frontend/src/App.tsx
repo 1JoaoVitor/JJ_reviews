@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Container, Spinner } from "react-bootstrap";
+import { Container} from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
@@ -21,6 +21,7 @@ import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
+import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -247,8 +248,9 @@ function MainApp() {
 
             {loading && movies.length === 0 ? (
                <div className={styles.loadingState}>
-                  <Spinner animation="border" role="status" />
-                  <p className="mt-2">Carregando...</p>
+                  {[...Array(8)].map((_, i) => (
+                     <MovieCardSkeleton key={i} />
+                  ))}
                </div>
                ) : !session ? (
                <div className={styles.landingContainer}>
