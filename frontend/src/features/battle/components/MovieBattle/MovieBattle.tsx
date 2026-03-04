@@ -1,15 +1,6 @@
 import { useState } from "react";
-import {
-   Container,
-   Card,
-   Button,
-   Form,
-   Row,
-   Col,
-   Alert,
-   ProgressBar,
-   Badge,
-} from "react-bootstrap";
+import { Container, Form, Row, Col, Alert, ProgressBar } from "react-bootstrap";
+import { Swords, Trophy } from "lucide-react";
 import type { MovieData } from "@/types";
 import confetti from "canvas-confetti";
 import styles from "./MovieBattle.module.css";
@@ -176,105 +167,102 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
 
    return (
       <Container className={`py-4 py-md-5 ${styles.battleContainer}`}>
-         <div className="d-flex justify-content-between align-items-center mb-4">
-            <h4 className="fw-bold mb-0 text-muted">⚔️ Modo Batalha</h4>
-            <Button variant="outline-secondary" size="sm" onClick={onExit}>
+         <div className={styles.header}>
+            <h4 className={styles.headerTitle}>
+               <Swords size={20} /> Modo Batalha
+            </h4>
+            <button className={styles.exitBtn} onClick={onExit}>
                Sair
-            </Button>
+            </button>
          </div>
 
          {/* Setup */}
          {stage === "setup" && (
-            <Card className="shadow-sm border-0">
-               <Card.Body className="p-4 p-md-5">
-                  <h2 className="mb-4 text-center fw-bold">Configurar Torneio</h2>
-                  {error && <Alert variant="warning">{error}</Alert>}
+            <div className={styles.setupCard}>
+               <h2 className={styles.setupTitle}>Configurar Torneio</h2>
+               {error && <Alert variant="warning">{error}</Alert>}
 
-                  <Form>
-                     <Row className="g-4">
-                        <Col md={6}>
-                           <Form.Label className="fw-bold">Critério</Form.Label>
-                           <div className="d-flex flex-column gap-2">
-                              <Form.Check type="radio" label="Aleatório" name="c" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
-                              <Form.Check type="radio" label="Melhores Notas" name="c" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
-                              <Form.Check type="radio" label="Piores Notas" name="c" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
-                              <Form.Check type="radio" label="Mais Recentes" name="c" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
-                              <div className="border-top my-2 pt-2"></div>
-                              <Form.Check type="radio" label="Indicados Oscar 2026" name="c" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
-                              <Form.Check type="radio" label="Nacionais" name="c" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
-                           </div>
-                           <div className="mt-3 text-muted small p-2 bg-light rounded">
-                              Disponíveis: <strong>{availableMovies.length}</strong>
-                           </div>
-                        </Col>
+               <Form>
+                  <Row className="g-4">
+                     <Col md={6}>
+                        <div className={styles.sectionLabel}>Critério</div>
+                        <div className="d-flex flex-column gap-2">
+                           <Form.Check type="radio" label="Aleatório" name="c" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
+                           <Form.Check type="radio" label="Melhores Notas" name="c" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
+                           <Form.Check type="radio" label="Piores Notas" name="c" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
+                           <Form.Check type="radio" label="Mais Recentes" name="c" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
+                           <div style={{ borderTop: "1px solid var(--border-subtle)", margin: "0.5rem 0" }} />
+                           <Form.Check type="radio" label="Indicados Oscar 2026" name="c" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
+                           <Form.Check type="radio" label="Nacionais" name="c" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
+                        </div>
+                        <div className={styles.availableCount}>
+                           Disponíveis: <strong>{availableMovies.length}</strong>
+                        </div>
+                     </Col>
 
-                        <Col md={6}>
-                           <Form.Label className="fw-bold">Tamanho do Torneio</Form.Label>
-                           <div className="d-grid gap-2">
-                              <Button
-                                 variant={quantity === -1 ? "primary" : "outline-primary"}
-                                 onClick={() => setQuantity(-1)}
-                                 className="fw-bold mb-2"
-                              >
-                                 Todos os Filmes ({availableMovies.length})
-                              </Button>
-                              {[4, 8, 16, 32, 64].map((qtd) => {
-                                 const maxBracket = nextPowerOfTwo(availableMovies.length);
-                                 const isDisabled = qtd > maxBracket;
-                                 if (qtd > maxBracket * 2) return null;
-                                 return (
-                                    <Button
-                                       key={qtd}
-                                       variant={quantity === qtd ? "dark" : "outline-light text-dark border"}
-                                       onClick={() => setQuantity(qtd)}
-                                       disabled={isDisabled}
-                                       className={isDisabled ? styles.disabledButton : ""}
-                                    >
-                                       {qtd} Filmes
-                                    </Button>
-                                 );
-                              })}
+                     <Col md={6}>
+                        <div className={styles.sectionLabel}>Tamanho do Torneio</div>
+                        <div className="d-grid gap-2">
+                           <button
+                              type="button"
+                              className={quantity === -1 ? styles.sizeBtnActive : styles.sizeBtn}
+                              onClick={() => setQuantity(-1)}
+                           >
+                              Todos os Filmes ({availableMovies.length})
+                           </button>
+                           {[4, 8, 16, 32, 64].map((qtd) => {
+                              const maxBracket = nextPowerOfTwo(availableMovies.length);
+                              const isDisabled = qtd > maxBracket;
+                              if (qtd > maxBracket * 2) return null;
+                              return (
+                                 <button
+                                    key={qtd}
+                                    type="button"
+                                    className={`${quantity === qtd ? styles.sizeBtnActive : styles.sizeBtn} ${isDisabled ? styles.disabledButton : ""}`}
+                                    onClick={() => setQuantity(qtd)}
+                                    disabled={isDisabled}
+                                 >
+                                    {qtd} Filmes
+                                 </button>
+                              );
+                           })}
+                        </div>
+                        {quantity !== -1 && quantity > availableMovies.length && (
+                           <div style={{ marginTop: "0.5rem", fontSize: "var(--font-sm)", color: "var(--accent)" }}>
+                              *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
                            </div>
-                           {quantity !== -1 && quantity > availableMovies.length && (
-                              <div className="mt-2 small text-primary">
-                                 *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
-                              </div>
-                           )}
-                        </Col>
-                     </Row>
+                        )}
+                     </Col>
+                  </Row>
 
-                     <div className="text-center mt-5">
-                        <Button
-                           variant="dark"
-                           size="lg"
-                           className="px-5 rounded-pill fw-bold"
-                           onClick={handleStart}
-                           disabled={availableMovies.length < 2}
-                        >
-                           INICIAR COMBATE
-                        </Button>
-                     </div>
-                  </Form>
-               </Card.Body>
-            </Card>
+                  <div className="text-center mt-5">
+                     <button
+                        className={styles.startBtn}
+                        onClick={handleStart}
+                        disabled={availableMovies.length < 2}
+                        type="button"
+                     >
+                        INICIAR COMBATE
+                     </button>
+                  </div>
+               </Form>
+            </div>
          )}
 
          {/* Battle */}
          {stage === "battle" && movieA && movieB && (
             <div>
                <div className="text-center mb-4">
-                  <Badge bg="warning" text="dark" className="fs-6 mb-2 text-uppercase px-3 py-2">
-                     {getRoundTitle()}
-                  </Badge>
+                  <span className={styles.roundBadge}>{getRoundTitle()}</span>
                   {byesWaiting > 0 && currentRoundMovies.length > 0 && (
-                     <div className="mb-2 text-muted small">
+                     <div style={{ color: "var(--text-muted)", fontSize: "var(--font-sm)", marginBottom: "0.35rem" }}>
                         (+{byesWaiting} filmes aguardando na próxima fase)
                      </div>
                   )}
-                  <h5 className="text-muted">
+                  <h5 className={styles.duelInfo}>
                      Duelo {currentMatchNum} de {totalMatchesInRound}
                   </h5>
-                  <ProgressBar now={progress} variant="success" className={styles.progressBar} />
+                  <ProgressBar now={progress} variant="warning" className={styles.progressBar} />
                </div>
 
                <Row className="align-items-center g-4">
@@ -282,7 +270,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                      <BattleCard movie={movieA} onClick={() => handleVote(movieA)} />
                   </Col>
                   <Col xs={12} md={2} className="text-center">
-                     <div className="fw-bold display-6 text-muted py-2 py-md-0">VS</div>
+                     <div className={styles.vsText}>VS</div>
                   </Col>
                   <Col xs={12} md={5}>
                      <BattleCard movie={movieB} onClick={() => handleVote(movieB)} />
@@ -294,23 +282,23 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
          {/* Winner */}
          {stage === "winner" && champion && (
             <div className="text-center">
-               <h1 className="fw-bold mb-4">GRANDE CAMPEÃO 🏆</h1>
+               <h1 className={styles.winnerTitle}>
+                  <Trophy size={32} color="var(--gold)" /> GRANDE CAMPEÃO
+               </h1>
                <div className="d-flex justify-content-center mb-4">
                   <img
                      src={`https://image.tmdb.org/t/p/w500${champion.poster_path}`}
                      alt={champion.title}
-                     className={`rounded shadow-lg ${styles.championImage}`}
+                     className={styles.championImage}
                   />
                </div>
-               <h2 className="fw-bold">{champion.title}</h2>
-               <p className="text-muted fs-5">
-                  {champion.release_date?.split("-")[0]} • Dir. {champion.director}
+               <h2 className="fw-bold" style={{ color: "var(--text-primary)" }}>{champion.title}</h2>
+               <p className={styles.championInfo}>
+                  {champion.release_date?.split("-")[0]} &middot; Dir. {champion.director}
                </p>
-               <div className="mt-5">
-                  <Button variant="dark" size="lg" onClick={() => setStage("setup")}>
-                     Jogar Novamente
-                  </Button>
-               </div>
+               <button className={styles.replayBtn} onClick={() => setStage("setup")}>
+                  Jogar Novamente
+               </button>
             </div>
          )}
       </Container>
@@ -320,27 +308,30 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
 /* ─── Sub-componente BattleCard (privado deste módulo) ─── */
 function BattleCard({ movie, onClick }: { movie: MovieData; onClick: () => void }) {
    return (
-      <Card
-         className={`h-100 shadow border-0 overflow-hidden ${styles.battleCard}`}
+      <div
+         className={styles.battleCard}
          onClick={onClick}
+         role="button"
+         tabIndex={0}
+         onKeyDown={(e) => e.key === "Enter" && onClick()}
       >
          <div className={styles.battlePosterContainer}>
             {movie.poster_path ? (
-               <Card.Img
-                  variant="top"
+               <img
                   src={`https://image.tmdb.org/t/p/w780${movie.poster_path}`}
+                  alt={movie.title}
                   className={styles.battlePosterImage}
                />
             ) : (
-               <div className="text-white h-100 d-flex align-items-center justify-content-center">
+               <div style={{ color: "var(--text-muted)", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   Sem Imagem
                </div>
             )}
             <div className={`position-absolute bottom-0 start-0 w-100 p-3 ${styles.battleGradient}`}>
-               <h5 className="text-white fw-bold mb-0 text-truncate">{movie.title}</h5>
-               <small className="text-warning">Nota Original: {movie.rating}</small>
+               <h5 className={`text-truncate ${styles.battleTitle}`}>{movie.title}</h5>
+               <small className={styles.battleRating}>Nota Original: {movie.rating}</small>
             </div>
          </div>
-      </Card>
+      </div>
    );
 }

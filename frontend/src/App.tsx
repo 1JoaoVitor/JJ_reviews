@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
+import { Dices, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -125,20 +126,18 @@ function MainApp() {
          {session && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
-                  <Button
-                     variant={filters.viewMode === "watched" ? "primary" : "light"}
-                     className="rounded-pill px-4 fw-bold"
+                  <button
+                     className={filters.viewMode === "watched" ? styles.mobileTabActive : styles.mobileTab}
                      onClick={() => filters.setViewMode("watched")}
                   >
                      Já Vimos
-                  </Button>
-                  <Button
-                     variant={filters.viewMode === "watchlist" ? "primary" : "light"}
-                     className="rounded-pill px-4 fw-bold"
+                  </button>
+                  <button
+                     className={filters.viewMode === "watchlist" ? styles.mobileTabActive : styles.mobileTab}
                      onClick={() => filters.setViewMode("watchlist")}
                   >
                      Watchlist
-                  </Button>
+                  </button>
                </div>
             </div>
          )}
@@ -149,9 +148,9 @@ function MainApp() {
                <>
                {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
 
-               <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+               <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
-                     <h5 className="text-muted mb-0">
+                     <span className={styles.movieCount}>
                         {loading
                            ? "Carregando..."
                            : filters.filteredMovies.length === movies.length
@@ -159,106 +158,96 @@ function MainApp() {
                            : filters.filteredMovies.length === 1
                               ? "Exibindo 1 filme"
                               : `Exibindo ${filters.filteredMovies.length} filmes`}
-                     </h5>
+                     </span>
 
-                     <ButtonGroup size="sm" className="d-none d-md-inline-flex shadow-sm">
-                        <Button
-                           variant={filters.viewMode === "watched" ? "secondary" : "outline-secondary"}
+                     <div className={styles.viewToggle}>
+                        <button
+                           className={filters.viewMode === "watched" ? styles.viewBtnActive : styles.viewBtn}
                            onClick={() => filters.setViewMode("watched")}
-                           className={filters.viewMode === "watched" ? "fw-bold border-secondary" : "text-muted border-secondary"}
                         >
                            Já Vimos
-                        </Button>
-                        <Button
-                           variant={filters.viewMode === "watchlist" ? "secondary" : "outline-secondary"}
+                        </button>
+                        <button
+                           className={filters.viewMode === "watchlist" ? styles.viewBtnActive : styles.viewBtn}
                            onClick={() => filters.setViewMode("watchlist")}
-                           className={filters.viewMode === "watchlist" ? "fw-bold border-secondary" : "text-muted border-secondary"}
                         >
                            Watchlist
-                        </Button>
-                     </ButtonGroup>
+                        </button>
+                     </div>
 
-                     <ButtonGroup>
+                     <div className={styles.actionGroup}>
                         {filters.viewMode === "watchlist" &&
                            movies.some((m) => m.status === "watchlist") && (
-                              <Button
-                                 variant="warning"
-                                 size="sm"
-                                 className="ms-2 fw-bold shadow-sm d-flex align-items-center justify-content-center"
+                              <button
+                                 className={styles.rouletteBtn}
                                  onClick={() => setShowRoulette(true)}
                                  title="Sortear um filme aleatório"
                               >
-                                 <span className="fs-6 d-md-none">🎲</span>
+                                 <Dices size={16} />
                                  <span className="d-none d-md-inline">Sortear</span>
-                              </Button>
+                              </button>
                            )}
 
                         {session && (
-                           <Button
-                              variant="primary"
-                              size="sm"
-                              className="fw-bold shadow-sm ms-3 rounded-pill px-3"
+                           <button
+                              className={styles.addBtn}
                               onClick={() => {
                                  setMovieToEdit(null);
                                  setShowAddModal(true);
                               }}
                            >
-                              <span className="d-md-none">+ Filme</span>{" "}
+                              <Plus size={16} className="d-md-none" />
+                              <span className="d-md-none"> Filme</span>
                               <span className="d-none d-md-inline">+ Adicionar Filme</span>
-                           </Button>
+                           </button>
                         )}
-                     </ButtonGroup>
+                     </div>
                   </div>
 
-                  <ButtonGroup size="sm" className="d-md-none w-100">
-                     <Button
-                        variant={!filters.onlyNational && !filters.onlyOscar ? "secondary" : "outline-secondary"}
+                  <div className={styles.mobileFilters}>
+                     <button
+                        className={!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : styles.mobileFilterBtn}
                         onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
-                        className="flex-grow-1"
                      >
                         Todos
-                     </Button>
-                     <Button
-                        variant={filters.onlyNational ? "success" : "outline-success"}
+                     </button>
+                     <button
+                        className={filters.onlyNational ? styles.mobileFilterBtnNationalActive : styles.mobileFilterBtnNational}
                         onClick={() => filters.setOnlyNational(!filters.onlyNational)}
-                        className="flex-grow-1"
                      >
                         Nacionais
-                     </Button>
-                     <Button
-                        variant={filters.onlyOscar ? "warning" : "outline-warning"}
+                     </button>
+                     <button
+                        className={filters.onlyOscar ? styles.mobileFilterBtnOscarActive : styles.mobileFilterBtnOscar}
                         onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
-                        className="flex-grow-1 btn-outline-oscar"
                      >
                         Oscar
-                     </Button>
-                  </ButtonGroup>
+                     </button>
+                  </div>
                </div>
                </>
             )}
 
             {loading && movies.length === 0 ? (
-               <div className="text-center mt-5">
+               <div className={styles.loadingState}>
                   <Spinner animation="border" role="status" />
                   <p className="mt-2">Carregando...</p>
                </div>
             ) : !session ? (
                <div className={styles.welcomeCard}>
-                  <h3 className="fw-bold text-muted mb-3">Bem-vindo ao JJ Reviews!</h3>
-                  <p className="text-secondary mb-4 fs-5">
+                  <h3 className={styles.welcomeTitle}>Bem-vindo ao JJ Reviews!</h3>
+                  <p className={styles.welcomeText}>
                      Faça login ou crie sua conta para começar a montar o seu diário de filmes e avaliações.
                   </p>
-                  <Button
-                     variant="primary"
-                     size="lg"
-                     className="fw-bold px-5"
+                  <button
+                     className={styles.welcomeBtn}
                      onClick={() => setShowLoginModal(true)}
                   >
                      Fazer Login / Cadastrar
-                  </Button>
+                  </button>
                </div>
             ) : filters.filteredMovies.length === 0 ? (
-               <div className="text-center mt-5 text-muted">
+               <div className={styles.emptyState}>
                   <h5>Nenhum filme encontrado na sua lista.</h5>
                   <p>Que tal adicionar o seu primeiro filme?</p>
                </div>

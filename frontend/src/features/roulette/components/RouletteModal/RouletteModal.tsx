@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Modal, Button, Image } from "react-bootstrap";
+import { Modal } from "react-bootstrap";
 import type { MovieData } from "@/types";
 import confetti from "canvas-confetti";
 import styles from "./RouletteModal.module.css";
@@ -55,7 +55,7 @@ export function RouletteModal({
 
    return (
       <Modal show={show} onHide={onHide} centered backdrop="static" size="sm">
-         <Modal.Header closeButton={!isSpinning}>
+         <Modal.Header closeButton={!isSpinning} className="border-0 pb-0">
             <Modal.Title className="fw-bold w-100 text-center">
                {isSpinning ? "Sorteando..." : "O Escolhido!"}
             </Modal.Title>
@@ -63,50 +63,43 @@ export function RouletteModal({
 
          <Modal.Body className="text-center py-4">
             {watchlist.length === 0 ? (
-               <p>Sua Watchlist está vazia! Adicione filmes primeiro.</p>
+               <p style={{ color: "var(--text-muted)" }}>Sua Watchlist está vazia! Adicione filmes primeiro.</p>
             ) : (
                <div className="d-flex flex-column align-items-center">
                   <div
                      className={`${styles.posterContainer} ${winner ? styles.posterContainerWinner : ""}`}
                   >
                      {currentMovie?.poster_path ? (
-                        <Image
+                        <img
                            src={`https://image.tmdb.org/t/p/w500${currentMovie.poster_path}`}
+                           alt={currentMovie.title}
                            className={styles.posterImage}
                         />
                      ) : (
-                        <div className="bg-secondary w-100 h-100 d-flex align-items-center justify-content-center text-white">
-                           ?
-                        </div>
+                        <div className={styles.posterPlaceholder}>?</div>
                      )}
                   </div>
 
-                  <h4 className="fw-bold mb-1">
+                  <h4 className={styles.movieTitle}>
                      {currentMovie?.title || "Carregando..."}
                   </h4>
-                  <small className="text-muted mb-4">
+                  <small className={styles.movieYear}>
                      {currentMovie?.release_date?.split("-")[0]}
                   </small>
 
                   {!isSpinning && winner && (
-                     <Button
-                        variant="success"
-                        size="lg"
-                        className="w-100 fw-bold"
+                     <button
+                        className={styles.detailsBtn}
                         onClick={() => onMovieSelect(winner)}
                      >
                         Ver Detalhes
-                     </Button>
+                     </button>
                   )}
 
                   {!isSpinning && winner && (
-                     <Button
-                        variant="link"
-                        className="text-muted mt-2 text-decoration-none"
-                        onClick={onHide}
-                     >
+                     <button className={styles.closeLink} onClick={onHide}>
                         Fechar
-                     </Button>
+                     </button>
                   )}
                </div>
             )}
