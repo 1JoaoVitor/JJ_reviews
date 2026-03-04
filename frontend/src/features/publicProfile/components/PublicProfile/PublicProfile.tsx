@@ -84,13 +84,13 @@ export function PublicProfile() {
          <div className={`d-md-none ${styles.mobileTabs}`}>
             <div className={styles.mobileTabsInner}>
                <button
-                  className={filters.viewMode === "watched" ? styles.mobileTabActive : styles.mobileTab}
+                  className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`}
                   onClick={() => filters.setViewMode("watched")}
                >
                   Já Vimos
                </button>
                <button
-                  className={filters.viewMode === "watchlist" ? styles.mobileTabActive : styles.mobileTab}
+                  className={`${styles.mobileTab} ${filters.viewMode === "watchlist" ? styles.mobileTabActive : ""}`}
                   onClick={() => filters.setViewMode("watchlist")}
                >
                   Watchlist
@@ -130,13 +130,13 @@ export function PublicProfile() {
 
                   <div className={styles.viewToggle}>
                      <button
-                        className={filters.viewMode === "watched" ? styles.viewBtnActive : styles.viewBtn}
+                        className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
                         onClick={() => filters.setViewMode("watched")}
                      >
                         Já Vimos
                      </button>
                      <button
-                        className={filters.viewMode === "watchlist" ? styles.viewBtnActive : styles.viewBtn}
+                        className={`${styles.viewBtn} ${filters.viewMode === "watchlist" ? styles.viewBtnActive : ""}`}
                         onClick={() => filters.setViewMode("watchlist")}
                      >
                         Watchlist
@@ -146,19 +146,19 @@ export function PublicProfile() {
 
                <div className={styles.mobileFilters}>
                   <button
-                     className={!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : styles.mobileFilterBtn}
+                     className={`${styles.mobileFilterBtn} ${!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : ""}`}
                      onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
                   >
                      Todos
                   </button>
                   <button
-                     className={filters.onlyNational ? styles.mobileFilterBtnNationalActive : styles.mobileFilterBtn}
+                     className={`${styles.mobileFilterBtn} ${filters.onlyNational ? styles.mobileFilterBtnNationalActive : ""}`}
                      onClick={() => filters.setOnlyNational(!filters.onlyNational)}
                   >
                      Nacionais
                   </button>
                   <button
-                     className={filters.onlyOscar ? styles.mobileFilterBtnOscarActive : styles.mobileFilterBtn}
+                     className={`${styles.mobileFilterBtn} ${filters.onlyOscar ? styles.mobileFilterBtnOscarActive : ""}`}
                      onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
                   >
                      Oscar

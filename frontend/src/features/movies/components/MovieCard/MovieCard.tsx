@@ -1,6 +1,7 @@
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieCard.module.css";
+import { Star } from "lucide-react";
 
 interface MovieCardProps {
    movie: MovieData;
@@ -34,7 +35,14 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             <div className={styles.posterGradient} />
 
             <div className={`${styles.ratingBadge} ${isWatchlist ? styles.ratingBadgeWatchlist : ""}`}>
-               {isWatchlist ? "Na Fila" : movie.rating}
+              {isWatchlist ? (
+                  "Na Fila"
+               ) : (
+                  <>
+                     <Star size={12} fill="currentColor" strokeWidth={2} style={{ marginTop: "-1px" }} /> 
+                     {movie.rating}
+                  </>
+               )}
             </div>
          </div>
 
@@ -50,8 +58,8 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
 
             {(movie.isNational || movie.isOscar) && (
                <div className={styles.tags}>
-                  {movie.isNational && <span className={styles.tagNational}>Nacional</span>}
-                  {movie.isOscar && <span className={styles.tagOscar}>Oscar</span>}
+                  {movie.isNational && <span className={`${styles.tag} ${styles.tagNational}`}>Nacional</span>}
+                  {movie.isOscar && <span className={`${styles.tag} ${styles.tagOscar}`}>Oscar</span>}
                </div>
             )}
 
@@ -68,7 +76,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   {movie.recommended}
                </span>
             ) : isWatchlist ? (
-               <span className={styles.waitingBadge}>Aguardando...</span>
+               <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
             ) : null}
          </div>
       </div>

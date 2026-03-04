@@ -84,12 +84,12 @@
 }
 
 .sizeBtn:hover:not(:disabled) {
+   background: var(--gold);
+   color: var(--bg-page);
    border-color: var(--gold);
-   color: var(--gold);
 }
 
 .sizeBtnActive {
-   composes: sizeBtn;
    background: var(--gold);
    color: var(--bg-page);
    border-color: var(--gold);

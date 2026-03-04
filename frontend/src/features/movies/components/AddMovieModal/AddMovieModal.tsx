@@ -205,14 +205,14 @@ export function AddMovieModal({
                      <div className={styles.statusToggle}>
                         <button
                            type="button"
-                           className={formStatus === "watched" ? styles.statusBtnActive : styles.statusBtn}
+                           className={`${styles.statusBtn} ${formStatus === "watched" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watched")}
                         >
                            Já Assistimos
                         </button>
                         <button
                            type="button"
-                           className={formStatus === "watchlist" ? styles.statusBtnActive : styles.statusBtn}
+                           className={`${styles.statusBtn} ${formStatus === "watchlist" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watchlist")}
                         >
                            Queremos Ver

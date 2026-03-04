@@ -161,10 +161,6 @@
    background: rgba(59, 130, 246, 0.08);
 }
 
-.adminBtnDanger {
-   composes: adminBtn;
-}
-
 .adminBtnDanger:hover {
    border-color: var(--danger);
    color: var(--danger);
