@@ -205,7 +205,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                         <div className="d-grid gap-2">
                            <button
                               type="button"
-                              className={quantity === -1 ? styles.sizeBtnActive : styles.sizeBtn}
+                              className={`${styles.sizeBtn} ${quantity === -1 ? styles.sizeBtnActive : ""}`}
                               onClick={() => setQuantity(-1)}
                            >
                               Todos os Filmes ({availableMovies.length})
@@ -218,7 +218,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                                  <button
                                     key={qtd}
                                     type="button"
-                                    className={`${quantity === qtd ? styles.sizeBtnActive : styles.sizeBtn} ${isDisabled ? styles.disabledButton : ""}`}
+                                    className={`${styles.sizeBtn} ${quantity === qtd ? styles.sizeBtnActive : ""} ${isDisabled ? styles.disabledButton : ""}`}
                                     onClick={() => setQuantity(qtd)}
                                     disabled={isDisabled}
                                  >

@@ -34,7 +34,7 @@
 }
 
 .statCard:hover {
-   border-color: var(--gold-40);
+   border-color: var(--gold);
    transform: translateY(-2px);
 }
 
@@ -79,8 +79,9 @@
 }
 
 .statLabel {
-   color: var(--text-muted);
-   font-size: var(--font-xs);
+   color: var(--text-primary);
+   font-size: var(--font-sm);
+   opacity: 0.9;
 }
 
 .directorName {

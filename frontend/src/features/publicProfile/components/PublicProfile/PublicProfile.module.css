@@ -94,7 +94,6 @@
 }
 
 .mobileTabActive {
-   composes: mobileTab;
    background: var(--gold);
    color: var(--bg-page);
 }
@@ -141,7 +140,6 @@
 }
 
 .viewBtnActive {
-   composes: viewBtn;
    background: var(--gold);
    color: var(--bg-page);
 }
@@ -175,19 +173,16 @@
 }
 
 .mobileFilterBtnActive {
-   composes: mobileFilterBtn;
    background: var(--gold);
    color: var(--bg-page);
 }
 
 .mobileFilterBtnNationalActive {
-   composes: mobileFilterBtn;
    background: #10B981;
    color: #fff;
 }
 
 .mobileFilterBtnOscarActive {
-   composes: mobileFilterBtn;
    background: var(--gold);
    color: var(--bg-page);
 }

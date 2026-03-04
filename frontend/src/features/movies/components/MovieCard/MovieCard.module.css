@@ -77,6 +77,9 @@
    font-weight: 700;
    font-size: var(--font-sm);
    border: 1px solid rgba(232, 177, 0, 0.2);
+   display: flex;
+   align-items: center;
+   gap: 0.25rem;
 }
 
 .ratingBadgeWatchlist {
@@ -130,14 +133,12 @@
 }
 
 .tagNational {
-   composes: tag;
    color: var(--success);
    border-color: rgba(34, 197, 94, 0.3);
    background: rgba(34, 197, 94, 0.1);
 }
 
 .tagOscar {
-   composes: tag;
    color: var(--gold);
    border-color: rgba(232, 177, 0, 0.3);
    background: rgba(232, 177, 0, 0.1);
@@ -163,7 +164,6 @@
 }
 
 .waitingBadge {
-   composes: recommendBadge;
    background: var(--bg-elevated);
    color: var(--text-muted);
    border: 1px solid var(--border-subtle);

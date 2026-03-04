@@ -45,7 +45,7 @@ export function MovieModal({
                         <Pencil size={14} /> Editar
                      </button>
                      <button
-                        className={styles.adminBtnDanger}
+                        className={`${styles.adminBtn} ${styles.adminBtnDanger}`}
                         onClick={() => {
                            if (confirm("Tem certeza que deseja excluir este filme?")) {
                               onDelete(movie);

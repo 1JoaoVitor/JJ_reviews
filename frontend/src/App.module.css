@@ -33,7 +33,6 @@
 }
 
 .mobileTabActive {
-   composes: mobileTab;
    background: var(--gold);
    color: var(--bg-page);
 }
@@ -49,9 +48,9 @@
 }
 
 .movieCount {
-   color: var(--text-muted);
+   color: var(--gold);
    font-size: var(--font-sm);
-   font-weight: 500;
+   font-weight: 600;
 }
 
 /* Desktop view mode toggle */
@@ -80,7 +79,6 @@
 }
 
 .viewBtnActive {
-   composes: viewBtn;
    background: var(--gold);
    color: var(--bg-page);
 }
@@ -158,27 +156,16 @@
 }
 
 .mobileFilterBtnActive {
-   composes: mobileFilterBtn;
    background: var(--gold);
    color: var(--bg-page);
 }
 
-.mobileFilterBtnNational {
-   composes: mobileFilterBtn;
-}
-
 .mobileFilterBtnNationalActive {
-   composes: mobileFilterBtn;
    background: #10B981;
    color: #fff;
 }
 
-.mobileFilterBtnOscar {
-   composes: mobileFilterBtn;
-}
-
 .mobileFilterBtnOscarActive {
-   composes: mobileFilterBtn;
    background: var(--gold);
    color: var(--bg-page);
 }
