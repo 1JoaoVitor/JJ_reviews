@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
-import { Modal, Form, Spinner, Alert } from "react-bootstrap";
+import { Modal, Form, Spinner} from "react-bootstrap";
+import toast from "react-hot-toast";
 import { Search, ArrowLeft } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+
+import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies } from "@/features/movies/services/tmdbService";
+
+import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData } from "@/types";
 import styles from "./AddMovieModal.module.css";
 
@@ -23,7 +27,6 @@ export function AddMovieModal({
    const [searchQuery, setSearchQuery] = useState("");
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
    const [loadingSearch, setLoadingSearch] = useState(false);
-   const [error, setError] = useState("");
 
    const [selectedMovie, setSelectedMovie] = useState<TmdbSearchResult | null>(null);
    const [rating, setRating] = useState(5);
@@ -35,7 +38,6 @@ export function AddMovieModal({
    useEffect(() => {
       if (show && movieToEdit) {
          setStep("form");
-         setError("");
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -48,7 +50,6 @@ export function AddMovieModal({
          });
       } else if (show) {
          setStep("search");
-         setError("");
          setSearchQuery("");
          setSearchResults([]);
          setSelectedMovie(null);
@@ -81,7 +82,6 @@ export function AddMovieModal({
    const handleSave = async () => {
       if (!selectedMovie) return;
       setSaving(true);
-      setError("");
 
       try {
          const {
@@ -90,7 +90,7 @@ export function AddMovieModal({
          } = await supabase.auth.getUser();
 
          if (userError || !user) {
-            setError("Você precisa estar logado para adicionar filmes.");
+            toast.error("Você precisa estar logado para adicionar filmes.");
             setSaving(false);
             return;
          }
@@ -104,8 +104,8 @@ export function AddMovieModal({
                .maybeSingle();
 
             if (existingMovie) {
-               const statusNome = existingMovie.status === "watched" ? "Já Vimos" : "Watchlist";
-               setError(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
+               const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
+               toast.error(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
                setSaving(false);
                return;
             }
@@ -117,6 +117,7 @@ export function AddMovieModal({
             review: formStatus === "watched" ? review : null,
             recommended: formStatus === "watched" ? recommended : null,
             status: formStatus,
+            user_id: user.id,
          };
 
          if (movieToEdit) {
@@ -130,10 +131,11 @@ export function AddMovieModal({
             if (error) throw error;
          }
 
+         toast.success("Filme guardado com sucesso!");
          onSuccess();
          onHide();
       } catch (err) {
-         setError("Erro ao salvar. Verifique sua conexão e tente novamente.");
+         toast.error("Erro ao salvar. Verifique sua conexão e tente novamente.");
          console.error(err);
       } finally {
          setSaving(false);
@@ -151,7 +153,6 @@ export function AddMovieModal({
          </Modal.Header>
 
          <Modal.Body>
-            {error && <Alert variant="warning" className="mb-4">{error}</Alert>}
 
             {step === "search" && (
                <>
@@ -207,14 +208,14 @@ export function AddMovieModal({
                            className={`${styles.statusBtn} ${formStatus === "watched" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watched")}
                         >
-                           Já Assistimos
+                           Já Assisti
                         </button>
                         <button
                            type="button"
                            className={`${styles.statusBtn} ${formStatus === "watchlist" ? styles.statusBtnActive : ""}`}
                            onClick={() => setFormStatus("watchlist")}
                         >
-                           Queremos Ver
+                           Quero Ver
                         </button>
                      </div>
                   </div>
@@ -223,16 +224,11 @@ export function AddMovieModal({
                      <>
                         <Form.Group className="mb-3">
                            <Form.Label className={styles.formLabel}>Sua Nota (0 a 10)</Form.Label>
-                           <div className={styles.ratingDisplay}>
-                              <Form.Range
-                                 min={0}
-                                 max={10}
-                                 step={0.5}
-                                 value={rating || 0}
-                                 onChange={(e) => setRating(Number(e.target.value))}
-                              />
-                              <span className={styles.ratingValue}>{rating}</span>
-                           </div>
+                           <StarRating 
+                              value={rating || 0} 
+                              onChange={setRating} 
+                              max={10} 
+                           />
                         </Form.Group>
 
                         <Form.Group className="mb-3">

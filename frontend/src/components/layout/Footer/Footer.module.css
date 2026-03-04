@@ -1,7 +1,7 @@
 .footer {
    text-align: center;
    padding: 2rem 0;
-   margin-top: 3rem;
+   margin-top: auto;
    border-top: 1px solid var(--border-subtle);
    background: var(--bg-surface);
 }
@@ -31,4 +31,10 @@
 
 .link:hover {
    color: var(--gold);
+}
+
+@media (max-width: 767px) {
+   .footer {
+      padding-bottom: 80px;
+   }
 }

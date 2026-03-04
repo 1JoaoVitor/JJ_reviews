@@ -23,6 +23,7 @@ interface AppNavbarProps {
    avatarUrl?: string | null;
    onProfileClick: () => void;
    showFilters?: boolean;
+   showBattle?: boolean;
 }
 
 export function AppNavbar({
@@ -45,6 +46,7 @@ export function AppNavbar({
    avatarUrl,
    onProfileClick,
    showFilters = true,
+   showBattle = true,
 }: AppNavbarProps) {
 
    const sortOptions: Record<string, string> = {
@@ -81,13 +83,15 @@ export function AppNavbar({
             {/* User actions */}
             <div className={styles.userActions}>
                {/* Battle button */}
-               <button
-                  className={styles.iconBtn}
-                  onClick={onStartBattle}
-                  title="Modo Batalha"
-               >
-                  <Swords size={18} />
-               </button>
+               {showBattle && (
+                  <button
+                     className={styles.iconBtn}
+                     onClick={onStartBattle}
+                     title="Modo Batalha"
+                  >
+                     <Swords size={18} />
+                  </button>
+               )}
 
                {session ? (
                   <>

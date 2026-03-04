@@ -112,25 +112,6 @@
    white-space: nowrap;
 }
 
-/* Rating display */
-.ratingDisplay {
-   display: flex;
-   align-items: center;
-   gap: 1rem;
-}
-
-.ratingValue {
-   background: var(--bg-page);
-   border: 2px solid var(--gold);
-   color: var(--gold);
-   font-weight: 800;
-   font-size: var(--font-xl);
-   padding: 0.35rem 0.75rem;
-   border-radius: var(--radius-md);
-   min-width: 52px;
-   text-align: center;
-}
-
 /* Watchlist info box */
 .watchlistInfo {
    background: var(--bg-elevated);

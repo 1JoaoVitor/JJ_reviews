@@ -28,31 +28,12 @@
 }
 
 /* Rating box – gold accent */
-.ratingBox {
-   background: linear-gradient(135deg, var(--gold), var(--gold-hover));
-   color: var(--text-inverse);
-   width: 68px;
-   height: 68px;
-   border-radius: var(--radius-lg);
-   font-weight: 800;
-   font-size: 1.75rem;
-   flex-shrink: 0;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   box-shadow: 0 4px 16px rgba(232, 177, 0, 0.3);
-}
-
 .ratingLabel {
    font-weight: 700;
    color: var(--text-primary);
    margin: 0;
 }
 
-.ratingSublabel {
-   font-size: var(--font-sm);
-   color: var(--text-muted);
-}
 
 /* Recommendation badge */
 .recommendBadge {
