@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
@@ -102,6 +103,19 @@ function MainApp() {
 
    return (
       <div className={styles.page}>
+         
+         <Toaster 
+            position="bottom-right" 
+            toastOptions={{
+               style: {
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-subtle)',
+               },
+               success: { iconTheme: { primary: 'var(--gold)', secondary: '#000' } }
+            }} 
+         />
+
          <AppNavbar
             onlyNational={filters.onlyNational}
             setOnlyNational={filters.setOnlyNational}

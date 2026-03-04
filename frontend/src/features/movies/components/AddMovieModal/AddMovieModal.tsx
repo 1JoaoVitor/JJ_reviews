@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Modal, Form, Spinner, Alert } from "react-bootstrap";
+import { Modal, Form, Spinner} from "react-bootstrap";
+import toast from "react-hot-toast";
 import { Search, ArrowLeft } from "lucide-react";
+
 import { StarRating } from "@/components/ui/StarRating/StarRating";
-import { supabase } from "@/lib/supabase";
 import { searchMovies } from "@/features/movies/services/tmdbService";
+
+import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData } from "@/types";
 import styles from "./AddMovieModal.module.css";
 
@@ -24,7 +27,6 @@ export function AddMovieModal({
    const [searchQuery, setSearchQuery] = useState("");
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
    const [loadingSearch, setLoadingSearch] = useState(false);
-   const [error, setError] = useState("");
 
    const [selectedMovie, setSelectedMovie] = useState<TmdbSearchResult | null>(null);
    const [rating, setRating] = useState(5);
@@ -36,7 +38,6 @@ export function AddMovieModal({
    useEffect(() => {
       if (show && movieToEdit) {
          setStep("form");
-         setError("");
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -49,7 +50,6 @@ export function AddMovieModal({
          });
       } else if (show) {
          setStep("search");
-         setError("");
          setSearchQuery("");
          setSearchResults([]);
          setSelectedMovie(null);
@@ -82,7 +82,7 @@ export function AddMovieModal({
    const handleSave = async () => {
       if (!selectedMovie) return;
       setSaving(true);
-      setError("");
+      toast.error("Você precisa estar logado para adicionar filmes.");
 
       try {
          const {
@@ -91,7 +91,7 @@ export function AddMovieModal({
          } = await supabase.auth.getUser();
 
          if (userError || !user) {
-            setError("Você precisa estar logado para adicionar filmes.");
+            toast.error("Você precisa estar logado para adicionar filmes.");
             setSaving(false);
             return;
          }
@@ -106,7 +106,7 @@ export function AddMovieModal({
 
             if (existingMovie) {
                const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
-               setError(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
+               toast.error(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
                setSaving(false);
                return;
             }
@@ -131,10 +131,11 @@ export function AddMovieModal({
             if (error) throw error;
          }
 
+         toast.success("Filme guardado com sucesso!");
          onSuccess();
          onHide();
       } catch (err) {
-         setError("Erro ao salvar. Verifique sua conexão e tente novamente.");
+         toast.error("Erro ao salvar. Verifique sua conexão e tente novamente.");
          console.error(err);
       } finally {
          setSaving(false);
@@ -152,7 +153,6 @@ export function AddMovieModal({
          </Modal.Header>
 
          <Modal.Body>
-            {error && <Alert variant="warning" className="mb-4">{error}</Alert>}
 
             {step === "search" && (
                <>
