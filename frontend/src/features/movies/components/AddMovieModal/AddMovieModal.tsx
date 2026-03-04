@@ -8,6 +8,7 @@ import {
    Image,
    Spinner,
    ButtonGroup,
+   Alert,
 } from "react-bootstrap";
 import { supabase } from "@/lib/supabase";
 import { searchMovies } from "@/features/movies/services/tmdbService";
@@ -30,6 +31,7 @@ export function AddMovieModal({
    const [searchQuery, setSearchQuery] = useState("");
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
    const [loadingSearch, setLoadingSearch] = useState(false);
+   const [error, setError] = useState("");
 
    const [selectedMovie, setSelectedMovie] = useState<TmdbSearchResult | null>(null);
    const [rating, setRating] = useState(5);
@@ -41,6 +43,7 @@ export function AddMovieModal({
    useEffect(() => {
       if (show && movieToEdit) {
          setStep("form");
+         setError("");
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -53,6 +56,7 @@ export function AddMovieModal({
          });
       } else if (show) {
          setStep("search");
+         setError("");
          setSearchQuery("");
          setSearchResults([]);
          setSelectedMovie(null);
@@ -85,6 +89,7 @@ export function AddMovieModal({
    const handleSave = async () => {
       if (!selectedMovie) return;
       setSaving(true);
+      setError("");
 
       try {
          const {
@@ -93,8 +98,26 @@ export function AddMovieModal({
          } = await supabase.auth.getUser();
 
          if (userError || !user) {
-            alert("Você precisa estar logado para adicionar filmes.");
+            setError("Você precisa estar logado para adicionar filmes."); 
+            setSaving(false);
             return;
+         }
+         
+         // Se NÃO for uma edição, verificamos se o filme já existe para este usuário
+         if (!movieToEdit) {
+            const { data: existingMovie } = await supabase
+               .from("reviews")
+               .select("id, status")
+               .eq("user_id", user.id)
+               .eq("tmdb_id", selectedMovie.id)
+               .maybeSingle(); // maybeSingle retorna 1 registro ou null, sem dar erro
+
+            if (existingMovie) {
+               const statusNome = existingMovie.status === "watched" ? "Já Vimos" : "Watchlist";
+               setError(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
+               setSaving(false);
+               return;
+            }
          }
 
          const payload = {
@@ -118,9 +141,9 @@ export function AddMovieModal({
 
          onSuccess();
          onHide();
-      } catch (error) {
-         alert("Erro ao salvar. Veja o console.");
-         console.error(error);
+      } catch (err) {
+         setError("Erro ao salvar. Verifique sua conexão e tente novamente."); // <--- TROCOU
+         console.error(err);
       } finally {
          setSaving(false);
       }
@@ -137,6 +160,9 @@ export function AddMovieModal({
          </Modal.Header>
 
          <Modal.Body>
+            {/* --- EXIBIÇÃO DO ERRO --- */}
+            {error && <Alert variant="warning" className="mb-4">{error}</Alert>}
+
             {step === "search" && (
                <>
                   <Form onSubmit={handleSearch} className="mb-4">
