@@ -119,7 +119,7 @@ export function MovieModal({
                   <div className="d-flex align-items-center gap-3 mb-4">
                      <div className={styles.ratingBox}>{movie.rating}</div>
                      <div>
-                        <h5 className={styles.ratingLabel}>Nossa Avaliação</h5>
+                        <h5 className={styles.ratingLabel}>Avaliação</h5>
                         <small className={styles.ratingSublabel}>Escala de 0 a 10</small>
                      </div>
                      {movie.recommended && (
@@ -142,7 +142,7 @@ export function MovieModal({
 
                   {/* Review */}
                   <div className="mb-4">
-                     <h5 className={styles.sectionTitle}>O que achamos</h5>
+                     <h5 className={styles.sectionTitle}>Review</h5>
                      <p className={styles.reviewText}>
                         &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
                      </p>

@@ -87,7 +87,7 @@ export function PublicProfile() {
                   className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`}
                   onClick={() => filters.setViewMode("watched")}
                >
-                  Já Vimos
+                  Assistidos
                </button>
                <button
                   className={`${styles.mobileTab} ${filters.viewMode === "watchlist" ? styles.mobileTabActive : ""}`}
@@ -133,7 +133,7 @@ export function PublicProfile() {
                         className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
                         onClick={() => filters.setViewMode("watched")}
                      >
-                        Já Vimos
+                        Assistidos
                      </button>
                      <button
                         className={`${styles.viewBtn} ${filters.viewMode === "watchlist" ? styles.viewBtnActive : ""}`}

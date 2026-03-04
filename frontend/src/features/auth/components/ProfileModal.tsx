@@ -99,7 +99,7 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
          setAvatarUrl(publicUrl);
          setImageSrc(null);
          setSuccess("Foto de perfil atualizada com sucesso!");
-         setTimeout(() => setSuccess(""), 3000);
+         setTimeout(() => setSuccess(""), 10000);
       } catch (err) {
          if (err instanceof Error) {
             setError(err.message);
@@ -144,8 +144,8 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
    const handleShareProfile = () => {
       const profileUrl = `${window.location.origin}/perfil/${currentUsername}`;
       navigator.clipboard.writeText(profileUrl);
-      setSuccess("Link copiado! Cole no WhatsApp ou onde desejar.");
-      setTimeout(() => setSuccess(""), 3000);
+      setSuccess("Link copiado, compartilhe com seus amigos!");
+      setTimeout(() => setSuccess(""), 10000);
    };
 
    return (
