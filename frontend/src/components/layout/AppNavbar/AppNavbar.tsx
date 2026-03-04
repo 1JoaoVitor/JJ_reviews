@@ -144,64 +144,66 @@ export function AppNavbar({
 
                <div className={styles.divider} />
 
-               {/* Dropdown de Gênero */}
-               <Dropdown>
-                  <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
-                     {selectedGenre || "Gênero"}
-                  </Dropdown.Toggle>
+               <div className={styles.dropdownGroup}>
+                  {/* Dropdown de Gênero */}
+                  <Dropdown>
+                     <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
+                        {selectedGenre || "Gênero"}
+                     </Dropdown.Toggle>
 
-                  <Dropdown.Menu className={styles.dropdownMenu}>
-                     <Dropdown.Item 
-                        className={`${styles.dropdownItem} ${!selectedGenre ? styles.dropdownItemActive : ""}`} 
-                        onClick={() => setSelectedGenre("")}
-                     >
-                        Todos os Gêneros
-                     </Dropdown.Item>
-                     {availableGenres.map((genre) => (
+                     <Dropdown.Menu className={styles.dropdownMenu}>
                         <Dropdown.Item 
-                           key={genre} 
-                           className={`${styles.dropdownItem} ${selectedGenre === genre ? styles.dropdownItemActive : ""}`}
-                           onClick={() => setSelectedGenre(genre)}
+                           className={`${styles.dropdownItem} ${!selectedGenre ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSelectedGenre("")}
                         >
-                           {genre}
+                           Todos os Gêneros
                         </Dropdown.Item>
-                     ))}
-                  </Dropdown.Menu>
-               </Dropdown>
+                        {availableGenres.map((genre) => (
+                           <Dropdown.Item 
+                              key={genre} 
+                              className={`${styles.dropdownItem} ${selectedGenre === genre ? styles.dropdownItemActive : ""}`}
+                              onClick={() => setSelectedGenre(genre)}
+                           >
+                              {genre}
+                           </Dropdown.Item>
+                        ))}
+                     </Dropdown.Menu>
+                  </Dropdown>
 
-               {/* Dropdown de Ordenação */}
-               <Dropdown>
-                  <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
-                     {sortOptions[sortOrder]}
-                  </Dropdown.Toggle>
+                  {/* Dropdown de Ordenação */}
+                  <Dropdown>
+                     <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
+                        {sortOptions[sortOrder]}
+                     </Dropdown.Toggle>
 
-                  <Dropdown.Menu className={styles.dropdownMenu}>
-                     <Dropdown.Item 
-                        className={`${styles.dropdownItem} ${sortOrder === "default" ? styles.dropdownItemActive : ""}`} 
-                        onClick={() => setSortOrder("default")}
-                     >
-                        Recentes
-                     </Dropdown.Item>
-                     <Dropdown.Item 
-                        className={`${styles.dropdownItem} ${sortOrder === "rating" ? styles.dropdownItemActive : ""}`} 
-                        onClick={() => setSortOrder("rating")}
-                     >
-                        Melhores Notas
-                     </Dropdown.Item>
-                     <Dropdown.Item 
-                        className={`${styles.dropdownItem} ${sortOrder === "date" ? styles.dropdownItemActive : ""}`} 
-                        onClick={() => setSortOrder("date")}
-                     >
-                        Lançamento
-                     </Dropdown.Item>
-                     <Dropdown.Item 
-                        className={`${styles.dropdownItem} ${sortOrder === "alpha" ? styles.dropdownItemActive : ""}`} 
-                        onClick={() => setSortOrder("alpha")}
-                     >
-                        Ordem A-Z
-                     </Dropdown.Item>
-                  </Dropdown.Menu>
-               </Dropdown>
+                     <Dropdown.Menu className={styles.dropdownMenu}>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "default" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("default")}
+                        >
+                           Recentes
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "rating" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("rating")}
+                        >
+                           Melhores Notas
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "date" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("date")}
+                        >
+                           Lançamento
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "alpha" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("alpha")}
+                        >
+                           Ordem A-Z
+                        </Dropdown.Item>
+                     </Dropdown.Menu>
+                  </Dropdown>
+               </div>
             </div>
          )}
       </nav>

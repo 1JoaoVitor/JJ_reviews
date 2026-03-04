@@ -161,7 +161,6 @@ export function AddMovieModal({
                            placeholder="Digite o nome do filme..."
                            value={searchQuery}
                            onChange={(e) => setSearchQuery(e.target.value)}
-                           autoFocus
                            className={styles.searchInput}
                         />
                         <button type="submit" className={styles.searchBtn} disabled={loadingSearch}>
