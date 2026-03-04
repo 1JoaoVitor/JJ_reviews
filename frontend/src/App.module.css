@@ -61,9 +61,12 @@
    overflow: hidden;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 767px) {
    .viewToggle {
       display: inline-flex;
+   }
+   .page {
+      padding-bottom: 80px; /* Dá espaço para a BottomNav não cobrir o rodapé */
    }
 }
 

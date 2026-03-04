@@ -19,6 +19,7 @@ import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
+import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -309,6 +310,20 @@ function MainApp() {
                setShowRoulette(false);
                handleOpenModal(movie);
             }}
+         />
+
+       { /* ─── Navegação Mobile ─── */}
+         <BottomNav
+            session={session}
+            avatarUrl={avatarUrl}
+            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onGamesClick={() => setIsBattleMode(true)} 
+            onAddClick={() => {
+               setMovieToEdit(null);
+               setShowAddModal(true);
+            }}
+            onProfileClick={() => setShowProfileModal(true)}
+            onLoginClick={() => setShowLoginModal(true)}
          />
       </div>
    );
