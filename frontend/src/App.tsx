@@ -121,114 +121,121 @@ function MainApp() {
             onProfileClick={() => setShowProfileModal(true)}
          />
 
-         {/* Abas mobile */}
-         <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
-            <div className={styles.mobileTabsInner}>
-               <Button
-                  variant={filters.viewMode === "watched" ? "primary" : "light"}
-                  className="rounded-pill px-4 fw-bold"
-                  onClick={() => filters.setViewMode("watched")}
-               >
-                  Já Vimos
-               </Button>
-               <Button
-                  variant={filters.viewMode === "watchlist" ? "primary" : "light"}
-                  className="rounded-pill px-4 fw-bold"
-                  onClick={() => filters.setViewMode("watchlist")}
-               >
-                  Watchlist
-               </Button>
+
+         {session && (
+            <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
+               <div className={styles.mobileTabsInner}>
+                  <Button
+                     variant={filters.viewMode === "watched" ? "primary" : "light"}
+                     className="rounded-pill px-4 fw-bold"
+                     onClick={() => filters.setViewMode("watched")}
+                  >
+                     Já Vimos
+                  </Button>
+                  <Button
+                     variant={filters.viewMode === "watchlist" ? "primary" : "light"}
+                     className="rounded-pill px-4 fw-bold"
+                     onClick={() => filters.setViewMode("watchlist")}
+                  >
+                     Watchlist
+                  </Button>
+               </div>
             </div>
-         </div>
+         )}
+         
 
          <Container className="px-4 pb-5">
-            {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
+            {session && (
+               <>
+               {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
 
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-               <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
-                  <h5 className="text-muted mb-0">
-                     {loading
-                        ? "Carregando..."
-                        : filters.filteredMovies.length === movies.length
-                          ? `Todos os ${movies.length} filmes`
-                          : filters.filteredMovies.length === 1
-                            ? "Exibindo 1 filme"
-                            : `Exibindo ${filters.filteredMovies.length} filmes`}
-                  </h5>
+               <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+                  <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
+                     <h5 className="text-muted mb-0">
+                        {loading
+                           ? "Carregando..."
+                           : filters.filteredMovies.length === movies.length
+                           ? `Todos os ${movies.length} filmes`
+                           : filters.filteredMovies.length === 1
+                              ? "Exibindo 1 filme"
+                              : `Exibindo ${filters.filteredMovies.length} filmes`}
+                     </h5>
 
-                  <ButtonGroup size="sm" className="d-none d-md-inline-flex shadow-sm">
-                     <Button
-                        variant={filters.viewMode === "watched" ? "secondary" : "outline-secondary"}
-                        onClick={() => filters.setViewMode("watched")}
-                        className={filters.viewMode === "watched" ? "fw-bold border-secondary" : "text-muted border-secondary"}
-                     >
-                        Já Vimos
-                     </Button>
-                     <Button
-                        variant={filters.viewMode === "watchlist" ? "secondary" : "outline-secondary"}
-                        onClick={() => filters.setViewMode("watchlist")}
-                        className={filters.viewMode === "watchlist" ? "fw-bold border-secondary" : "text-muted border-secondary"}
-                     >
-                        Watchlist
-                     </Button>
-                  </ButtonGroup>
+                     <ButtonGroup size="sm" className="d-none d-md-inline-flex shadow-sm">
+                        <Button
+                           variant={filters.viewMode === "watched" ? "secondary" : "outline-secondary"}
+                           onClick={() => filters.setViewMode("watched")}
+                           className={filters.viewMode === "watched" ? "fw-bold border-secondary" : "text-muted border-secondary"}
+                        >
+                           Já Vimos
+                        </Button>
+                        <Button
+                           variant={filters.viewMode === "watchlist" ? "secondary" : "outline-secondary"}
+                           onClick={() => filters.setViewMode("watchlist")}
+                           className={filters.viewMode === "watchlist" ? "fw-bold border-secondary" : "text-muted border-secondary"}
+                        >
+                           Watchlist
+                        </Button>
+                     </ButtonGroup>
 
-                  <ButtonGroup>
-                     {filters.viewMode === "watchlist" &&
-                        movies.some((m) => m.status === "watchlist") && (
+                     <ButtonGroup>
+                        {filters.viewMode === "watchlist" &&
+                           movies.some((m) => m.status === "watchlist") && (
+                              <Button
+                                 variant="warning"
+                                 size="sm"
+                                 className="ms-2 fw-bold shadow-sm d-flex align-items-center justify-content-center"
+                                 onClick={() => setShowRoulette(true)}
+                                 title="Sortear um filme aleatório"
+                              >
+                                 <span className="fs-6 d-md-none">🎲</span>
+                                 <span className="d-none d-md-inline">Sortear</span>
+                              </Button>
+                           )}
+
+                        {session && (
                            <Button
-                              variant="warning"
+                              variant="primary"
                               size="sm"
-                              className="ms-2 fw-bold shadow-sm d-flex align-items-center justify-content-center"
-                              onClick={() => setShowRoulette(true)}
-                              title="Sortear um filme aleatório"
+                              className="fw-bold shadow-sm ms-3 rounded-pill px-3"
+                              onClick={() => {
+                                 setMovieToEdit(null);
+                                 setShowAddModal(true);
+                              }}
                            >
-                              <span className="fs-6 d-md-none">🎲</span>
-                              <span className="d-none d-md-inline">Sortear</span>
+                              <span className="d-md-none">+ Filme</span>{" "}
+                              <span className="d-none d-md-inline">+ Adicionar Filme</span>
                            </Button>
                         )}
+                     </ButtonGroup>
+                  </div>
 
-                     {session && (
-                        <Button
-                           variant="primary"
-                           size="sm"
-                           className="fw-bold shadow-sm ms-3 rounded-pill px-3"
-                           onClick={() => {
-                              setMovieToEdit(null);
-                              setShowAddModal(true);
-                           }}
-                        >
-                           <span className="d-md-none">+ Filme</span>{" "}
-                           <span className="d-none d-md-inline">+ Adicionar Filme</span>
-                        </Button>
-                     )}
+                  <ButtonGroup size="sm" className="d-md-none w-100">
+                     <Button
+                        variant={!filters.onlyNational && !filters.onlyOscar ? "secondary" : "outline-secondary"}
+                        onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
+                        className="flex-grow-1"
+                     >
+                        Todos
+                     </Button>
+                     <Button
+                        variant={filters.onlyNational ? "success" : "outline-success"}
+                        onClick={() => filters.setOnlyNational(!filters.onlyNational)}
+                        className="flex-grow-1"
+                     >
+                        Nacionais
+                     </Button>
+                     <Button
+                        variant={filters.onlyOscar ? "warning" : "outline-warning"}
+                        onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
+                        className="flex-grow-1 btn-outline-oscar"
+                     >
+                        Oscar
+                     </Button>
                   </ButtonGroup>
                </div>
-
-               <ButtonGroup size="sm" className="d-md-none w-100">
-                  <Button
-                     variant={!filters.onlyNational && !filters.onlyOscar ? "secondary" : "outline-secondary"}
-                     onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
-                     className="flex-grow-1"
-                  >
-                     Todos
-                  </Button>
-                  <Button
-                     variant={filters.onlyNational ? "success" : "outline-success"}
-                     onClick={() => filters.setOnlyNational(!filters.onlyNational)}
-                     className="flex-grow-1"
-                  >
-                     Nacionais
-                  </Button>
-                  <Button
-                     variant={filters.onlyOscar ? "warning" : "outline-warning"}
-                     onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
-                     className="flex-grow-1 btn-outline-oscar"
-                  >
-                     Oscar
-                  </Button>
-               </ButtonGroup>
-            </div>
+               </>
+            )}
 
             {loading && movies.length === 0 ? (
                <div className="text-center mt-5">
