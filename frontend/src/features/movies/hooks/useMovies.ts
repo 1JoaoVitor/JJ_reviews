@@ -50,6 +50,7 @@ export function useMovies(session: Session | null) {
    useEffect(() => {
       if (!session) {
          setMovies([]);
+         setLoading(false);
          hasFetchedOnce.current = false;
       } else {
          fetchMovies();
