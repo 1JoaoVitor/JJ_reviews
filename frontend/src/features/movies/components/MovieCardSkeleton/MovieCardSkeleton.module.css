@@ -1,0 +1,77 @@
+.cardSkeleton {
+   background: var(--bg-surface);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-lg);
+   overflow: hidden;
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+}
+
+@keyframes pulse {
+   0% { background-color: var(--bg-elevated); }
+   50% { background-color: var(--border-medium); }
+   100% { background-color: var(--bg-elevated); }
+}
+
+.skeletonPulse {
+   animation: pulse 1.5s ease-in-out infinite;
+}
+
+.posterSkeleton {
+   height: 280px; 
+   width: 100%;
+}
+
+@media (min-width: 768px) {
+   .posterSkeleton { height: 420px; }
+}
+
+@media (max-width: 576px) {
+   .posterSkeleton { height: 240px; }
+}
+
+.bodySkeleton {
+   padding: 0.875rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.5rem;
+   flex-grow: 1;
+}
+
+.titleSkeleton {
+   height: 1.2rem;
+   width: 80%;
+   border-radius: var(--radius-sm);
+}
+
+.metaSkeleton {
+   height: 0.8rem;
+   width: 50%;
+   border-radius: var(--radius-sm);
+   margin-bottom: 0.5rem;
+}
+
+.tagsSkeleton {
+   display: flex;
+   gap: 0.35rem;
+}
+
+.tagSkeleton {
+   height: 18px;
+   width: 60px;
+   border-radius: var(--radius-pill);
+}
+
+.dividerSkeleton {
+   height: 1px;
+   background: var(--border-subtle);
+   margin: 0.5rem 0;
+}
+
+.buttonSkeleton {
+   height: 32px;
+   width: 100%;
+   border-radius: var(--radius-md);
+   margin-top: auto;
+}

@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Container, Spinner } from "react-bootstrap";
+import { useState, useEffect } from "react";
+import { Container} from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
@@ -20,6 +21,8 @@ import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
+import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -41,8 +44,16 @@ export default function App() {
 }
 
 function MainApp() {
-   const { session, username, avatarUrl, logout, updateUsername } = useAuth();
-   const { movies, loading, fetchMovies } = useMovies(!!session);
+   const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
+   const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
+
+   const isPageLoading = authLoading || moviesLoading;
+
+   // Scroll to top on mount (F5 / navegação)
+   useEffect(() => {
+      window.scrollTo(0, 0);
+   }, []);
+
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
 
@@ -102,6 +113,19 @@ function MainApp() {
 
    return (
       <div className={styles.page}>
+         
+         <Toaster 
+            position="bottom-right" 
+            toastOptions={{
+               style: {
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-subtle)',
+               },
+               success: { iconTheme: { primary: 'var(--gold)', secondary: '#000' } }
+            }} 
+         />
+
          <AppNavbar
             onlyNational={filters.onlyNational}
             setOnlyNational={filters.setOnlyNational}
@@ -149,12 +173,12 @@ function MainApp() {
          <Container className="px-4 pb-5">
             {session && (
                <>
-               {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
+               {!isPageLoading && !filters.searchTerm && <Dashboard movies={movies} />}
 
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
                      <span className={styles.movieCount}>
-                        {loading
+                        {isPageLoading
                            ? "Carregando..."
                            : filters.filteredMovies.length === movies.length
                            ? `Todos os ${movies.length} filmes`
@@ -231,10 +255,11 @@ function MainApp() {
                </>
             )}
 
-            {loading && movies.length === 0 ? (
+            {isPageLoading && movies.length === 0 ? (
                <div className={styles.loadingState}>
-                  <Spinner animation="border" role="status" />
-                  <p className="mt-2">Carregando...</p>
+                  {[...Array(8)].map((_, i) => (
+                     <MovieCardSkeleton key={i} />
+                  ))}
                </div>
                ) : !session ? (
                <div className={styles.landingContainer}>
@@ -270,10 +295,19 @@ function MainApp() {
                   </div>
                </div>
             ) : filters.filteredMovies.length === 0 ? (
-               <div className={styles.emptyState}>
-                  <h5>Nenhum filme encontrado na sua lista.</h5>
-                  <p>Que tal adicionar o seu primeiro filme?</p>
-               </div>
+               <EmptyState 
+                  title="Nenhum filme por aqui"
+                  message={
+                     filters.searchTerm
+                        ? `Não encontrámos nenhum resultado para "${filters.searchTerm}".`
+                        : "Você ainda não adicionou nenhum filme à sua lista. Que tal começar a sua jornada cinematográfica agora?"
+                  }
+                  actionText="Adicionar Filme"
+                  onAction={() => {
+                     setMovieToEdit(null);
+                     setShowAddModal(true);
+                  }}
+               />
             ) : (
                <div className="movie-grid">
                   {filters.filteredMovies.map((movie) => (
