@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Container, Spinner } from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
-import { Dices, Plus } from "lucide-react";
+import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -236,18 +236,38 @@ function MainApp() {
                   <Spinner animation="border" role="status" />
                   <p className="mt-2">Carregando...</p>
                </div>
-            ) : !session ? (
-               <div className={styles.welcomeCard}>
-                  <h3 className={styles.welcomeTitle}>Bem-vindo ao JJ Reviews!</h3>
-                  <p className={styles.welcomeText}>
-                     Faça login ou crie sua conta para começar a montar o seu diário de filmes e avaliações.
-                  </p>
-                  <button
-                     className={styles.welcomeBtn}
-                     onClick={() => setShowLoginModal(true)}
-                  >
-                     Fazer Login / Cadastrar
-                  </button>
+               ) : !session ? (
+               <div className={styles.landingContainer}>
+                  <div className={styles.heroSection}>
+                     <h1 className={styles.heroTitle}>Sua jornada cinematográfica<br/>começa aqui.</h1>
+                     <p className={styles.heroSubtitle}>
+                        O JJ Reviews é a sua plataforma pessoal para avaliar filmes, montar sua Watchlist, descobrir seu próximo filme e muito mais!
+                     </p>
+                     <button
+                        className={styles.heroBtn}
+                        onClick={() => setShowLoginModal(true)}
+                     >
+                        Criar minha conta grátis
+                     </button>
+                  </div>
+
+                  <div className={styles.featuresGrid}>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Star size={28} /></div>
+                        <h3>Avalie e Critique</h3>
+                        <p>Dê suas notas e escreva o seu veredito. Construa uma biblioteca visual com tudo o que você já assistiu.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Bookmark size={28} /></div>
+                        <h3>Sua Watchlist</h3>
+                        <p>Nunca mais esqueça o nome de um filme. Salve para ver depois e use a Roleta quando não souber o que escolher.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Swords size={28} /></div>
+                        <h3>Modo Batalha</h3>
+                        <p>Coloque seus filmes frente a frente num torneio mata-mata para definir o seu favorito de verdade.</p>
+                     </div>
+                  </div>
                </div>
             ) : filters.filteredMovies.length === 0 ? (
                <div className={styles.emptyState}>
