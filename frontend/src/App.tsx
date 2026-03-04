@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
+import { Routes, Route } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -16,6 +17,7 @@ import { Dashboard } from "@/features/dashboard";
 import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
+import { PublicProfile } from "@/features/publicProfile";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -24,7 +26,19 @@ import { LoadingOverlay } from "@/components/ui/LoadingOverlay/LoadingOverlay";
 
 import styles from "./App.module.css";
 
-function App() {
+export default function App() {
+   return (
+      <Routes>
+         {/* Se a URL for apenas "/", carrega o seu sistema completo */}
+         <Route path="/" element={<MainApp />} />
+         
+         {/* Se a URL for "/perfil/algum-nome", carrega a tela de visitante */}
+         <Route path="/perfil/:username" element={<PublicProfile />} />
+      </Routes>
+   );
+}
+
+function MainApp() {
    // ─── Custom Hooks (toda a lógica pesada fica isolada) ───
    const { session, username, logout, updateUsername } = useAuth();
    const { movies, loading, fetchMovies } = useMovies(!!session);
@@ -304,4 +318,3 @@ function App() {
    );
 }
 
-export default App;
