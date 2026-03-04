@@ -1,8 +1,11 @@
 /*
- * Estilos globais do JJ Reviews.
+ * Estilos globais — JJ Reviews Dark Theme.
  * Apenas estilos verdadeiramente globais ficam aqui.
  * Estilos de componentes devem usar CSS Modules (*.module.css).
  */
+
+/* ─── Google Fonts ─── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 
 /* ─── Reset & Base ─── */
 *,
@@ -12,16 +15,31 @@
 }
 
 body {
-   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-      "Helvetica Neue", sans-serif;
-   background-color: var(--color-bg-page);
-   color: var(--color-text-primary);
+   font-family: var(--font-family);
+   background-color: var(--bg-page);
+   color: var(--text-primary);
    margin: 0;
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
+   line-height: 1.5;
 }
 
-/* ─── Grid de Filmes (usado em múltiplos contextos) ─── */
+/* ─── Scrollbar Dark ─── */
+::-webkit-scrollbar {
+   width: 8px;
+}
+::-webkit-scrollbar-track {
+   background: var(--bg-page);
+}
+::-webkit-scrollbar-thumb {
+   background: var(--border-medium);
+   border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+   background: var(--border-strong);
+}
+
+/* ─── Grid de Filmes ─── */
 .movie-grid {
    display: grid;
    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -29,14 +47,10 @@ body {
    width: 100%;
 }
 
-/* ─── Barra de pesquisa responsiva ─── */
-.custom-search-bar {
-   width: 100%;
-}
-
-@media (min-width: 768px) {
-   .custom-search-bar {
-      max-width: 300px;
+@media (max-width: 576px) {
+   .movie-grid {
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
    }
 }
 
@@ -44,7 +58,7 @@ body {
 .movie-poster-container {
    height: 250px;
    overflow: hidden;
-   background-color: var(--color-bg-dark);
+   background-color: var(--bg-surface);
    position: relative;
 }
 
@@ -54,18 +68,167 @@ body {
    }
 }
 
-/* ─── Botão Oscar custom ─── */
-@media (max-width: 768px) {
-   .btn-outline-oscar {
-      color: #aa7d0a;
-      border-color: #b8860b;
-   }
+/* ─── Bootstrap Dark Overrides ─── */
+
+/* Modais */
+.modal-content {
+   background-color: var(--bg-surface) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-lg) !important;
+   color: var(--text-primary) !important;
 }
 
-.btn-outline-oscar:hover,
-.btn-outline-oscar:active,
-.btn-check:checked + .btn-outline-oscar {
-   background-color: var(--color-warning);
-   color: #000;
-   border-color: var(--color-warning);
+.modal-header {
+   border-bottom-color: var(--border-subtle) !important;
+}
+
+.modal-footer {
+   border-top-color: var(--border-subtle) !important;
+}
+
+.modal-header .btn-close {
+   filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* Forms */
+.form-control,
+.form-select {
+   background-color: var(--bg-input) !important;
+   border-color: var(--border-medium) !important;
+   color: var(--text-primary) !important;
+   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-control:focus,
+.form-select:focus {
+   border-color: var(--gold) !important;
+   box-shadow: 0 0 0 3px var(--gold-glow) !important;
+}
+
+.form-control::placeholder {
+   color: var(--text-muted) !important;
+}
+
+.form-label {
+   color: var(--text-secondary) !important;
+   font-weight: 600;
+   font-size: var(--font-sm);
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+}
+
+/* Alerts */
+.alert-danger {
+   background-color: var(--danger-dim) !important;
+   border-color: var(--danger) !important;
+   color: #fca5a5 !important;
+}
+
+.alert-success {
+   background-color: var(--success-dim) !important;
+   border-color: var(--success) !important;
+   color: #86efac !important;
+}
+
+.alert-warning {
+   background-color: rgba(232, 177, 0, 0.15) !important;
+   border-color: var(--gold-dim) !important;
+   color: var(--gold-hover) !important;
+}
+
+.alert-primary {
+   background-color: rgba(59, 130, 246, 0.15) !important;
+   border-color: rgba(59, 130, 246, 0.3) !important;
+   color: var(--accent-hover) !important;
+}
+
+.alert-secondary {
+   background-color: var(--bg-elevated) !important;
+   border-color: var(--border-medium) !important;
+   color: var(--text-secondary) !important;
+}
+
+/* Text utils */
+.text-muted {
+   color: var(--text-secondary) !important;
+}
+
+/* Cards */
+.card {
+   background-color: var(--bg-surface) !important;
+   border-color: var(--border-subtle) !important;
+   color: var(--text-primary) !important;
+}
+
+/* Badges */
+.badge.bg-dark {
+   background-color: var(--bg-elevated) !important;
+   border-color: var(--border-medium) !important;
+}
+
+.badge.bg-light {
+   background-color: var(--bg-elevated) !important;
+   color: var(--text-primary) !important;
+}
+
+.badge.bg-secondary {
+   background-color: var(--border-medium) !important;
+}
+
+/* ListGroup */
+.list-group-item {
+   background-color: var(--bg-surface) !important;
+   border-color: var(--border-subtle) !important;
+   color: var(--text-primary) !important;
+}
+
+.list-group-item-action:hover {
+   background-color: var(--bg-surface-hover) !important;
+}
+
+/* Backgrounds and borders */
+.bg-light {
+   background-color: var(--bg-elevated) !important;
+}
+
+.bg-white {
+   background-color: var(--bg-surface) !important;
+}
+
+.border-top, .border-bottom, .border {
+   border-color: var(--border-subtle) !important;
+}
+
+.border-secondary {
+   border-color: var(--border-medium) !important;
+}
+
+/* Form ranges */
+.form-range::-webkit-slider-thumb {
+   background: var(--gold);
+}
+.form-range::-moz-range-thumb {
+   background: var(--gold);
+}
+.form-range::-webkit-slider-runnable-track {
+   background: var(--border-medium);
+}
+
+/* Spinner */
+.spinner-border {
+   color: var(--gold) !important;
+}
+
+/* Progress bar */
+.progress {
+   background-color: var(--border-subtle) !important;
+}
+
+/* Nav pills and tabs */
+.nav-link {
+   color: var(--text-secondary) !important;
+}
+
+.nav-link.active {
+   color: var(--gold) !important;
 }

@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Container, Button, ButtonGroup, Spinner } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
+import { Routes, Route } from "react-router-dom";
+import { Dices, Plus } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -16,6 +18,8 @@ import { Dashboard } from "@/features/dashboard";
 import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
+import { PublicProfile } from "@/features/publicProfile";
+import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -24,9 +28,20 @@ import { LoadingOverlay } from "@/components/ui/LoadingOverlay/LoadingOverlay";
 
 import styles from "./App.module.css";
 
-function App() {
-   // ─── Custom Hooks (toda a lógica pesada fica isolada) ───
-   const { session, username, logout, updateUsername } = useAuth();
+export default function App() {
+   return (
+      <Routes>
+         {/* Se a URL for apenas "/", carrega o seu sistema completo */}
+         <Route path="/" element={<MainApp />} />
+         
+         {/* Se a URL for "/perfil/algum-nome", carrega a tela de visitante */}
+         <Route path="/perfil/:username" element={<PublicProfile />} />
+      </Routes>
+   );
+}
+
+function MainApp() {
+   const { session, username, avatarUrl, logout, updateUsername } = useAuth();
    const { movies, loading, fetchMovies } = useMovies(!!session);
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
@@ -104,140 +119,136 @@ function App() {
             session={session}
             onLogout={logout}
             username={username}
+            avatarUrl={avatarUrl}
             onProfileClick={() => setShowProfileModal(true)}
          />
 
-         {/* Abas mobile */}
-         <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
-            <div className={styles.mobileTabsInner}>
-               <Button
-                  variant={filters.viewMode === "watched" ? "primary" : "light"}
-                  className="rounded-pill px-4 fw-bold"
-                  onClick={() => filters.setViewMode("watched")}
-               >
-                  Já Vimos
-               </Button>
-               <Button
-                  variant={filters.viewMode === "watchlist" ? "primary" : "light"}
-                  className="rounded-pill px-4 fw-bold"
-                  onClick={() => filters.setViewMode("watchlist")}
-               >
-                  Watchlist
-               </Button>
+
+         {session && (
+            <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
+               <div className={styles.mobileTabsInner}>
+                  <button
+                     className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`}
+                     onClick={() => filters.setViewMode("watched")}
+                  >
+                     Já Vimos
+                  </button>
+                  <button
+                     className={`${styles.mobileTab} ${filters.viewMode === "watchlist" ? styles.mobileTabActive : ""}`}
+                     onClick={() => filters.setViewMode("watchlist")}
+                  >
+                     Watchlist
+                  </button>
+               </div>
             </div>
-         </div>
+         )}
+         
 
          <Container className="px-4 pb-5">
-            {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
+            {session && (
+               <>
+               {!loading && !filters.searchTerm && <Dashboard movies={movies} />}
 
-            <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-               <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
-                  <h5 className="text-muted mb-0">
-                     {loading
-                        ? "Carregando..."
-                        : filters.filteredMovies.length === movies.length
-                          ? `Todos os ${movies.length} filmes`
-                          : filters.filteredMovies.length === 1
-                            ? "Exibindo 1 filme"
-                            : `Exibindo ${filters.filteredMovies.length} filmes`}
-                  </h5>
+               <div className={styles.subheader}>
+                  <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
+                     <span className={styles.movieCount}>
+                        {loading
+                           ? "Carregando..."
+                           : filters.filteredMovies.length === movies.length
+                           ? `Todos os ${movies.length} filmes`
+                           : filters.filteredMovies.length === 1
+                              ? "Exibindo 1 filme"
+                              : `Exibindo ${filters.filteredMovies.length} filmes`}
+                     </span>
 
-                  <ButtonGroup size="sm" className="d-none d-md-inline-flex shadow-sm">
-                     <Button
-                        variant={filters.viewMode === "watched" ? "secondary" : "outline-secondary"}
-                        onClick={() => filters.setViewMode("watched")}
-                        className={filters.viewMode === "watched" ? "fw-bold border-secondary" : "text-muted border-secondary"}
-                     >
-                        Já Vimos
-                     </Button>
-                     <Button
-                        variant={filters.viewMode === "watchlist" ? "secondary" : "outline-secondary"}
-                        onClick={() => filters.setViewMode("watchlist")}
-                        className={filters.viewMode === "watchlist" ? "fw-bold border-secondary" : "text-muted border-secondary"}
-                     >
-                        Watchlist
-                     </Button>
-                  </ButtonGroup>
-
-                  <ButtonGroup>
-                     {filters.viewMode === "watchlist" &&
-                        movies.some((m) => m.status === "watchlist") && (
-                           <Button
-                              variant="warning"
-                              size="sm"
-                              className="ms-2 fw-bold shadow-sm d-flex align-items-center justify-content-center"
-                              onClick={() => setShowRoulette(true)}
-                              title="Sortear um filme aleatório"
-                           >
-                              <span className="fs-6 d-md-none">🎲</span>
-                              <span className="d-none d-md-inline">Sortear</span>
-                           </Button>
-                        )}
-
-                     {session && (
-                        <Button
-                           variant="primary"
-                           size="sm"
-                           className="fw-bold shadow-sm ms-3 rounded-pill px-3"
-                           onClick={() => {
-                              setMovieToEdit(null);
-                              setShowAddModal(true);
-                           }}
+                     <div className={styles.viewToggle}>
+                        <button
+                           className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
+                           onClick={() => filters.setViewMode("watched")}
                         >
-                           <span className="d-md-none">+ Filme</span>{" "}
-                           <span className="d-none d-md-inline">+ Adicionar Filme</span>
-                        </Button>
-                     )}
-                  </ButtonGroup>
-               </div>
+                           Já Vimos
+                        </button>
+                        <button
+                           className={`${styles.viewBtn} ${filters.viewMode === "watchlist" ? styles.viewBtnActive : ""}`}
+                           onClick={() => filters.setViewMode("watchlist")}
+                        >
+                           Watchlist
+                        </button>
+                     </div>
 
-               <ButtonGroup size="sm" className="d-md-none w-100">
-                  <Button
-                     variant={!filters.onlyNational && !filters.onlyOscar ? "secondary" : "outline-secondary"}
-                     onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
-                     className="flex-grow-1"
-                  >
-                     Todos
-                  </Button>
-                  <Button
-                     variant={filters.onlyNational ? "success" : "outline-success"}
-                     onClick={() => filters.setOnlyNational(!filters.onlyNational)}
-                     className="flex-grow-1"
-                  >
-                     Nacionais
-                  </Button>
-                  <Button
-                     variant={filters.onlyOscar ? "warning" : "outline-warning"}
-                     onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
-                     className="flex-grow-1 btn-outline-oscar"
-                  >
-                     Oscar
-                  </Button>
-               </ButtonGroup>
-            </div>
+                     <div className={styles.actionGroup}>
+                        {filters.viewMode === "watchlist" &&
+                           movies.some((m) => m.status === "watchlist") && (
+                              <button
+                                 className={styles.rouletteBtn}
+                                 onClick={() => setShowRoulette(true)}
+                                 title="Sortear um filme aleatório"
+                              >
+                                 <Dices size={16} />
+                                 <span className="d-none d-md-inline">Sortear</span>
+                              </button>
+                           )}
+
+                        {session && (
+                           <button
+                              className={styles.addBtn}
+                              onClick={() => {
+                                 setMovieToEdit(null);
+                                 setShowAddModal(true);
+                              }}
+                           >
+                              <Plus size={16} className="d-md-none" />
+                              <span className="d-md-none"> Filme</span>
+                              <span className="d-none d-md-inline">+ Adicionar Filme</span>
+                           </button>
+                        )}
+                     </div>
+                  </div>
+
+                  <div className={styles.mobileFilters}>
+                     <button
+                        className={`${styles.mobileFilterBtn} ${!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : ""}`}
+                        onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
+                     >
+                        Todos
+                     </button>
+                     <button
+                        className={`${styles.mobileFilterBtn} ${filters.onlyNational ? styles.mobileFilterBtnNationalActive : ""}`}
+                        onClick={() => filters.setOnlyNational(!filters.onlyNational)}
+                     >
+                        Nacionais
+                     </button>
+                     <button
+                        className={`${styles.mobileFilterBtn} ${filters.onlyOscar ? styles.mobileFilterBtnOscarActive : ""}`}
+                        onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
+                     >
+                        Oscar
+                     </button>
+                  </div>
+               </div>
+               </>
+            )}
 
             {loading && movies.length === 0 ? (
-               <div className="text-center mt-5">
+               <div className={styles.loadingState}>
                   <Spinner animation="border" role="status" />
                   <p className="mt-2">Carregando...</p>
                </div>
             ) : !session ? (
                <div className={styles.welcomeCard}>
-                  <h3 className="fw-bold text-muted mb-3">Bem-vindo ao JJ Reviews!</h3>
-                  <p className="text-secondary mb-4 fs-5">
+                  <h3 className={styles.welcomeTitle}>Bem-vindo ao JJ Reviews!</h3>
+                  <p className={styles.welcomeText}>
                      Faça login ou crie sua conta para começar a montar o seu diário de filmes e avaliações.
                   </p>
-                  <Button
-                     variant="primary"
-                     size="lg"
-                     className="fw-bold px-5"
+                  <button
+                     className={styles.welcomeBtn}
                      onClick={() => setShowLoginModal(true)}
                   >
                      Fazer Login / Cadastrar
-                  </Button>
+                  </button>
                </div>
             ) : filters.filteredMovies.length === 0 ? (
-               <div className="text-center mt-5 text-muted">
+               <div className={styles.emptyState}>
                   <h5>Nenhum filme encontrado na sua lista.</h5>
                   <p>Que tal adicionar o seu primeiro filme?</p>
                </div>
@@ -300,8 +311,21 @@ function App() {
                handleOpenModal(movie);
             }}
          />
+
+       { /* ─── Navegação Mobile ─── */}
+         <BottomNav
+            session={session}
+            avatarUrl={avatarUrl}
+            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onGamesClick={() => setIsBattleMode(true)} 
+            onAddClick={() => {
+               setMovieToEdit(null);
+               setShowAddModal(true);
+            }}
+            onProfileClick={() => setShowProfileModal(true)}
+            onLoginClick={() => setShowLoginModal(true)}
+         />
       </div>
    );
 }
 
-export default App;
