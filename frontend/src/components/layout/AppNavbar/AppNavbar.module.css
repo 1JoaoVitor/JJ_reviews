@@ -1,0 +1,361 @@
+/* ─── AppNavbar — Dark Theme ─── */
+
+.navbar {
+   background-color: var(--bg-surface);
+   border-bottom: 1px solid var(--border-subtle);
+   position: sticky;
+   top: 0;
+   z-index: 1030;
+   margin-bottom: 2.5rem;
+}
+
+/* ─── Row 1: Brand + Search + User actions ─── */
+.topRow {
+   display: flex;
+   align-items: center;
+   gap: 1rem;
+   padding: 0.75rem 1.25rem;
+}
+
+.brand {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   text-decoration: none;
+   flex-shrink: 0;
+}
+
+.brandCircle {
+   width: 36px;
+   height: 36px;
+   border-radius: 50%;
+   background-color: var(--gold);
+   color: var(--text-inverse);
+   font-weight: 900;
+   font-size: 0.9rem;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   letter-spacing: -0.5px;
+}
+
+.brandText {
+   font-weight: 800;
+   font-size: var(--font-xl);
+   color: var(--text-primary);
+   letter-spacing: -0.5px;
+}
+
+/* Search */
+.searchWrapper {
+   flex: 1;
+   max-width: 400px;
+   margin: 0 auto;
+}
+
+.searchInput {
+   width: 100%;
+   background-color: var(--bg-elevated) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-pill) !important;
+   padding: 0.5rem 1rem 0.5rem 2.5rem;
+   color: var(--text-primary) !important;
+   font-size: var(--font-sm);
+   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.searchInput:focus {
+   border-color: var(--gold) !important;
+   box-shadow: 0 0 0 3px var(--gold-glow) !important;
+}
+
+.searchIcon {
+   position: absolute;
+   left: 0.85rem;
+   top: 50%;
+   transform: translateY(-50%);
+   color: var(--text-muted);
+   pointer-events: none;
+}
+
+/* User actions */
+.userActions {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   flex-shrink: 0;
+}
+
+.avatarBtn {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background: transparent;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-pill);
+   padding: 0.35rem 0.75rem 0.35rem 0.35rem;
+   color: var(--text-primary);
+   cursor: pointer;
+   transition: border-color var(--transition-fast), background-color var(--transition-fast);
+   font-size: var(--font-sm);
+   font-weight: 600;
+}
+
+.avatarBtn:hover {
+   border-color: var(--gold-dim);
+   background-color: var(--bg-elevated);
+}
+
+.avatarImg {
+   width: 28px;
+   height: 28px;
+   border-radius: 50%;
+   object-fit: cover;
+}
+
+.avatarPlaceholder {
+   width: 28px;
+   height: 28px;
+   border-radius: 50%;
+   background: var(--bg-elevated);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   color: var(--text-muted);
+}
+
+/* ─── Row 2: Filters ─── */
+.filtersRow {
+   display: flex;
+   align-items: center;
+   gap: 0.75rem;
+   padding: 0.5rem 1.25rem;
+   border-top: 1px solid var(--border-subtle);
+   flex-wrap: wrap;
+}
+
+.filtersRow::-webkit-scrollbar {
+   display: none;
+}
+
+/* Filter chips */
+.chip {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.35rem;
+   padding: 0.375rem 0.85rem;
+   border-radius: var(--radius-pill);
+   font-size: var(--font-sm);
+   font-weight: 600;
+   white-space: nowrap;
+   cursor: pointer;
+   border: 1px solid var(--border-medium);
+   background: transparent;
+   color: var(--text-secondary);
+   transition: all var(--transition-fast);
+}
+
+.chip:hover {
+   border-color: var(--text-secondary);
+   color: var(--text-primary);
+   background: var(--bg-elevated);
+}
+
+.chipActive {
+   border-color: var(--gold) !important;
+   background: rgba(232, 177, 0, 0.12) !important;
+   color: var(--gold) !important;
+}
+
+.chipNationalActive {
+   border-color: var(--success) !important;
+   background: rgba(34, 197, 94, 0.12) !important;
+   color: var(--success) !important;
+}
+
+.chipOscarActive {
+   border-color: var(--gold) !important;
+   background: rgba(232, 177, 0, 0.15) !important;
+   color: var(--gold) !important;
+}
+
+/* ─── Custom Dropdowns (Substituindo os Selects nativos) ─── */
+.customDropdownToggle {
+   background-color: var(--bg-elevated) !important;
+   border: 1px solid var(--border-medium) !important;
+   border-radius: var(--radius-pill) !important;
+   color: var(--text-primary) !important;
+   font-size: var(--font-sm) !important;
+   font-weight: 600 !important;
+   padding: 0.375rem 1rem 0.375rem 1rem !important;
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   transition: border-color var(--transition-fast);
+}
+
+.customDropdownToggle:hover,
+.customDropdownToggle:focus {
+   border-color: var(--gold) !important;
+}
+
+/* Reduz o tamanho da setinha padrão do Bootstrap */
+.customDropdownToggle::after {
+   margin-left: 0.25rem;
+   border-top-width: 0.25em;
+   border-right-width: 0.25em;
+   border-left-width: 0.25em;
+}
+
+/* Menu */
+.dropdownMenu {
+   background-color: var(--bg-surface) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-md) !important;
+   box-shadow: var(--shadow-lg) !important;
+   padding: 0.5rem 0 !important;
+   margin-top: 0.5rem !important;
+   min-width: 180px !important;
+}
+
+.dropdownItem {
+   color: var(--text-secondary) !important;
+   font-size: var(--font-sm) !important;
+   font-weight: 500 !important;
+   padding: 0.4rem 1rem !important;
+   transition: all var(--transition-fast) !important;
+   cursor: pointer;
+}
+
+.dropdownItem:hover {
+   background-color: var(--bg-elevated) !important;
+   color: var(--gold) !important;
+}
+
+.dropdownItemActive {
+   background-color: rgba(232, 177, 0, 0.1) !important;
+   color: var(--gold) !important;
+   font-weight: 700 !important;
+}
+
+.dropdownGroup {
+   display: flex;
+   gap: 0.75rem;
+   flex-wrap: wrap;
+}
+
+.divider {
+   width: 1px;
+   height: 20px;
+   background: var(--border-medium);
+   flex-shrink: 0;
+}
+
+/* ─── Icon buttons ─── */
+.iconBtn {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   width: 36px;
+   height: 36px;
+   border-radius: var(--radius-md);
+   background: transparent;
+   border: 1px solid var(--border-subtle);
+   color: var(--text-secondary);
+   cursor: pointer;
+   transition: all var(--transition-fast);
+   flex-shrink: 0;
+}
+
+.iconBtn:hover {
+   border-color: var(--gold-dim);
+   color: var(--gold);
+   background: rgba(232, 177, 0, 0.08);
+}
+
+/* Primary CTA button (gold) */
+.btnPrimary {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.4rem;
+   padding: 0.4rem 1rem;
+   border-radius: var(--radius-md);
+   background: var(--gold);
+   color: var(--text-inverse);
+   border: none;
+   font-weight: 700;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: all var(--transition-fast);
+   white-space: nowrap;
+}
+
+.btnPrimary:hover {
+   background: var(--gold-hover);
+   box-shadow: var(--shadow-glow);
+}
+
+/* Ghost button */
+.btnGhost {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.4rem;
+   padding: 0.4rem 0.75rem;
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--text-secondary);
+   border: none;
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: all var(--transition-fast);
+   white-space: nowrap;
+}
+
+.btnGhost:hover {
+   color: var(--text-primary);
+   background: var(--bg-elevated);
+}
+
+.btnDanger:hover {
+   color: var(--danger);
+   background: rgba(239, 68, 68, 0.1);
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 767px) {
+   .topRow {
+      padding: 0.6rem 0.75rem;
+      gap: 0.5rem;
+   }
+
+   .searchWrapper {
+      max-width: none;
+   }
+
+   .brandText {
+      display: none;
+   }
+
+   .filtersRow {
+      padding: 0.5rem 0.75rem;
+      gap: 0.5rem;
+   }
+
+   .desktopOnly {
+      display: none !important;
+   }
+
+   .userActions {
+      display: none;
+   }
+   .dropdownGroup {
+      width: 100%; 
+      margin-top: 0.25rem;
+   }
+
+   .divider {
+      display: none;
+   }
+}
+
