@@ -1,7 +1,7 @@
-import { Card } from "react-bootstrap";
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieCard.module.css";
+import { Star } from "lucide-react";
 
 interface MovieCardProps {
    movie: MovieData;
@@ -10,80 +10,75 @@ interface MovieCardProps {
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
    const badgeStyle = getBadgeStyle(movie.recommended);
+   const isWatchlist = movie.rating === null;
 
    return (
-      <Card
-         className={`h-100 shadow border-0 overflow-hidden ${styles.card}`}
+      <div
+         className={styles.card}
          onClick={() => onClick(movie)}
+         role="button"
+         tabIndex={0}
+         onKeyDown={(e) => e.key === "Enter" && onClick(movie)}
       >
-         <div className="movie-poster-container">
+         <div className={styles.posterContainer}>
             {movie.poster_path ? (
-               <Card.Img
-                  variant="top"
+               <img
                   src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                  alt={movie.title || "Poster"}
                   className={styles.posterImage}
+                  loading="lazy"
                />
             ) : (
-               <div className="d-flex align-items-center justify-content-center h-100 text-white">
-                  Sem Capa
-               </div>
+               <div className={styles.posterPlaceholder}>Sem Capa</div>
             )}
 
-            <div className={styles.ratingBadge}>
-               {movie.rating !== null ? `Nota: ${movie.rating}` : "Na Fila"}
+            <div className={styles.posterGradient} />
+
+            <div className={`${styles.ratingBadge} ${isWatchlist ? styles.ratingBadgeWatchlist : ""}`}>
+              {isWatchlist ? (
+                  "Na Fila"
+               ) : (
+                  <>
+                     <Star size={12} fill="currentColor" strokeWidth={2} style={{ marginTop: "-1px" }} /> 
+                     {movie.rating}
+                  </>
+               )}
             </div>
          </div>
 
-         <Card.Body className="d-flex flex-column p-3">
-            <Card.Title
-               className="fs-6 fw-bold text-truncate"
-               title={movie.title}
-            >
+         <div className={styles.body}>
+            <h3 className={styles.title} title={movie.title}>
                {movie.title || `Filme #${movie.tmdb_id}`}
-            </Card.Title>
+            </h3>
 
-            <p className="text-muted small mb-1 text-truncate">
-               Dir: {movie.director}
-            </p>
+            <span className={styles.meta}>
+               {movie.director}
+               {movie.release_date ? ` · ${movie.release_date.split("-")[0]}` : ""}
+            </span>
 
-            <p className="text-muted small mb-2">
-               {movie.release_date ? movie.release_date.split("-")[0] : ""}
-               {movie.isNational && (
-                  <span className={`ms-2 badge bg-success text-white ${styles.tagBadge}`}>
-                     NACIONAL
-                  </span>
-               )}
-               {movie.isOscar && (
-                  <span className={`ms-2 badge bg-warning text-dark border border-warning ${styles.tagBadge}`}>
-                     OSCAR 26
-                  </span>
-               )}
-            </p>
-
-            <hr className="my-2" />
-
-            {movie.recommended && (
-               <div className="mt-auto text-center">
-                  <span
-                     className={`badge rounded-pill w-100 py-2 ${styles.recommendBadge}`}
-                     style={{
-                        backgroundColor: badgeStyle.bg,
-                        color: badgeStyle.color,
-                     }}
-                  >
-                     {movie.recommended}
-                  </span>
+            {(movie.isNational || movie.isOscar) && (
+               <div className={styles.tags}>
+                  {movie.isNational && <span className={`${styles.tag} ${styles.tagNational}`}>Nacional</span>}
+                  {movie.isOscar && <span className={`${styles.tag} ${styles.tagOscar}`}>Oscar</span>}
                </div>
             )}
 
-            {movie.rating === null && (
-               <div className="mt-auto text-center">
-                  <span className="badge bg-secondary w-100 py-2">
-                     Aguardando...
-                  </span>
-               </div>
-            )}
-         </Card.Body>
-      </Card>
+            <div className={styles.divider} />
+
+            {movie.recommended ? (
+               <span
+                  className={styles.recommendBadge}
+                  style={{
+                     backgroundColor: badgeStyle.bg,
+                     color: badgeStyle.color,
+                  }}
+               >
+                  {movie.recommended}
+               </span>
+            ) : isWatchlist ? (
+               <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
+            ) : null}
+         </div>
+      </div>
    );
 }

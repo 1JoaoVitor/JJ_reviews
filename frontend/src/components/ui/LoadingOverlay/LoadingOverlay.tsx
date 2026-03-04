@@ -8,7 +8,7 @@ interface LoadingOverlayProps {
 export function LoadingOverlay({ message = "Carregando..." }: LoadingOverlayProps) {
    return (
       <div className={styles.overlay}>
-         <div className="text-white text-center">
+         <div className={styles.content}>
             <Spinner animation="border" className="mb-3" />
             <h3>{message}</h3>
          </div>

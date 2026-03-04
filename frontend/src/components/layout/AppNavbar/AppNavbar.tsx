@@ -1,11 +1,5 @@
-import {
-   Navbar,
-   Container,
-   ButtonGroup,
-   Button,
-   Form,
-   InputGroup,
-} from "react-bootstrap";
+import { Search, Swords, LogOut, LogIn, User } from "lucide-react";
+import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
 
@@ -26,7 +20,9 @@ interface AppNavbarProps {
    onLogout: () => void;
    onLoginClick: () => void;
    username: string;
+   avatarUrl?: string | null;
    onProfileClick: () => void;
+   showFilters?: boolean;
 }
 
 export function AppNavbar({
@@ -46,116 +42,170 @@ export function AppNavbar({
    onLogout,
    onLoginClick,
    username,
+   avatarUrl,
    onProfileClick,
+   showFilters = true,
 }: AppNavbarProps) {
+
+   const sortOptions: Record<string, string> = {
+      default: "Recentes",
+      rating: "Melhores Notas",
+      date: "Lançamento",
+      alpha: "Ordem A-Z",
+   };
+
+
    return (
-      <Navbar bg="dark" variant="dark" expand="lg" sticky="top" className="mb-4 shadow-sm px-3">
-         <Container fluid>
-            <Navbar.Brand href="#" className="fw-bold fs-3 d-flex align-items-center">
-               <div className={`bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2 ${styles.brand}`}>
-                  JJ
+      <nav className={styles.navbar}>
+         {/* ─── Row 1: Brand + Search + User ─── */}
+         <div className={styles.topRow}>
+            <a href="#" className={styles.brand}>
+               <div className={styles.brandCircle}>JJ</div>
+               <span className={styles.brandText}>Reviews</span>
+            </a>
+
+            {/* Search */}
+            <div className={styles.searchWrapper}>
+               <div style={{ position: "relative" }}>
+                  <Search size={16} className={styles.searchIcon} />
+                  <input
+                     type="search"
+                     placeholder="Buscar filmes..."
+                     value={searchTerm}
+                     onChange={(e) => setSearchTerm(e.target.value)}
+                     className={styles.searchInput}
+                  />
                </div>
-               <span>Reviews</span>
-            </Navbar.Brand>
+            </div>
 
-            <div className="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-3 w-100 justify-content-end mt-3 mt-md-0">
-               <div className="d-flex gap-2 w-100 justify-content-between justify-content-md-end">
-                  {/* Botões de usuário */}
-                  {session ? (
-                     <div className="d-flex align-items-center gap-2">
-                        <Button
-                           variant="outline-light"
-                           size="sm"
-                           onClick={onProfileClick}
-                           className="fw-bold border-secondary text-white"
-                        >
-                           👤 {username || "Perfil"}
-                        </Button>
-                        <Button variant="outline-danger" size="sm" onClick={onLogout} className="fw-bold">
-                           Sair
-                        </Button>
-                     </div>
-                  ) : (
-                     <Button variant="outline-primary" size="sm" onClick={onLoginClick} className="fw-bold">
-                        Entrar
-                     </Button>
-                  )}
+            {/* User actions */}
+            <div className={styles.userActions}>
+               {/* Battle button */}
+               <button
+                  className={styles.iconBtn}
+                  onClick={onStartBattle}
+                  title="Modo Batalha"
+               >
+                  <Swords size={18} />
+               </button>
 
-                  {/* Batalha */}
-                  <Button variant="dark" className="me-3 fw-bold" onClick={onStartBattle} size="sm">
-                     <span className="fs-6">⚔️</span>
-                     <span className="d-none d-md-inline ms-2">Batalha</span>
-                  </Button>
-
-                  <ButtonGroup className="d-none d-md-flex">
-                     <Button
-                        variant={!onlyNational && !onlyOscar ? "secondary" : "outline-secondary"}
-                        onClick={() => { setOnlyNational(false); setOnlyOscar(false); }}
-                        className="fw-bold"
-                     >
-                        Todos
-                     </Button>
-                     <Button
-                        variant={onlyNational ? "success" : "outline-success"}
-                        onClick={() => setOnlyNational(!onlyNational)}
-                        className="fw-bold"
-                     >
-                        Nacionais
-                     </Button>
-                     <Button
-                        variant={onlyOscar ? "warning" : "outline-warning"}
-                        onClick={() => setOnlyOscar(!onlyOscar)}
-                        className={`btn-outline-oscar ${styles.oscarButton}`}
-                     >
-                        Oscar
-                        {onlyOscar && (
-                           <span className="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                              <span className="visually-hidden">Filtro ativo</span>
+               {session ? (
+                  <>
+                     <button className={styles.avatarBtn} onClick={onProfileClick}>
+                        {avatarUrl ? (
+                           <img src={avatarUrl} alt="Avatar" className={styles.avatarImg} />
+                        ) : (
+                           <span className={styles.avatarPlaceholder}>
+                              <User size={16} />
                            </span>
                         )}
-                     </Button>
-                  </ButtonGroup>
-
-                  {/* Dropdowns */}
-                  <div className="d-flex gap-2 flex-grow-1 flex-md-grow-0">
-                     <Form.Select
-                        className={`bg-dark text-white border-secondary ${styles.genreSelect}`}
-                        value={selectedGenre}
-                        onChange={(e) => setSelectedGenre(e.target.value)}
+                        <span className={styles.desktopOnly}>{username || "Perfil"}</span>
+                     </button>
+                     <button
+                        className={`${styles.btnGhost} ${styles.btnDanger}`}
+                        onClick={onLogout}
+                        title="Sair"
                      >
-                        <option value="">Todos</option>
-                        {availableGenres.map((genre) => (
-                           <option key={genre} value={genre}>{genre}</option>
-                        ))}
-                     </Form.Select>
-
-                     <Form.Select
-                        aria-label="Ordenar por"
-                        className={`bg-dark text-white border-secondary ${styles.sortSelect}`}
-                        value={sortOrder}
-                        onChange={(e) => setSortOrder(e.target.value)}
-                     >
-                        <option value="default">Recentes</option>
-                        <option value="rating">Melhores Notas</option>
-                        <option value="date">Lançamento</option>
-                        <option value="alpha">Ordem A-Z</option>
-                     </Form.Select>
-                  </div>
-               </div>
-
-               <Form className="d-flex custom-search-bar" onSubmit={(e) => e.preventDefault()}>
-                  <InputGroup>
-                     <InputGroup.Text id="search-icon">🔍</InputGroup.Text>
-                     <Form.Control
-                        type="search"
-                        placeholder="Buscar..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                     />
-                  </InputGroup>
-               </Form>
+                        <LogOut size={16} />
+                        <span className={styles.desktopOnly}>Sair</span>
+                     </button>
+                  </>
+               ) : (
+                  <button className={styles.btnPrimary} onClick={onLoginClick}>
+                     <LogIn size={16} />
+                     Entrar
+                  </button>
+               )}
             </div>
-         </Container>
-      </Navbar>
+         </div>
+
+         {/* ─── Row 2: Filters ─── */}
+         {showFilters && (
+            <div className={styles.filtersRow}>
+               {/* Filter chips */}
+               <button
+                  className={`${styles.chip} ${!onlyNational && !onlyOscar ? styles.chipActive : ""}`}
+                  onClick={() => { setOnlyNational(false); setOnlyOscar(false); }}
+               >
+                  Todos
+               </button>
+               <button
+                  className={`${styles.chip} ${onlyNational ? styles.chipNationalActive : ""}`}
+                  onClick={() => setOnlyNational(!onlyNational)}
+               >
+                  Nacionais
+               </button>
+               <button
+                  className={`${styles.chip} ${onlyOscar ? styles.chipOscarActive : ""}`}
+                  onClick={() => setOnlyOscar(!onlyOscar)}
+               >
+                  Oscar
+               </button>
+
+               <div className={styles.divider} />
+
+               <div className={styles.dropdownGroup}>
+                  {/* Dropdown de Gênero */}
+                  <Dropdown>
+                     <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
+                        {selectedGenre || "Gênero"}
+                     </Dropdown.Toggle>
+
+                     <Dropdown.Menu className={styles.dropdownMenu}>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${!selectedGenre ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSelectedGenre("")}
+                        >
+                           Todos os Gêneros
+                        </Dropdown.Item>
+                        {availableGenres.map((genre) => (
+                           <Dropdown.Item 
+                              key={genre} 
+                              className={`${styles.dropdownItem} ${selectedGenre === genre ? styles.dropdownItemActive : ""}`}
+                              onClick={() => setSelectedGenre(genre)}
+                           >
+                              {genre}
+                           </Dropdown.Item>
+                        ))}
+                     </Dropdown.Menu>
+                  </Dropdown>
+
+                  {/* Dropdown de Ordenação */}
+                  <Dropdown>
+                     <Dropdown.Toggle variant="custom" className={styles.customDropdownToggle}>
+                        {sortOptions[sortOrder]}
+                     </Dropdown.Toggle>
+
+                     <Dropdown.Menu className={styles.dropdownMenu}>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "default" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("default")}
+                        >
+                           Recentes
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "rating" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("rating")}
+                        >
+                           Melhores Notas
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "date" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("date")}
+                        >
+                           Lançamento
+                        </Dropdown.Item>
+                        <Dropdown.Item 
+                           className={`${styles.dropdownItem} ${sortOrder === "alpha" ? styles.dropdownItemActive : ""}`} 
+                           onClick={() => setSortOrder("alpha")}
+                        >
+                           Ordem A-Z
+                        </Dropdown.Item>
+                     </Dropdown.Menu>
+                  </Dropdown>
+               </div>
+            </div>
+         )}
+      </nav>
    );
 }

@@ -1,4 +1,4 @@
-import { Card, Row, Col } from "react-bootstrap";
+import { Film, Star, Globe, Clapperboard } from "lucide-react";
 import type { MovieData } from "@/types";
 import styles from "./Dashboard.module.css";
 
@@ -50,49 +50,37 @@ export function Dashboard({ movies }: DashboardProps) {
    });
 
    return (
-      <div className="mb-5">
-         <h5 className="text-muted mb-3">Resumo</h5>
-         <Row xs={2} md={4} className="g-3">
-            <Col>
-               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardTotal}`}>
-                  <h3 className="fw-bold mb-0">{totalMovies}</h3>
-                  <small className="text-muted">Filmes Assistidos</small>
-               </Card>
-            </Col>
+      <div>
+         <h5 className={styles.heading}>Resumo</h5>
+         <div className={styles.grid}>
+            <div className={`${styles.statCard} ${styles.statCardTotal}`}>
+               <div className={styles.icon}><Film size={20} color="var(--gold)" /></div>
+               <div className={styles.statValue}>{totalMovies}</div>
+               <div className={styles.statLabel}>Filmes Assistidos</div>
+            </div>
 
-            <Col>
-               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardAverage}`}>
-                  <h3 className={`fw-bold mb-0 ${styles.averageValue}`}>
-                     {averageRating}
-                  </h3>
-                  <small className="text-muted">Média Geral</small>
-               </Card>
-            </Col>
+            <div className={`${styles.statCard} ${styles.statCardAverage}`}>
+               <div className={styles.icon}><Star size={20} color="#3B82F6" /></div>
+               <div className={styles.statValue}>{averageRating}</div>
+               <div className={styles.statLabel}>Média Geral</div>
+            </div>
 
-            <Col>
-               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardInternational}`}>
-                  <h3 className="fw-bold mb-0">{nonUSCount}</h3>
-                  <small className="text-muted">
-                     Fora dos EUA ({nonUSPercentage}%)
-                  </small>
-               </Card>
-            </Col>
+            <div className={`${styles.statCard} ${styles.statCardInternational}`}>
+               <div className={styles.icon}><Globe size={20} color="#10B981" /></div>
+               <div className={styles.statValue}>{nonUSCount}</div>
+               <div className={styles.statLabel}>Fora dos EUA ({nonUSPercentage}%)</div>
+            </div>
 
-            <Col>
-               <Card className={`h-100 border-0 shadow-sm ${styles.statCard} ${styles.statCardDirector}`}>
-                  <div className="d-flex align-items-center justify-content-center h-100 px-2">
-                     <div>
-                        <h6 className={`fw-bold mb-1 text-truncate ${styles.directorName}`}>
-                           {maxCount > 1 ? topDirector : "Vários"}
-                        </h6>
-                        <small className="text-muted">
-                           {maxCount > 1 ? `${maxCount} filmes` : "Diretor Favorito"}
-                        </small>
-                     </div>
-                  </div>
-               </Card>
-            </Col>
-         </Row>
+            <div className={`${styles.statCard} ${styles.statCardDirector}`}>
+               <div className={styles.icon}><Clapperboard size={20} color="#A855F7" /></div>
+               <div className={styles.directorName}>
+                  {maxCount > 1 ? topDirector : "Vários"}
+               </div>
+               <div className={styles.statLabel}>
+                  {maxCount > 1 ? `${maxCount} filmes` : "Diretor Favorito"}
+               </div>
+            </div>
+         </div>
       </div>
    );
 }

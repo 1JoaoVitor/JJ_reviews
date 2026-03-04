@@ -1,0 +1,173 @@
+.avatarWrapper {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   margin-bottom: 1.5rem;
+}
+
+.avatarCircle {
+   width: 120px;
+   height: 120px;
+   border-radius: 50%;
+   background: var(--bg-elevated);
+   border: 3px solid var(--border-subtle);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   overflow: hidden;
+   margin-bottom: 0.75rem;
+}
+
+.avatarImage {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+}
+
+.avatarPlaceholder {
+   color: var(--text-muted);
+}
+
+.changePhotoBtn {
+   padding: 0.4rem 1.5rem;
+   border: 1px solid var(--gold);
+   border-radius: var(--radius-pill);
+   background: transparent;
+   color: var(--gold);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: background 0.2s, color 0.2s;
+}
+
+.changePhotoBtn:hover {
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+.divider {
+   border: none;
+   border-top: 1px solid var(--border-subtle);
+   margin: 0.5rem 0 1rem;
+}
+
+.formLabel {
+   font-weight: 600;
+   font-size: var(--font-sm);
+   color: var(--text-secondary);
+   text-transform: uppercase;
+   letter-spacing: 0.03em;
+   margin-bottom: 0.35rem;
+}
+
+.saveBtn {
+   width: 100%;
+   padding: 0.75rem;
+   border: none;
+   border-radius: var(--radius-md);
+   background: var(--gold);
+   color: var(--bg-page);
+   font-weight: 700;
+   font-size: var(--font-base);
+   cursor: pointer;
+   transition: background 0.2s, transform 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+   background: var(--gold-hover);
+   transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+}
+
+.shareLinkBtn {
+   width: 100%;
+   padding: 0.75rem;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--text-primary);
+   font-weight: 600;
+   font-size: var(--font-base);
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 0.5rem;
+   transition: border-color 0.2s, color 0.2s;
+}
+
+.shareLinkBtn:hover {
+   border-color: var(--gold);
+   color: var(--gold);
+}
+
+/* Crop mode */
+.cropperContainer {
+   width: 100%;
+   height: 300px;
+   position: relative;
+   background: var(--bg-page);
+   border-radius: var(--radius-lg);
+   overflow: hidden;
+}
+
+.zoomLabel {
+   font-size: var(--font-sm);
+   color: var(--text-muted);
+   font-weight: 600;
+   text-transform: uppercase;
+   margin-bottom: 0;
+}
+
+.cropActions {
+   display: flex;
+   gap: 0.75rem;
+   width: 100%;
+   margin-top: 1.5rem;
+}
+
+.cancelBtn {
+   flex: 1;
+   padding: 0.65rem;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--text-secondary);
+   font-weight: 600;
+   cursor: pointer;
+   transition: border-color 0.2s;
+}
+
+.cancelBtn:hover:not(:disabled) {
+   border-color: var(--text-muted);
+}
+
+.cancelBtn:disabled {
+   opacity: 0.5;
+   cursor: not-allowed;
+}
+
+.confirmBtn {
+   flex: 1;
+   padding: 0.65rem;
+   border: none;
+   border-radius: var(--radius-md);
+   background: var(--gold);
+   color: var(--bg-page);
+   font-weight: 700;
+   cursor: pointer;
+   transition: background 0.2s;
+}
+
+.confirmBtn:hover:not(:disabled) {
+   background: var(--gold-hover);
+}
+
+.confirmBtn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+}

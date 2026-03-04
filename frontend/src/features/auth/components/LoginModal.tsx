@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Modal, Button, Form, Alert } from "react-bootstrap";
+import { Modal, Form, Alert } from "react-bootstrap";
 import { supabase } from "@/lib/supabase";
+import styles from "./LoginModal.module.css";
 
 interface LoginModalProps {
    show: boolean;
@@ -42,16 +43,16 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
 
    return (
       <Modal show={show} onHide={onHide} centered size="sm">
-         <Modal.Header closeButton>
-            <Modal.Title>{isLogin ? "Login" : "Cadastro"}</Modal.Title>
+         <Modal.Header closeButton className="border-0 pb-0">
+            <Modal.Title className="fw-bold">{isLogin ? "Login" : "Cadastro"}</Modal.Title>
          </Modal.Header>
 
-         <Modal.Body className="p-4">
+         <Modal.Body className="p-4 pt-2">
             {error && <Alert variant="danger">{error}</Alert>}
 
             <Form onSubmit={handleLogin}>
                <Form.Group className="mb-3">
-                  <Form.Label className="fw-bold">Email</Form.Label>
+                  <Form.Label className={styles.formLabel}>Email</Form.Label>
                   <Form.Control
                      type="email"
                      value={email}
@@ -61,7 +62,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                </Form.Group>
 
                <Form.Group className="mb-4">
-                  <Form.Label className="fw-bold">Senha</Form.Label>
+                  <Form.Label className={styles.formLabel}>Senha</Form.Label>
                   <Form.Control
                      type="password"
                      value={password}
@@ -69,28 +70,27 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                   />
                </Form.Group>
 
-               <Button
-                  variant="dark"
+               <button
                   type="submit"
-                  className="w-100 mb-3 py-2 fw-bold"
+                  className={styles.submitBtn}
                   disabled={loading}
                >
                   {loading ? "Aguarde..." : isLogin ? "Entrar" : "Cadastrar"}
-               </Button>
+               </button>
 
-               <div className="text-center border-top pt-3 mt-2">
-                  <Button
-                     variant="link"
+               <div className={styles.toggleArea}>
+                  <button
+                     type="button"
+                     className={styles.toggleBtn}
                      onClick={() => {
                         setIsLogin(!isLogin);
                         setError("");
                      }}
-                     className="text-muted text-decoration-none small"
                   >
                      {isLogin
                         ? "Não tem uma conta? Cadastre-se aqui"
                         : "Já tem uma conta? Faça login"}
-                  </Button>
+                  </button>
                </div>
             </Form>
          </Modal.Body>

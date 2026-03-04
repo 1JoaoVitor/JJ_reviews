@@ -1,31 +1,97 @@
 /* ─── Dashboard ─── */
 
+.heading {
+   color: var(--text-secondary);
+   font-size: var(--font-sm);
+   font-weight: 600;
+   text-transform: uppercase;
+   letter-spacing: 0.05em;
+   margin-bottom: 1rem;
+}
+
+.grid {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: 1rem;
+   margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+   .grid {
+      grid-template-columns: repeat(2, 1fr);
+   }
+}
+
 .statCard {
+   background: var(--bg-surface);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-lg);
+   padding: 1.25rem 1rem;
    text-align: center;
-   padding: 1rem 0;
+   position: relative;
+   overflow: hidden;
+   transition: border-color 0.2s, transform 0.2s;
 }
 
-.statCardTotal {
-   background-color: var(--color-dashboard-total);
+.statCard:hover {
+   border-color: var(--gold);
+   transform: translateY(-2px);
 }
 
-.statCardAverage {
-   background-color: var(--color-dashboard-average);
+.statCard::before {
+   content: "";
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   height: 3px;
 }
 
-.statCardInternational {
-   background-color: var(--color-dashboard-international);
+.statCardTotal::before {
+   background: var(--gold);
 }
 
-.statCardDirector {
-   background-color: var(--color-dashboard-director);
+.statCardAverage::before {
+   background: #3B82F6;
 }
 
-.averageValue {
-   text-shadow: 1px 1px 0 #dac17c;
+.statCardInternational::before {
+   background: #10B981;
+}
+
+.statCardDirector::before {
+   background: #A855F7;
+}
+
+.icon {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   margin-bottom: 0.5rem;
+}
+
+.statValue {
+   font-weight: 800;
+   font-size: var(--font-2xl);
+   color: var(--text-primary);
+   line-height: 1.1;
+   margin-bottom: 0.25rem;
+}
+
+.statLabel {
+   color: var(--text-primary);
+   font-size: var(--font-sm);
+   opacity: 0.9;
 }
 
 .directorName {
    max-width: 150px;
    margin: 0 auto;
+   font-weight: 700;
+   font-size: var(--font-base);
+   color: var(--text-primary);
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
 }
+
