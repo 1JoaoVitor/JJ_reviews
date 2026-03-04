@@ -52,3 +52,11 @@
    object-fit: cover;
    border: 1px solid var(--border-medium);
 }
+
+.navItemDanger {
+   color: var(--danger, #ef4444);
+}
+
+.navItemDanger:active {
+   color: #dc2626;
+}
