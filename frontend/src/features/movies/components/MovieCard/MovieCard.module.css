@@ -1,28 +1,35 @@
-/* ─── MovieCard ─── */
+/* ─── MovieCard — Dark Theme ─── */
 
 .card {
    cursor: pointer;
+   background: var(--bg-surface) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-lg) !important;
+   overflow: hidden;
    transition:
       transform var(--transition-fast),
+      border-color var(--transition-fast),
       box-shadow var(--transition-fast);
 }
 
 .card:hover {
-   transform: translateY(-5px);
-   box-shadow: var(--shadow-card-hover) !important;
+   transform: translateY(-4px);
+   border-color: var(--gold-dim) !important;
+   box-shadow: var(--shadow-lg), 0 0 20px rgba(232, 177, 0, 0.08) !important;
 }
 
-/* Badge de nota no canto superior direito do poster */
-.ratingBadge {
-   position: absolute;
-   top: 10px;
-   right: 10px;
-   background: rgba(0, 0, 0, 0.8);
-   color: var(--color-warning);
-   padding: 5px 10px;
-   border-radius: var(--radius-sm);
-   font-weight: bold;
-   font-size: 0.9rem;
+/* Poster container */
+.posterContainer {
+   position: relative;
+   height: 250px;
+   overflow: hidden;
+   background-color: var(--bg-elevated);
+}
+
+@media (min-width: 768px) {
+   .posterContainer {
+      height: 380px;
+   }
 }
 
 /* Imagem do poster */
@@ -30,14 +37,149 @@
    width: 100%;
    height: 100%;
    object-fit: cover;
+   transition: transform var(--transition-slow);
 }
 
-/* Tag NACIONAL / OSCAR */
-.tagBadge {
-   font-size: 0.7em;
+.card:hover .posterImage {
+   transform: scale(1.03);
 }
 
-/* Pill de recomendação */
+.posterPlaceholder {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   height: 100%;
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+}
+
+/* Gradient overlay on poster */
+.posterGradient {
+   position: absolute;
+   bottom: 0;
+   left: 0;
+   right: 0;
+   height: 50%;
+   background: linear-gradient(to top, var(--bg-surface), transparent);
+   pointer-events: none;
+}
+
+/* Badge de nota */
+.ratingBadge {
+   position: absolute;
+   top: 0.6rem;
+   right: 0.6rem;
+   background: rgba(0, 0, 0, 0.75);
+   backdrop-filter: blur(8px);
+   color: var(--gold);
+   padding: 0.3rem 0.6rem;
+   border-radius: var(--radius-sm);
+   font-weight: 700;
+   font-size: var(--font-sm);
+   border: 1px solid rgba(232, 177, 0, 0.2);
+}
+
+.ratingBadgeWatchlist {
+   color: var(--text-secondary);
+   border-color: var(--border-medium);
+}
+
+/* Card body */
+.body {
+   padding: 0.875rem;
+   display: flex;
+   flex-direction: column;
+   gap: 0.25rem;
+}
+
+.title {
+   font-size: var(--font-base);
+   font-weight: 700;
+   color: var(--text-primary);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   margin: 0;
+   line-height: 1.3;
+}
+
+.meta {
+   font-size: var(--font-xs);
+   color: var(--text-muted);
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+/* Tags row */
+.tags {
+   display: flex;
+   gap: 0.35rem;
+   margin-top: 0.25rem;
+   flex-wrap: wrap;
+}
+
+.tag {
+   font-size: 0.65rem;
+   font-weight: 700;
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+   padding: 0.15rem 0.5rem;
+   border-radius: var(--radius-pill);
+   border: 1px solid;
+}
+
+.tagNational {
+   composes: tag;
+   color: var(--success);
+   border-color: rgba(34, 197, 94, 0.3);
+   background: rgba(34, 197, 94, 0.1);
+}
+
+.tagOscar {
+   composes: tag;
+   color: var(--gold);
+   border-color: rgba(232, 177, 0, 0.3);
+   background: rgba(232, 177, 0, 0.1);
+}
+
+/* Divider */
+.divider {
+   height: 1px;
+   background: var(--border-subtle);
+   margin: 0.5rem 0;
+}
+
+/* Recommendation badge */
 .recommendBadge {
-   font-weight: 500;
+   display: block;
+   width: 100%;
+   text-align: center;
+   padding: 0.4rem 0.5rem;
+   border-radius: var(--radius-md);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   margin-top: auto;
+}
+
+.waitingBadge {
+   composes: recommendBadge;
+   background: var(--bg-elevated);
+   color: var(--text-muted);
+   border: 1px solid var(--border-subtle);
+}
+
+/* Mobile adjustments */
+@media (max-width: 576px) {
+   .posterContainer {
+      height: 220px;
+   }
+
+   .body {
+      padding: 0.65rem;
+   }
+
+   .title {
+      font-size: var(--font-sm);
+   }
 }

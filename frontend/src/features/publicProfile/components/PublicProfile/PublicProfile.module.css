@@ -1,0 +1,246 @@
+.profilePage {
+   min-height: 100vh;
+   background-color: var(--bg-page);
+}
+
+/* Profile header */
+.profileHeader {
+   display: flex;
+   align-items: center;
+   gap: 1rem;
+   padding-bottom: 1rem;
+   margin-bottom: 1.5rem;
+   border-bottom: 1px solid var(--border-subtle);
+}
+
+.avatar {
+   width: 60px;
+   height: 60px;
+   border-radius: 50%;
+   object-fit: cover;
+   border: 2px solid var(--border-subtle);
+}
+
+.avatarPlaceholder {
+   width: 60px;
+   height: 60px;
+   border-radius: 50%;
+   background: var(--bg-elevated);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   color: var(--text-secondary);
+   font-size: 1.5rem;
+   font-weight: 700;
+}
+
+.profileName {
+   font-weight: 800;
+   font-size: var(--font-xl);
+   color: var(--text-primary);
+   margin-bottom: 0;
+}
+
+.profileCount {
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+   margin-bottom: 0;
+}
+
+.createListBtn {
+   margin-left: auto;
+   padding: 0.5rem 1.25rem;
+   border: 1px solid var(--gold);
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--gold);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: background 0.2s, color 0.2s;
+   white-space: nowrap;
+}
+
+.createListBtn:hover {
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+/* Mobile tabs */
+.mobileTabs {
+   display: flex;
+   justify-content: center;
+   margin-bottom: 1.25rem;
+}
+
+.mobileTabsInner {
+   background-color: var(--bg-surface);
+   padding: 0.25rem;
+   border-radius: var(--radius-pill);
+   border: 1px solid var(--border-subtle);
+   display: inline-flex;
+}
+
+.mobileTab {
+   padding: 0.45rem 1.25rem;
+   border: none;
+   border-radius: var(--radius-pill);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   background: transparent;
+   color: var(--text-muted);
+   transition: background 0.2s, color 0.2s;
+}
+
+.mobileTabActive {
+   composes: mobileTab;
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+/* Subheader */
+.subheader {
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: space-between;
+   align-items: center;
+   gap: 0.75rem;
+   margin-bottom: 1.5rem;
+}
+
+.movieCount {
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+   font-weight: 500;
+}
+
+.viewToggle {
+   display: none;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   overflow: hidden;
+   margin-left: 0.75rem;
+}
+
+@media (min-width: 768px) {
+   .viewToggle {
+      display: inline-flex;
+   }
+}
+
+.viewBtn {
+   padding: 0.35rem 1rem;
+   border: none;
+   background: transparent;
+   color: var(--text-muted);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: background 0.2s, color 0.2s;
+}
+
+.viewBtnActive {
+   composes: viewBtn;
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+/* Mobile filters */
+.mobileFilters {
+   display: flex;
+   gap: 0;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   overflow: hidden;
+   width: 100%;
+}
+
+@media (min-width: 768px) {
+   .mobileFilters {
+      display: none;
+   }
+}
+
+.mobileFilterBtn {
+   flex: 1;
+   padding: 0.45rem;
+   border: none;
+   background: transparent;
+   color: var(--text-muted);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: background 0.2s, color 0.2s;
+}
+
+.mobileFilterBtnActive {
+   composes: mobileFilterBtn;
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+.mobileFilterBtnNationalActive {
+   composes: mobileFilterBtn;
+   background: #10B981;
+   color: #fff;
+}
+
+.mobileFilterBtnOscarActive {
+   composes: mobileFilterBtn;
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+/* Empty / Loading */
+.emptyState {
+   text-align: center;
+   margin-top: 4rem;
+   color: var(--text-muted);
+}
+
+.emptyState h5 {
+   color: var(--text-secondary);
+}
+
+.loadingState {
+   text-align: center;
+   margin-top: 4rem;
+   color: var(--text-muted);
+}
+
+.errorCard {
+   display: inline-block;
+   background: var(--bg-surface);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-lg);
+   padding: 2rem;
+   text-align: center;
+}
+
+.errorTitle {
+   font-weight: 700;
+   color: var(--text-primary);
+   margin-bottom: 0.5rem;
+}
+
+.errorText {
+   color: var(--text-secondary);
+   margin-bottom: 1rem;
+}
+
+.backBtn {
+   padding: 0.5rem 1.25rem;
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--text-secondary);
+   font-weight: 600;
+   cursor: pointer;
+   transition: border-color 0.2s, color 0.2s;
+}
+
+.backBtn:hover {
+   border-color: var(--gold);
+   color: var(--gold);
+}

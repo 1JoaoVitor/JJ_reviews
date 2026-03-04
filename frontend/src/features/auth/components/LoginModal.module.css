@@ -1,0 +1,51 @@
+.formLabel {
+   font-weight: 600;
+   font-size: var(--font-sm);
+   color: var(--text-secondary);
+   text-transform: uppercase;
+   letter-spacing: 0.03em;
+   margin-bottom: 0.35rem;
+}
+
+.submitBtn {
+   width: 100%;
+   padding: 0.75rem;
+   border: none;
+   border-radius: var(--radius-md);
+   background: var(--gold);
+   color: var(--bg-page);
+   font-weight: 700;
+   font-size: var(--font-base);
+   cursor: pointer;
+   transition: background 0.2s, transform 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) {
+   background: var(--gold-hover);
+   transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+}
+
+.toggleArea {
+   text-align: center;
+   border-top: 1px solid var(--border-subtle);
+   padding-top: 1rem;
+   margin-top: 0.75rem;
+}
+
+.toggleBtn {
+   background: none;
+   border: none;
+   cursor: pointer;
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+   transition: color 0.2s;
+}
+
+.toggleBtn:hover {
+   color: var(--gold);
+}
