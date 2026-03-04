@@ -39,8 +39,7 @@ export default function App() {
 }
 
 function MainApp() {
-   // ─── Custom Hooks (toda a lógica pesada fica isolada) ───
-   const { session, username, logout, updateUsername } = useAuth();
+   const { session, username, avatarUrl, logout, updateUsername } = useAuth();
    const { movies, loading, fetchMovies } = useMovies(!!session);
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
@@ -118,6 +117,7 @@ function MainApp() {
             session={session}
             onLogout={logout}
             username={username}
+            avatarUrl={avatarUrl}
             onProfileClick={() => setShowProfileModal(true)}
          />
 
