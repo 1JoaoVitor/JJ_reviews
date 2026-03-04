@@ -4,41 +4,36 @@ import styles from "./StarRating.module.css";
 
 interface StarRatingProps {
    value: number;
-   onChange: (rating: number) => void;
+   onChange?: (rating: number) => void; 
    max?: number;
+   readOnly?: boolean;
 }
 
-export function StarRating({ value, onChange, max = 10 }: StarRatingProps) {
+export function StarRating({ value, onChange, max = 10, readOnly = false }: StarRatingProps) {
    const [hover, setHover] = useState<number | null>(null);
    const wrapperRef = useRef<HTMLDivElement>(null);
 
-   // Calcula a nota (0.5 a max) baseado na posição exata do ponteiro/dedo na tela
    const calculateRating = (clientX: number) => {
       if (!wrapperRef.current) return null;
-      
       const { left, width } = wrapperRef.current.getBoundingClientRect();
       const percent = (clientX - left) / width;
-      
-      if (percent <= 0) return 0.5; // Mínimo
-      if (percent >= 1) return max; // Máximo
-      
-      // Multiplica a % pelo máximo (ex: 85% de 10 = 8.5) e arredonda para os 0.5 mais próximos
-      const rawRating = percent * max;
-      return Math.ceil(rawRating * 2) / 2; 
+      if (percent <= 0) return 0.5;
+      if (percent >= 1) return max;
+      return Math.ceil((percent * max) * 2) / 2; 
    };
 
-   // Quando arrasta o mouse ou o dedo
    const handleMove = (clientX: number) => {
+      if (readOnly) return;
       const rating = calculateRating(clientX);
       if (rating) setHover(rating);
    };
 
-   // Quando clica ou solta o dedo da tela
    const handleConfirm = (clientX: number) => {
+      if (readOnly || !onChange) return;
       const rating = calculateRating(clientX);
       if (rating) {
          onChange(rating);
-         setHover(null); // Limpa o estado visual de hover
+         setHover(null);
       }
    };
 
@@ -49,11 +44,10 @@ export function StarRating({ value, onChange, max = 10 }: StarRatingProps) {
          <div 
             className={styles.starsWrapper}
             ref={wrapperRef}
-            // Eventos de Computador (Mouse)
-            onMouseLeave={() => setHover(null)}
+            style={{ cursor: readOnly ? "default" : "pointer", touchAction: readOnly ? "auto" : "none" }}
+            onMouseLeave={() => !readOnly && setHover(null)}
             onMouseMove={(e) => handleMove(e.clientX)}
             onClick={(e) => handleConfirm(e.clientX)}
-            // Eventos de Celular (Touch)
             onTouchMove={(e) => handleMove(e.touches[0].clientX)}
             onTouchEnd={(e) => handleConfirm(e.changedTouches[0].clientX)}
          >
@@ -67,7 +61,7 @@ export function StarRating({ value, onChange, max = 10 }: StarRatingProps) {
                      type="button"
                      key={index}
                      className={`${styles.starBtn} ${displayValue >= starNumber - 0.5 ? styles.active : ""}`}
-                     title={`Dar nota ${displayValue}`}
+                     title={readOnly ? `Nota: ${value}` : `Dar nota ${displayValue}`}
                      style={{ pointerEvents: "none" }}
                   >
                      {isHalf ? (

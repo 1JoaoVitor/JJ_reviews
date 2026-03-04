@@ -1,5 +1,6 @@
 import { Modal, Row, Col } from "react-bootstrap";
 import { Pencil, Trash2, Share2 } from "lucide-react";
+import { StarRating } from "@/components/ui/StarRating/StarRating";
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
@@ -116,12 +117,18 @@ export function MovieModal({
 
                <Col md={8}>
                   {/* Rating + Recommendation */}
-                  <div className="d-flex align-items-center gap-3 mb-4">
-                     <div className={styles.ratingBox}>{movie.rating}</div>
+                  <div className="d-flex align-items-center gap-4 mb-4 flex-wrap">
                      <div>
-                        <h5 className={styles.ratingLabel}>Avaliação</h5>
-                        <small className={styles.ratingSublabel}>Escala de 0 a 10</small>
+                        <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
+                           Sua Avaliação
+                        </h5>
+                        {movie.rating !== null ? (
+                           <StarRating value={movie.rating} readOnly={true} />
+                        ) : (
+                           <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
+                        )}
                      </div>
+
                      {movie.recommended && (
                         <div className="ms-auto">
                            <span
