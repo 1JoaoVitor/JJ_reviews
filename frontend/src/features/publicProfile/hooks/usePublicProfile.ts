@@ -8,6 +8,7 @@ export function usePublicProfile(username: string | undefined) {
    const [loading, setLoading] = useState(true);
    const [error, setError] = useState("");
    const [profileName, setProfileName] = useState("");
+   const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
 
    const fetchPublicMovies = useCallback(async () => {
       if (!username) return;
@@ -18,7 +19,7 @@ export function usePublicProfile(username: string | undefined) {
          //  Busca o ID do usuário através do username
          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
-            .select("id, username")
+            .select("id, username, avatar_url")
             .eq("username", username)
             .single();
 
@@ -27,6 +28,7 @@ export function usePublicProfile(username: string | undefined) {
          }
 
          setProfileName(profileData.username);
+         setProfileAvatar(profileData.avatar_url);
 
          // Busca os filmes usando o ID desse usuário
          const { data: reviewsData, error: reviewsError } = await supabase
@@ -59,5 +61,5 @@ export function usePublicProfile(username: string | undefined) {
       fetchPublicMovies();
    }, [fetchPublicMovies]);
 
-   return { movies, loading, error, profileName };
+   return { movies, loading, error, profileName, profileAvatar};
 }

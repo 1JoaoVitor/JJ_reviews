@@ -14,10 +14,10 @@ export function PublicProfile() {
    const navigate = useNavigate();
    
    // Busca os dados do amigo
-   const { movies, loading, error, profileName } = usePublicProfile(profileUsername);
+   const { movies, loading, error, profileName, profileAvatar } = usePublicProfile(profileUsername);
 
    // Trazemos o usuário logado (o visitante pode estar logado na própria conta)
-   const { session, username: loggedInUsername, logout, updateUsername } = useAuth();
+   const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
 
    // Reutilizamos toda a lógica de filtros que você criou
    const filters = useMovieFilters(movies);
@@ -27,6 +27,7 @@ export function PublicProfile() {
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [isBattleMode, setIsBattleMode] = useState(false);
+
 
    if (loading) {
       return (
@@ -83,6 +84,7 @@ export function PublicProfile() {
             session={session}
             onLogout={logout}
             username={loggedInUsername}
+            avatarUrl={loggedInAvatar}
             onProfileClick={() => setShowProfileModal(true)}
          />
 
@@ -107,14 +109,29 @@ export function PublicProfile() {
          </div>
 
          <Container className="px-4 pb-5">
-            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-               <div>
-                  <h2 className="fw-bold mb-0">Lista de @{profileName}</h2>
-                  <p className="text-muted mb-0">{movies.filter(m => m.status === "watched").length} filmes na coleção</p>
-               </div>
-               <Button variant="outline-primary" onClick={() => navigate("/")}>
-                  Criar a minha lista
-               </Button>
+            <div className="d-flex align-items-center gap-3 mb-4 border-bottom pb-3">
+            {profileAvatar ? (
+                <img 
+                    src={profileAvatar} 
+                    alt={profileName}
+                    className="rounded-circle shadow-sm border border-2 border-light"
+                    style={{ width: "60px", height: "60px", objectFit: "cover" }}
+                />
+            ) : (
+                <div 
+                    className="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white shadow-sm"
+                    style={{ width: "60px", height: "60px", fontSize: "1.5rem" }}
+                >
+                    {profileName.charAt(0).toUpperCase()}
+                </div>
+            )}
+            <div className="flex-grow-1">
+                <h2 className="fw-bold mb-0">Lista de @{profileName}</h2>
+                <p className="text-muted mb-0">{movies.filter(m => m.status === "watched").length} filmes na coleção</p>
+            </div>
+            <Button variant="outline-primary" onClick={() => navigate("/")}>
+                Criar a minha lista
+            </Button>
             </div>
 
             {/* Dashboard só aparece na aba de assistidos e se não estiver buscando nada */}

@@ -26,6 +26,7 @@ interface AppNavbarProps {
    onLogout: () => void;
    onLoginClick: () => void;
    username: string;
+   avatarUrl?: string | null;
    onProfileClick: () => void;
 }
 
@@ -46,6 +47,7 @@ export function AppNavbar({
    onLogout,
    onLoginClick,
    username,
+   avatarUrl,
    onProfileClick,
 }: AppNavbarProps) {
    return (
@@ -63,13 +65,22 @@ export function AppNavbar({
                   {/* Botões de usuário */}
                   {session ? (
                      <div className="d-flex align-items-center gap-2">
-                        <Button
-                           variant="outline-light"
-                           size="sm"
-                           onClick={onProfileClick}
-                           className="fw-bold border-secondary text-white"
+                        <Button 
+                           variant="outline-light" 
+                           size="sm" 
+                           onClick={onProfileClick} 
+                           className="fw-bold border-secondary text-white d-flex align-items-center gap-2"
                         >
-                           👤 {username || "Perfil"}
+                           {avatarUrl ? (
+                              <img 
+                                 src={avatarUrl} 
+                                 alt="Avatar" 
+                                 style={{ width: "24px", height: "24px", objectFit: "cover", borderRadius: "50%" }} 
+                              />
+                           ) : (
+                              <span>👤</span>
+                           )}
+                           {username || "Perfil"}
                         </Button>
                         <Button variant="outline-danger" size="sm" onClick={onLogout} className="fw-bold">
                            Sair
