@@ -380,6 +380,7 @@ function MainApp() {
             }}
             onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
+            onLogout={logout}
          />
       </div>
    );

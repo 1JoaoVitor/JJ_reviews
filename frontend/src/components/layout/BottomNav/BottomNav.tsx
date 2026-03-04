@@ -1,4 +1,4 @@
-import { Home, Plus, User, LogIn, Swords } from "lucide-react";
+import { Home, Plus, User, LogIn, LogOut, Swords } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./BottomNav.module.css";
 
@@ -10,6 +10,7 @@ interface BottomNavProps {
    onAddClick: () => void;
    onProfileClick: () => void;
    onLoginClick: () => void;
+   onLogout: () => void;
 }
 
 export function BottomNav({
@@ -20,6 +21,7 @@ export function BottomNav({
    onAddClick,
    onProfileClick,
    onLoginClick,
+   onLogout,
 }: BottomNavProps) {
    return (
       <nav className={styles.bottomNav}>
@@ -40,14 +42,20 @@ export function BottomNav({
          </button>
 
          {session ? (
-            <button className={styles.navItem} onClick={onProfileClick}>
-               {avatarUrl ? (
-                  <img src={avatarUrl} alt="Perfil" className={styles.avatarImg} />
-               ) : (
-                  <User size={22} />
-               )}
-               <span>Perfil</span>
-            </button>
+            <>
+               <button className={styles.navItem} onClick={onProfileClick}>
+                  {avatarUrl ? (
+                     <img src={avatarUrl} alt="Perfil" className={styles.avatarImg} />
+                  ) : (
+                     <User size={22} />
+                  )}
+                  <span>Perfil</span>
+               </button>
+               <button className={`${styles.navItem} ${styles.navItemDanger}`} onClick={onLogout}>
+                  <LogOut size={22} />
+                  <span>Sair</span>
+               </button>
+            </>
          ) : (
             <button className={styles.navItem} onClick={onLoginClick}>
                <LogIn size={22} />
