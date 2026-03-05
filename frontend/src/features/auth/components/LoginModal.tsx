@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Modal, Form, Alert } from "react-bootstrap";
+import { Modal, Form } from "react-bootstrap";
 import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
 import styles from "./LoginModal.module.css";
 
 interface LoginModalProps {
@@ -13,12 +14,10 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
    const [email, setEmail] = useState("");
    const [password, setPassword] = useState("");
    const [loading, setLoading] = useState(false);
-   const [error, setError] = useState("");
 
    const handleLogin = async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
-      setError("");
 
       try {
          if (isLogin) {
@@ -32,9 +31,9 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
          }
       } catch (err) {
          if (err instanceof Error) {
-            setError("Erro ao logar: " + err.message);
+            toast.error("Erro ao logar: " + err.message);
          } else {
-            setError("Ocorreu um erro desconhecido.");
+            toast.error("Ocorreu um erro desconhecido.");
          }
       } finally {
          setLoading(false);
@@ -48,7 +47,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
          </Modal.Header>
 
          <Modal.Body className="p-4 pt-2">
-            {error && <Alert variant="danger">{error}</Alert>}
 
             <Form onSubmit={handleLogin}>
                <Form.Group className="mb-3">
@@ -84,7 +82,6 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                      className={styles.toggleBtn}
                      onClick={() => {
                         setIsLogin(!isLogin);
-                        setError("");
                      }}
                   >
                      {isLogin
