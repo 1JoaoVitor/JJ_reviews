@@ -7,6 +7,7 @@ import { MovieCard, MovieModal, AddMovieModal, useMovieFilters } from "@/feature
 import { Dashboard } from "@/features/dashboard";
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
+import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
 import { MovieBattle } from "@/features/battle";
 import type { MovieData } from "@/types";
@@ -14,6 +15,7 @@ import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
 import { useFriendship } from "@/features/friends/hooks/useFriendship"; 
+import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
 
 
 export function PublicProfile() {
@@ -34,6 +36,8 @@ export function PublicProfile() {
    const [showAddModal, setShowAddModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+   const [showFriendsModal, setShowFriendsModal] = useState(false);
 
    if (loading) {
       return (
@@ -72,10 +76,11 @@ export function PublicProfile() {
             onStartBattle={() => setIsBattleMode(true)}
             onLoginClick={() => setShowLoginModal(true)}
             session={session}
-            onLogout={logout}
+            onLogout={() => setShowLogoutConfirm(true)}
             username={loggedInUsername}
             avatarUrl={loggedInAvatar}
             onProfileClick={() => setShowProfileModal(true)}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
          {/* Mobile tabs */}
@@ -225,6 +230,8 @@ export function PublicProfile() {
             )}
          </Container>
 
+         <Footer />
+
          <MovieModal
             show={!!selectedMovie}
             movie={selectedMovie}
@@ -253,6 +260,16 @@ export function PublicProfile() {
             session={session}
             currentUsername={loggedInUsername}
             onUpdate={updateUsername}
+            onLogout={() => {
+               setShowProfileModal(false);
+               setShowLogoutConfirm(true);
+            }}
+         />
+
+         <FriendsModal 
+            show={showFriendsModal} 
+            onHide={() => setShowFriendsModal(false)} 
+            session={session} 
          />
 
          <BottomNav
@@ -266,7 +283,7 @@ export function PublicProfile() {
             }}
             onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
-            onLogout={() => setShowLogoutConfirm(true)}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
          <ConfirmModal
