@@ -50,3 +50,21 @@ export interface TmdbGenre {
    id: number;
    name: string;
 }
+
+export interface Friendship {
+  id: string;
+  requester_id: string;
+  receiver_id: string;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+}
+
+// Tipagem para juntar a amizade com os dados do perfil do amigo
+export interface FriendProfile {
+  friendship_id: string;
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  is_requester: boolean; 
+}
