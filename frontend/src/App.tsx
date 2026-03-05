@@ -24,6 +24,7 @@ import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
+import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -68,6 +69,7 @@ function MainApp() {
    const [isBattleMode, setIsBattleMode] = useState(false);
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+   const [showFriendsModal, setShowFriendsModal] = useState(false);
 
    // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
@@ -149,6 +151,7 @@ function MainApp() {
             onProfileClick={() => setShowProfileModal(true)}
             showFilters={!!session} 
             showBattle={!!session}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
 
@@ -354,6 +357,10 @@ function MainApp() {
             session={session}
             currentUsername={username}
             onUpdate={updateUsername}
+            onLogout={() => {
+               setShowProfileModal(false);
+               setShowLogoutConfirm(true);
+            }}
          />
 
          {sharingMovie && <ShareCard ref={shareRef} movie={sharingMovie} />}
@@ -382,6 +389,12 @@ function MainApp() {
             }}
          />
 
+         <FriendsModal 
+            show={showFriendsModal} 
+            onHide={() => setShowFriendsModal(false)} 
+            session={session} 
+         />
+
        { /* ─── Navegação Mobile ─── */}
          <BottomNav
             session={session}
@@ -394,7 +407,7 @@ function MainApp() {
             }}
             onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
-            onLogout={() => setShowLogoutConfirm(true)}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
       </div>
    );

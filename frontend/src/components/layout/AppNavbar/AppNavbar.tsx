@@ -1,4 +1,4 @@
-import { Search, Swords, LogOut, LogIn, User } from "lucide-react";
+import { Search, Swords, LogOut, LogIn, User, Users } from "lucide-react";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
@@ -24,6 +24,7 @@ interface AppNavbarProps {
    onProfileClick: () => void;
    showFilters?: boolean;
    showBattle?: boolean;
+   onFriendsClick?: () => void;
 }
 
 export function AppNavbar({
@@ -47,6 +48,7 @@ export function AppNavbar({
    onProfileClick,
    showFilters = true,
    showBattle = true,
+   onFriendsClick,
 }: AppNavbarProps) {
 
    const sortOptions: Record<string, string> = {
@@ -90,6 +92,14 @@ export function AppNavbar({
                      title="Modo Batalha"
                   >
                      <Swords size={18} />
+                  </button>
+               )}
+
+               {/* Botão de amigos */}
+               {session && onFriendsClick && (
+                  <button onClick={onFriendsClick} className={styles.friendsBtn} title="Central de Amigos">
+                     <Users size={20} />
+                     Amigos
                   </button>
                )}
 

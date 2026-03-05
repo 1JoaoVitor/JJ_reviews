@@ -1,19 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { enrichMovieWithTmdb } from "@/features/movies/services/tmdbService";
+import toast from "react-hot-toast";
 import type { MovieData } from "@/types";
 
 export function usePublicProfile(username: string | undefined) {
    const [movies, setMovies] = useState<MovieData[]>([]);
    const [loading, setLoading] = useState(true);
-   const [error, setError] = useState("");
    const [profileName, setProfileName] = useState("");
    const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+   const [profileId, setProfileId] = useState<string | null>(null);
 
    const fetchPublicMovies = useCallback(async () => {
       if (!username) return;
       setLoading(true);
-      setError("");
 
       try {
          //  Busca o ID do usuário através do username
@@ -29,6 +29,7 @@ export function usePublicProfile(username: string | undefined) {
 
          setProfileName(profileData.username);
          setProfileAvatar(profileData.avatar_url);
+         setProfileId(profileData.id);
 
          // Busca os filmes usando o ID desse usuário
          const { data: reviewsData, error: reviewsError } = await supabase
@@ -48,9 +49,9 @@ export function usePublicProfile(username: string | undefined) {
          setMovies(fullMovies);
       } catch (err) {
             if (err instanceof Error) {
-                setError(err.message || "Erro ao carregar o perfil.");
+                toast.error(err.message || "Erro ao carregar o perfil.");
             } else {
-                setError("Ocorreu um erro desconhecido.");
+                toast.error("Ocorreu um erro desconhecido.");
             }
       } finally {
          setLoading(false);
@@ -61,5 +62,5 @@ export function usePublicProfile(username: string | undefined) {
       fetchPublicMovies();
    }, [fetchPublicMovies]);
 
-   return { movies, loading, error, profileName, profileAvatar};
+   return { movies, loading, profileName, profileAvatar, profileId };
 }
