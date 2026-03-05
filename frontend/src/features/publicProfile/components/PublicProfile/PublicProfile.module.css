@@ -95,6 +95,60 @@
    margin-bottom: -0.5rem;
 }
 
+.actionButtons {
+   display: flex;
+   gap: 0.5rem;
+   margin-left: auto;
+}
+
+.addFriendBtn, .pendingBtn, .acceptBtn, .friendsBtn {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   padding: 0.75rem 1.25rem;
+   border-radius: var(--radius-pill);
+   font-weight: 700;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: all 0.2s ease;
+   white-space: nowrap;
+}
+
+.addFriendBtn {
+   background: var(--gold);
+   color: var(--bg-page);
+   border: 1px solid var(--gold);
+}
+.addFriendBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(232, 177, 0, 0.3); }
+
+.pendingBtn {
+   background: transparent;
+   color: var(--text-muted);
+   border: 1px dashed var(--border-medium);
+}
+.pendingBtn:hover { border-color: #ef4444; color: #ef4444; }
+
+.acceptBtn {
+   background: #10B981; 
+   color: #fff;
+   border: 1px solid #10B981;
+}
+.acceptBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+
+
+.friendsBtn {
+   background: var(--bg-surface);
+   color: var(--gold);
+   border: 1px solid var(--border-medium);
+}
+.friendsBtn:hover { border-color: #ef4444; color: #ef4444; } 
+
+/* Mobile */
+@media (max-width: 767px) {
+   .actionButtons { width: 100%; }
+   .actionButtons button { flex: 1; justify-content: center; }
+}
+
 .createListBtn {
    margin-left: auto;
    padding: 0.5rem 1.25rem;

@@ -1,23 +1,27 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Clock} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
 import { MovieCard, MovieModal, AddMovieModal, useMovieFilters } from "@/features/movies";
 import { Dashboard } from "@/features/dashboard";
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
+import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
 import { MovieBattle } from "@/features/battle";
 import type { MovieData } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
+import { useFriendship } from "@/features/friends/hooks/useFriendship"; 
+import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
+
+
 export function PublicProfile() {
    const { username: profileUsername } = useParams<{ username: string }>();
-   const navigate = useNavigate();
    
-   const { movies, loading, error, profileName, profileAvatar } = usePublicProfile(profileUsername);
+   const { movies, loading, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
    const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
    const filters = useMovieFilters(movies);
 
@@ -26,9 +30,14 @@ export function PublicProfile() {
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [isBattleMode, setIsBattleMode] = useState(false);
 
+   const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel } = 
+      useFriendship(session?.user.id, profileId ?? undefined);
+
    const [showAddModal, setShowAddModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+   const [showFriendsModal, setShowFriendsModal] = useState(false);
 
    if (loading) {
       return (
@@ -36,20 +45,6 @@ export function PublicProfile() {
             <Spinner animation="border" />
             <p className="mt-3">Buscando a lista de @{profileUsername}...</p>
          </div>
-      );
-   }
-
-   if (error) {
-      return (
-         <Container className="text-center mt-5 pt-5">
-            <div className={styles.errorCard}>
-               <h4 className={styles.errorTitle}>Ops!</h4>
-               <p className={styles.errorText}>{error}</p>
-               <button className={styles.backBtn} onClick={() => navigate("/")}>
-                  Voltar para o início
-               </button>
-            </div>
-         </Container>
       );
    }
 
@@ -81,10 +76,11 @@ export function PublicProfile() {
             onStartBattle={() => setIsBattleMode(true)}
             onLoginClick={() => setShowLoginModal(true)}
             session={session}
-            onLogout={logout}
+            onLogout={() => setShowLogoutConfirm(true)}
             username={loggedInUsername}
             avatarUrl={loggedInAvatar}
             onProfileClick={() => setShowProfileModal(true)}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
          {/* Mobile tabs */}
@@ -123,16 +119,48 @@ export function PublicProfile() {
                      </div>
                   )}
                   <div className={styles.nameContainer}>
-                     <h2 className={styles.profileName}>Lista de @{profileName}</h2>
+                     <h2 className={styles.profileName}>@{profileName}</h2>
                      <p className={styles.profileCount}>
                         {movies.filter(m => m.status === "watched").length} filmes na coleção
                      </p>
                   </div>
                </div>
 
-               <button className={styles.createListBtn} onClick={() => navigate("/")}>
-                  Criar a minha lista
-               </button>
+               <div className={styles.actionButtons}>
+
+                  {session && session.user.id !== profileId && !friendLoading && (
+                     <>
+                        {friendStatus === "none" && (
+                           <button className={styles.addFriendBtn} onClick={sendRequest}>
+                              <UserPlus size={18} /> Adicionar
+                           </button>
+                        )}
+                        {friendStatus === "pending_sent" && (
+                           <button className={styles.pendingBtn} onClick={removeOrCancel}>
+                              <Clock size={18} /> Pendente
+                           </button>
+                        )}
+                        {friendStatus === "pending_received" && (
+                           <button className={styles.acceptBtn} onClick={acceptRequest}>
+                              <UserCheck size={18} /> Aceitar Pedido
+                           </button>
+                        )}
+                        {friendStatus === "accepted" && (
+                           <button className={styles.friendsBtn} onClick={() => {
+                              if(window.confirm("Desfazer amizade?")) removeOrCancel();
+                           }}>
+                              <UserCheck size={18} /> Amigos
+                           </button>
+                        )}
+                     </>
+                  )}
+
+                  {!session && (
+                     <button className={styles.createListBtn} onClick={() => setShowLoginModal(true)}>
+                        Criar a minha lista
+                     </button>
+                  )}
+               </div>
             </div>
 
             {!filters.searchTerm && filters.viewMode === "watched" && (
@@ -202,6 +230,8 @@ export function PublicProfile() {
             )}
          </Container>
 
+         <Footer />
+
          <MovieModal
             show={!!selectedMovie}
             movie={selectedMovie}
@@ -230,6 +260,16 @@ export function PublicProfile() {
             session={session}
             currentUsername={loggedInUsername}
             onUpdate={updateUsername}
+            onLogout={() => {
+               setShowProfileModal(false);
+               setShowLogoutConfirm(true);
+            }}
+         />
+
+         <FriendsModal 
+            show={showFriendsModal} 
+            onHide={() => setShowFriendsModal(false)} 
+            session={session} 
          />
 
          <BottomNav
@@ -243,7 +283,7 @@ export function PublicProfile() {
             }}
             onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
-            onLogout={() => setShowLogoutConfirm(true)}
+            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
          <ConfirmModal
