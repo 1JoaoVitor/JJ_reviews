@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Container, Form, Row, Col, Alert, ProgressBar } from "react-bootstrap";
+import { Container, Form, Row, Col, ProgressBar } from "react-bootstrap";
 import { Swords, Trophy } from "lucide-react";
 import type { MovieData } from "@/types";
 import confetti from "canvas-confetti";
+import toast from "react-hot-toast";
 import styles from "./MovieBattle.module.css";
 
 interface MovieBattleProps {
@@ -23,7 +24,6 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
    const [quantity, setQuantity] = useState(8);
    const [criteria, setCriteria] = useState<SelectionCriteria>("random");
-   const [error, setError] = useState("");
 
    const [currentRoundMovies, setCurrentRoundMovies] = useState<MovieData[]>([]);
    const [nextRoundMovies, setNextRoundMovies] = useState<MovieData[]>([]);
@@ -76,10 +76,9 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    };
 
    const handleStart = () => {
-      setError("");
       const availableCount = availableMovies.length;
       if (availableCount < 2) {
-         setError("Você precisa de pelo menos 2 filmes para uma batalha.");
+         toast.error("Você precisa de pelo menos 2 filmes para uma batalha.");
          return;
       }
 
@@ -180,7 +179,6 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
          {stage === "setup" && (
             <div className={styles.setupCard}>
                <h2 className={styles.setupTitle}>Configurar Torneio</h2>
-               {error && <Alert variant="warning">{error}</Alert>}
 
                <Form>
                   <Row className="g-4">

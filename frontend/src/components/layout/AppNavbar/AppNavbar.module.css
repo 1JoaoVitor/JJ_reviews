@@ -86,7 +86,7 @@
    flex-shrink: 0;
 }
 
-.avatarBtn {
+.avatarBtn, .friendsBtn {
    display: flex;
    align-items: center;
    gap: 0.5rem;
@@ -101,7 +101,7 @@
    font-weight: 600;
 }
 
-.avatarBtn:hover {
+.avatarBtn:hover, .friendsBtn:hover {
    border-color: var(--gold-dim);
    background-color: var(--bg-elevated);
 }

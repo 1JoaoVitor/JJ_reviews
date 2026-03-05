@@ -16,9 +16,10 @@ interface ProfileModalProps {
    session: Session | null;
    currentUsername: string;
    onUpdate: (newUsername: string) => void;
+   onLogout: () => void;
 }
 
-export function ProfileModal({ show, onHide, session, currentUsername, onUpdate }: ProfileModalProps) {
+export function ProfileModal({ show, onHide, session, currentUsername, onUpdate, onLogout }: ProfileModalProps) {
    const [username, setUsername] = useState(currentUsername);
    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
    const [loading, setLoading] = useState(false);
@@ -221,7 +222,15 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate 
                            <Link2 size={16} /> Copiar Link do Meu Perfil
                         </button>
                      </div>
+
+
                   </Form>
+                  <button 
+                     onClick={onLogout} 
+                     className="btn btn-outline-danger w-100 mt-4"
+                  >
+                     Sair da Conta
+                  </button>
                </>
             )}
          </Modal.Body>
