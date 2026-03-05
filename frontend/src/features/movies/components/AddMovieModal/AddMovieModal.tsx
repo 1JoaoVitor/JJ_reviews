@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Search, ArrowLeft } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
-import { searchMovies } from "@/features/movies/services/tmdbService";
+import { searchMovies } from "../../services/tmdbService";
 
 import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData } from "@/types";

@@ -14,8 +14,8 @@ import type { MovieData } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
-import { useFriendship } from "@/features/friends/hooks/useFriendship"; 
-import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
+import { useFriendship } from "@/features/friends"; 
+import { FriendsModal } from "@/features/auth";
 
 
 export function PublicProfile() {

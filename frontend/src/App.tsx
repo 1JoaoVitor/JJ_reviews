@@ -7,9 +7,10 @@ import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
 // ─── Features ───
-import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
+import { useAuth, LoginModal, ProfileModal, FriendsModal } from "@/features/auth";
 import {
    MovieCard,
+   MovieCardSkeleton,
    MovieModal,
    AddMovieModal,
    useMovies,
@@ -21,10 +22,8 @@ import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
-import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
-import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
