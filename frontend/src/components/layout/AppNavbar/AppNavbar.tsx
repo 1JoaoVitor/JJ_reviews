@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
+import { NotificationBell } from "@/features/notifications";
 
 interface AppNavbarProps {
    onlyNational: boolean;
@@ -106,6 +107,8 @@ export function AppNavbar({
 
                {session ? (
                   <>
+                     <NotificationBell userId={session.user.id} />
+
                      <button className={styles.avatarBtn} onClick={onProfileClick}>
                         {avatarUrl ? (
                            <img src={avatarUrl} alt="Avatar" className={styles.avatarImg} />

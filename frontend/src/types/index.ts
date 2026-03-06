@@ -69,19 +69,61 @@ export interface FriendProfile {
   is_requester: boolean; 
 }
 
-export interface CustomList {
-   id: string;
-   name: string;
-   description: string | null;
-   owner_id: string;
-   created_at: string;
-   // Campos extras preenchidos pelo frontend/joins
-   movie_count?: number; 
-}
-
 export interface ListMovie {
    list_id: string;
    tmdb_id: number;
    added_by: string;
    created_at: string;
+}
+
+export interface AppNotification {
+   id: string;
+   user_id: string;
+   sender_id?: string;
+   type: "friend_request" | "list_invite" | "movie_added" | "general";
+   message: string;
+   is_read: boolean;
+   created_at: string;
+   sender?: {
+      username: string;
+      avatar_url: string;
+   };
+}
+
+
+export interface CustomList {
+   id: string;
+   owner_id: string;
+   name: string;
+   description?: string;
+   type: "private" | "partial_shared" | "full_shared"; 
+   created_at: string;
+   movie_count?: number; 
+}
+
+export interface ListCollaborator {
+   id: string;
+   list_id: string;
+   user_id: string;
+   role: "owner" | "member";
+   status: "pending" | "accepted";
+   created_at: string;
+   user?: {
+      username: string;
+      avatar_url: string;
+   };
+}
+
+export interface ListReview {
+   id: string;
+   list_id: string;
+   tmdb_id: number;
+   user_id?: string | null;
+   rating?: number;
+   review?: string;
+   created_at: string;
+   user?: {
+      username: string;
+      avatar_url: string;
+   };
 }
