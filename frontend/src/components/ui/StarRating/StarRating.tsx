@@ -11,30 +11,54 @@ interface StarRatingProps {
 
 export function StarRating({ value, onChange, max = 10, readOnly = false }: StarRatingProps) {
    const [hover, setHover] = useState<number | null>(null);
+   const [lastTap, setLastTap] = useState<{ rating: number, time: number } | null>(null);
    const wrapperRef = useRef<HTMLDivElement>(null);
 
    const calculateRating = (clientX: number) => {
       if (!wrapperRef.current) return null;
-      const { left, width } = wrapperRef.current.getBoundingClientRect();
-      const percent = (clientX - left) / width;
-      if (percent <= 0) return 0.5;
-      if (percent >= 1) return max;
-      return Math.ceil((percent * max) * 2) / 2; 
+      
+      const rect = wrapperRef.current.getBoundingClientRect();
+      
+      // Zonas de folga para mobile (Se sair ligeiramente, crava os limites)
+      if (clientX >= rect.right - 10) return max;
+      if (clientX <= rect.left + 10) return 0.5;
+
+      const percent = (clientX - rect.left) / rect.width;
+      return Math.max(0.5, Math.min(max, Math.ceil(percent * max * 2) / 2));
    };
 
-   const handleMove = (clientX: number) => {
+   // Eventos de Pointer (Unifica Mobile + PC nativamente)
+   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
       if (readOnly) return;
-      const rating = calculateRating(clientX);
+      const rating = calculateRating(e.clientX);
       if (rating) setHover(rating);
    };
 
-   const handleConfirm = (clientX: number) => {
+   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
       if (readOnly || !onChange) return;
-      const rating = calculateRating(clientX);
+      // Captura o "arrasto" do dedo para ele não escapar do componente
+      e.currentTarget.setPointerCapture(e.pointerId); 
+      const rating = calculateRating(e.clientX);
+      if (rating) setHover(rating);
+   };
+
+   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+      if (readOnly || !onChange) return;
+      e.currentTarget.releasePointerCapture(e.pointerId);
+      
+      const rating = calculateRating(e.clientX);
       if (rating) {
-         onChange(rating);
-         setHover(null);
+         const now = e.timeStamp; 
+         
+         if (lastTap && lastTap.rating === rating && now - lastTap.time < 300) {
+            onChange(rating - 0.5);
+            setLastTap(null); 
+         } else {
+            onChange(rating);
+            setLastTap({ rating, time: now });
+         }
       }
+      setHover(null);
    };
 
    const displayValue = hover !== null ? hover : value;
@@ -44,12 +68,17 @@ export function StarRating({ value, onChange, max = 10, readOnly = false }: Star
          <div 
             className={styles.starsWrapper}
             ref={wrapperRef}
-            style={{ cursor: readOnly ? "default" : "pointer", touchAction: readOnly ? "auto" : "none" }}
-            onMouseLeave={() => !readOnly && setHover(null)}
-            onMouseMove={(e) => handleMove(e.clientX)}
-            onClick={(e) => handleConfirm(e.clientX)}
-            onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-            onTouchEnd={(e) => handleConfirm(e.changedTouches[0].clientX)}
+            style={{ 
+               display: "inline-flex", 
+               width: "max-content", 
+               
+               cursor: readOnly ? "default" : "pointer", 
+               touchAction: readOnly ? "auto" : "none" 
+            }}
+            onPointerLeave={() => !readOnly && setHover(null)}
+            onPointerMove={handlePointerMove}
+            onPointerDown={handlePointerDown}
+            onPointerUp={handlePointerUp}
          >
             {[...Array(max)].map((_, index) => {
                const starNumber = index + 1;
@@ -62,7 +91,7 @@ export function StarRating({ value, onChange, max = 10, readOnly = false }: Star
                      key={index}
                      className={`${styles.starBtn} ${displayValue >= starNumber - 0.5 ? styles.active : ""}`}
                      title={readOnly ? `Nota: ${value}` : `Dar nota ${displayValue}`}
-                     style={{ pointerEvents: "none" }}
+                     style={{ pointerEvents: "none", padding: 0, background: "transparent", border: "none" }}
                   >
                      {isHalf ? (
                         <StarHalf size={22} fill="currentColor" strokeWidth={1.5} />
