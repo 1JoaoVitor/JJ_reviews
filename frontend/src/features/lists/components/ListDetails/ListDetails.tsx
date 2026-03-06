@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
 
+const listCache: Record<string, number[]> = {};
+
 interface ListDetailsProps {
    list: CustomList;
    allMovies: MovieData[]; // 👈 RECEBEMOS TODOS OS FILMES AQUI
@@ -34,8 +36,6 @@ export function ListDetails({
    onAddMovieClick,
    onMovieClick,
 }: ListDetailsProps) {
-   const [listMovies, setListMovies] = useState<MovieData[]>([]);
-   const [loading, setLoading] = useState(true);
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
@@ -44,26 +44,28 @@ export function ListDetails({
 
    const isOwner = currentUserId === list.owner_id;
 
-   const fetchListMovies = useCallback(async () => {
-      setLoading(true);
-      try {
-         // 1. Pega apenas os IDs que pertencem a esta lista
-         const { data, error } = await supabase
-            .from("list_movies")
-            .select("tmdb_id")
-            .eq("list_id", list.id);
+   const [listMovies, setListMovies] = useState<MovieData[]>(() => {
+      // Se já tivermos em cache, carrega instantaneamente
+      if (listCache[list.id]) {
+         return allMovies.filter(m => listCache[list.id].includes(m.tmdb_id));
+      }
+      return [];
+   });
+   
+   // Só mostra o spinner na primeira vez
+   const [loading, setLoading] = useState(!listCache[list.id]);
 
+   const fetchListMovies = useCallback(async () => {
+      if (!listCache[list.id]) setLoading(true);
+      try {
+         const { data, error } = await supabase.from("list_movies").select("tmdb_id").eq("list_id", list.id);
          if (error) throw error;
 
-         // 2. Filtra os filmes do App.tsx que batem com estes IDs!
-         // Adeus chamadas desnecessárias ao TMDB e adeus filmes sem nota!
          const tmdbIds = data?.map(d => d.tmdb_id) || [];
-         const populatedMovies = allMovies.filter(m => tmdbIds.includes(m.tmdb_id));
-         
-         setListMovies(populatedMovies);
+         listCache[list.id] = tmdbIds; // Guarda no cache
+         setListMovies(allMovies.filter(m => tmdbIds.includes(m.tmdb_id)));
       } catch (error) {
-         console.error("Erro ao buscar filmes da lista:", error);
-         toast.error("Não foi possível carregar os filmes desta lista.");
+         console.error(error);
       } finally {
          setLoading(false);
       }
@@ -116,8 +118,8 @@ export function ListDetails({
 
             <div className={styles.titleSection}>
                <div>
-                  <h1 className={styles.title}>{list.name}</h1>
-                  {list.description && <p className={styles.description}>{list.description}</p>}
+                  <h1 className={styles.title} style={{ wordBreak: 'break-word' }}>{list.name}</h1>
+                  {list.description && <p className={styles.description} style={{ wordBreak: 'break-word' }}>{list.description}</p>}
                   <p className={styles.metaInfo}>{listMovies.length} filmes na lista</p>
                </div>
 
@@ -147,11 +149,12 @@ export function ListDetails({
          ) : listMovies.length === 0 ? (
             <div className={styles.emptyState}>
                <p>Esta lista ainda não tem filmes.</p>
-               {isOwner && (
+               <p>Clique em Adicionar Filme ou escolha uma lista ao Editar um filme.</p>
+               {/* {isOwner && (
                   <button className={styles.emptyAddBtn} onClick={onAddMovieClick}>
                      Procurar um filme para adicionar
                   </button>
-               )}
+               )} */}
             </div>
          ) : (
             <div className="movie-grid">

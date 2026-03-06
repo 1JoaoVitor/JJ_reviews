@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus} from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -46,6 +46,9 @@ export default function App() {
 }
 
 function MainApp() {
+
+   const navigate = useNavigate();
+   
    const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
 
@@ -66,9 +69,13 @@ function MainApp() {
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
 
-   const { lists, loading: listsLoading, createList, fetchLists, updateList, removeMovieFromList } = useLists(session?.user.id);
+   const { lists, loading: listsLoading, createList, fetchLists, 
+      updateList, removeMovieFromList, addMovieToList } = useLists(session?.user.id);
+
    const [showCreateListModal, setShowCreateListModal] = useState(false);
+   const [preselectedListId, setPreselectedListId] = useState<string>("");
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
+
 
 
    // Scroll to top on mount (F5 / navegação)
@@ -195,13 +202,16 @@ function MainApp() {
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
                      <span className={styles.movieCount}>
-                        {isPageLoading
-                           ? "Carregando..."
-                           : filters.filteredMovies.length === movies.length
-                           ? `Todos os ${movies.length} filmes`
-                           : filters.filteredMovies.length === 1
-                              ? "Exibindo 1 filme"
-                              : `Exibindo ${filters.filteredMovies.length} filmes`}
+                        {filters.viewMode === "lists" 
+                           ? (listsLoading ? "Carregando..." : `Exibindo ${lists.length} listas`)
+                           : isPageLoading
+                              ? "Carregando..."
+                              : filters.filteredMovies.length === movies.length
+                              ? `Todos os ${movies.length} filmes`
+                              : filters.filteredMovies.length === 1
+                                 ? "Exibindo 1 filme"
+                                 : `Exibindo ${filters.filteredMovies.length} filmes`
+                        }
                      </span>
 
                      <div className={styles.viewToggle}>
@@ -243,6 +253,7 @@ function MainApp() {
                               className={styles.addBtn}
                               onClick={() => {
                                  setMovieToEdit(null);
+                                 setPreselectedListId("");
                                  setShowAddModal(true);
                               }}
                            >
@@ -336,6 +347,7 @@ function MainApp() {
                      onRemoveMovie={removeMovieFromList}
                      onAddMovieClick={() => {
                         setMovieToEdit(null);
+                        setPreselectedListId(selectedList.id);
                         setShowAddModal(true);
                      }}
                      onMovieClick={handleOpenModal}
@@ -367,8 +379,9 @@ function MainApp() {
                                     onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
                                     onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
                                  >
-                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem' }}>{list.name}</h5>
-                                    <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
+                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem', wordBreak: 'break-word' }}>{list.name}</h5>
+                                    <p className="text-muted small mb-0" style={{ wordBreak: 'break-word' }}>{list.description || "Sem descrição"}</p>
+                                    <p className="text-muted small mb-0 mt-2">{(list.movie_count ?? 0) === 1 ? "1 filme" : `${list.movie_count ?? 0} filmes`}</p>
                                  </div>
                               </div>
                            ))}
@@ -387,6 +400,7 @@ function MainApp() {
                   actionText="Adicionar Filme"
                   onAction={() => {
                      setMovieToEdit(null);
+                     setPreselectedListId("");
                      setShowAddModal(true);
                   }}
                />
@@ -418,9 +432,16 @@ function MainApp() {
 
          <AddMovieModal
             show={showAddModal}
-            onHide={() => setShowAddModal(false)}
+            onHide={() => {
+               setShowAddModal(false);
+               setPreselectedListId(""); 
+            }}
             onSuccess={() => fetchMovies()}
             movieToEdit={movieToEdit}
+            lists={lists}
+            addMovieToList={addMovieToList}
+            createList={createList}
+            preselectedListId={preselectedListId}
          />
 
          <LoginModal
@@ -482,10 +503,14 @@ function MainApp() {
          <BottomNav
             session={session}
             avatarUrl={avatarUrl}
-            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onHomeClick={() => {
+               navigate("/");
+               window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);
+               setPreselectedListId("");
                setShowAddModal(true);
             }}
             onProfileClick={() => setShowProfileModal(true)}

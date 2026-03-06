@@ -5,12 +5,11 @@ import { Search, ArrowLeft } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies } from "../../services/tmdbService";
-import { useAuth } from "@/features/auth";
-import { useLists, CreateListModal } from "@/features/lists";
+import { CreateListModal } from "@/features/lists";
 import { ListPlus } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
-import type { TmdbSearchResult, MovieData } from "@/types";
+import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
 import styles from "./AddMovieModal.module.css";
 
 interface AddMovieModalProps {
@@ -18,6 +17,10 @@ interface AddMovieModalProps {
    onHide: () => void;
    onSuccess: () => void;
    movieToEdit?: MovieData | null;
+   lists: CustomList[];
+   addMovieToList: (listId: string, tmdbId: number) => Promise<boolean>;
+   createList: (name: string, description: string) => Promise<CustomList | null>;
+   preselectedListId?: string;
 }
 
 export function AddMovieModal({
@@ -25,6 +28,10 @@ export function AddMovieModal({
    onHide,
    onSuccess,
    movieToEdit,
+   lists,
+   addMovieToList,
+   createList,
+   preselectedListId
 }: AddMovieModalProps) {
    const [step, setStep] = useState<"search" | "form">("search");
    const [searchQuery, setSearchQuery] = useState("");
@@ -38,14 +45,17 @@ export function AddMovieModal({
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
-   const { session } = useAuth();
-   const { lists, addMovieToList, createList } = useLists(session?.user.id);
    const [selectedListId, setSelectedListId] = useState<string>("");
    const [showCreateList, setShowCreateList] = useState(false);
 
    useEffect(() => {
+      if (show) {
+         setSelectedListId(preselectedListId || "");
+      }
+
       if (show && movieToEdit) {
          setStep("form");
+         // ... o resto do seu useEffect original continua igual a partir daqui:
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -66,7 +76,8 @@ export function AddMovieModal({
          setRecommended("Vale a pena assistir");
          setFormStatus("watched");
       }
-   }, [show, movieToEdit]);
+   }, [show, movieToEdit, preselectedListId]); 
+
 
    const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
