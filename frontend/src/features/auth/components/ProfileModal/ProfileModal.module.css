@@ -70,6 +70,7 @@
    font-weight: 700;
    font-size: var(--font-base);
    cursor: pointer;
+   margin-top: 1rem;
    transition: background 0.2s, transform 0.15s;
 }
 
@@ -82,6 +83,8 @@
    opacity: 0.6;
    cursor: not-allowed;
 }
+
+
 
 .shareLinkBtn {
    width: 100%;
@@ -170,4 +173,136 @@
 .confirmBtn:disabled {
    opacity: 0.6;
    cursor: not-allowed;
+}
+
+.modalContent {
+   background-color: var(--bg-surface);
+   border: 1px solid var(--border-medium);
+   border-radius: var(--radius-lg);
+   overflow: hidden;
+}
+
+.header {
+   border-bottom: 1px solid var(--border-subtle);
+   padding: 1.5rem 1.5rem 0; /* Menos padding em baixo para colar as abas */
+   display: flex;
+   flex-direction: column;
+}
+
+.title {
+   font-weight: 800;
+   color: var(--text-primary);
+   margin-bottom: 1rem;
+}
+
+/* ─── Sistema de Abas ─── */
+.tabs {
+   display: flex;
+   gap: 1.5rem;
+   border-bottom: 1px solid var(--border-subtle);
+   margin-bottom: -1px; /* Para sobrepor a borda do header */
+}
+
+.tabBtn {
+   background: transparent;
+   border: none;
+   color: var(--text-muted);
+   font-weight: 600;
+   padding: 0.75rem 0;
+   border-bottom: 2px solid transparent;
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   transition: all 0.2s;
+}
+
+.tabBtn:hover {
+   color: var(--text-primary);
+}
+
+.tabBtnActive {
+   color: var(--gold);
+   border-bottom-color: var(--gold);
+}
+
+.body {
+   padding: 1.5rem;
+}
+
+/* ─── Inputs ─── */
+.label {
+   color: var(--text-secondary);
+   font-size: var(--font-sm);
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.inputGroup {
+   position: relative;
+   display: flex;
+   align-items: center;
+}
+
+.inputIcon {
+   position: absolute;
+   left: 1rem;
+   color: var(--text-muted);
+   pointer-events: none;
+}
+
+.input {
+   background-color: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   color: var(--text-primary);
+   padding-left: 2.75rem !important;
+   border-radius: var(--radius-sm);
+   height: 48px;
+}
+
+.input:focus {
+   background-color: var(--bg-elevated);
+   border-color: var(--gold);
+   color: var(--text-primary);
+   box-shadow: 0 0 0 2px rgba(232, 177, 0, 0.2);
+}
+
+.logoutBtn {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 0.5rem;
+   width: 100%;
+   background: transparent;
+   border: 1px solid #EF4444;
+   color: #EF4444;
+   padding: 0.75rem;
+   border-radius: var(--radius-sm);
+   font-weight: 600;
+   margin-top: 2rem;
+   transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+   background: rgba(239, 68, 68, 0.1);
+}
+
+.deleteAccountBtn {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 0.5rem;
+   width: 100%;
+   background: rgba(239, 68, 68, 0.1);
+   border: 1px solid #EF4444;
+   color: #EF4444;
+   padding: 0.75rem;
+   border-radius: var(--radius-sm);
+   font-weight: 700;
+   margin-top: 2rem;
+   transition: all 0.2s;
+}
+
+.deleteAccountBtn:hover {
+   background: #EF4444;
+   color: white;
 }

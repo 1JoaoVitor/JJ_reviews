@@ -262,8 +262,8 @@ export function AddMovieModal({
                            >
                               <option value="Assista com certeza">Assista com certeza</option>
                               <option value="Vale a pena assistir">Vale a pena assistir</option>
-                              <option value="tem filmes melhores, mas é legal">Tem filmes melhores</option>
-                              <option value="não tão bom">Não tão bom</option>
+                              <option value="Tem filmes melhores, mas é legal">Tem filmes melhores</option>
+                              <option value="Não tão bom">Não tão bom</option>
                               <option value="Não perca seu tempo">Não perca seu tempo</option>
                            </Form.Select>
                         </Form.Group>
