@@ -91,7 +91,7 @@ export function FriendsModal({ show, onHide, session }: FriendsModalProps) {
       }
    }, [show, session, activeTab, fetchFriends]);
 
-   // Função para procurar utilizadores novos
+   // Função para procurar usuários novos
    const handleSearch = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!searchQuery.trim() || !session?.user.id) return;
@@ -102,7 +102,7 @@ export function FriendsModal({ show, onHide, session }: FriendsModalProps) {
             .from("profiles")
             .select("id, username, avatar_url")
             .ilike("username", `%${searchQuery}%`) // Procura nomes parecidos
-            .neq("id", session.user.id) // Esconde o próprio utilizador da busca
+            .neq("id", session.user.id) // Esconde o próprio usuários da busca
             .limit(10);
 
          if (error) throw error;
@@ -162,7 +162,7 @@ export function FriendsModal({ show, onHide, session }: FriendsModalProps) {
 
                   <div className={styles.resultsList}>
                      {searchResults.length === 0 && !isSearching && searchQuery && (
-                        <p className={styles.emptyText}>Nenhum utilizador encontrado.</p>
+                        <p className={styles.emptyText}>Nenhum usuário encontrado.</p>
                      )}
                      
                      {searchResults.map(user => (

@@ -96,7 +96,7 @@
    transform: translateY(-2px);
 }
 
-/* Lista de utilizadores */
+/* Lista de usuários */
 .resultsList {
    display: flex;
    flex-direction: column;

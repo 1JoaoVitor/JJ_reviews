@@ -7,28 +7,6 @@
    margin-bottom: 0.35rem;
 }
 
-.submitBtn {
-   width: 100%;
-   padding: 0.75rem;
-   border: none;
-   border-radius: var(--radius-md);
-   background: var(--gold);
-   color: var(--bg-page);
-   font-weight: 700;
-   font-size: var(--font-base);
-   cursor: pointer;
-   transition: background 0.2s, transform 0.15s;
-}
-
-.submitBtn:hover:not(:disabled) {
-   background: var(--gold-hover);
-   transform: translateY(-1px);
-}
-
-.submitBtn:disabled {
-   opacity: 0.6;
-   cursor: not-allowed;
-}
 
 .toggleArea {
    text-align: center;
@@ -48,4 +26,143 @@
 
 .toggleBtn:hover {
    color: var(--gold);
+}
+
+.modalContent {
+   background-color: var(--bg-surface);
+   border: 1px solid var(--border-medium);
+   border-radius: var(--radius-lg);
+   overflow: hidden;
+}
+
+.header {
+   border-bottom: 1px solid var(--border-subtle);
+   padding: 1.5rem 1.5rem 1rem;
+}
+
+.title {
+   font-weight: 800;
+   color: var(--text-primary);
+}
+
+.body {
+   padding: 1.5rem;
+}
+
+
+
+
+/* Inputs com Ícones */
+.label {
+   color: var(--text-secondary);
+   font-size: var(--font-sm);
+   font-weight: 600;
+   margin-bottom: 0.5rem;
+}
+
+.inputGroup {
+   position: relative;
+   display: flex;
+   align-items: center;
+}
+
+.inputIcon {
+   position: absolute;
+   left: 1rem;
+   color: var(--text-muted);
+   pointer-events: none; /* Para não atrapalhar o clique no input */
+}
+
+.input {
+   background-color: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   color: var(--text-primary);
+   padding-left: 2.75rem !important; /* Espaço para o ícone */
+   border-radius: var(--radius-sm);
+   height: 48px;
+}
+
+.input:focus {
+   background-color: var(--bg-elevated);
+   border-color: var(--gold);
+   color: var(--text-primary);
+   box-shadow: 0 0 0 2px rgba(232, 177, 0, 0.2);
+}
+
+/* Botão do Olhinho */
+.eyeBtn {
+   position: absolute;
+   right: 1rem;
+   background: none;
+   border: none;
+   color: var(--text-muted);
+   padding: 0;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+   color: var(--text-primary);
+}
+
+/* Links Pequenos */
+.forgotLink {
+   background: none;
+   border: none;
+   color: var(--gold);
+   font-size: var(--font-xs);
+   font-weight: 600;
+   padding: 0;
+   margin-bottom: 0.5rem;
+}
+
+.forgotLink:hover {
+   text-decoration: underline;
+}
+
+/* Botão Principal e Footer */
+.submitBtn {
+   width: 100%;
+   background: var(--gold);
+   border: none;
+   color: var(--bg-page);
+   padding: 0.75rem;
+   border-radius: var(--radius-sm);
+   font-weight: 700;
+   font-size: 1rem;
+   margin-top: 1rem;
+   transition: var(--transition-fast);
+}
+
+.submitBtn:hover:not(:disabled) {
+   transform: translateY(-2px);
+   box-shadow: var(--shadow-md);
+}
+
+.submitBtn:disabled {
+   opacity: 0.7;
+   cursor: not-allowed;
+}
+
+.footerText {
+   text-align: center;
+   margin-top: 1.5rem;
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+}
+
+.footerText button {
+   background: none;
+   border: none;
+   color: var(--gold);
+   font-weight: 700;
+   padding: 0;
+   margin-left: 0.25rem;
+}
+
+.footerText button:hover {
+   text-decoration: underline;
 }

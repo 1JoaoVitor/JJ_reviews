@@ -344,6 +344,7 @@ export function PublicProfile() {
                setShowProfileModal(false);
                setShowLogoutConfirm(true);
             }}
+            forceLogout={logout}
          />
 
          <FriendsModal 

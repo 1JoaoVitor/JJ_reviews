@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
 
 // ─── Features ───
-import { useAuth, LoginModal, ProfileModal, FriendsModal } from "@/features/auth";
+import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
 import {
    MovieCard,
    MovieCardSkeleton,
@@ -41,6 +41,8 @@ export default function App() {
          
          {/* Se a URL for "/perfil/algum-nome", carrega a tela de visitante */}
          <Route path="/perfil/:username" element={<PublicProfile />} />
+
+         <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
    );
 }
@@ -459,6 +461,7 @@ function MainApp() {
                setShowProfileModal(false);
                setShowLogoutConfirm(true);
             }}
+            forceLogout={logout}
          />
 
          {sharingMovie && <ShareCard ref={shareRef} movie={sharingMovie} />}
