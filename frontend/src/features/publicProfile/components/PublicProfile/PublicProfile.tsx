@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams} from "react-router-dom";
+import { useParams, useNavigate} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
@@ -10,20 +10,29 @@ import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
 import { MovieBattle } from "@/features/battle";
-import type { MovieData } from "@/types";
+import type { MovieData, CustomList } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
-import { useFriendship } from "@/features/friends/hooks/useFriendship"; 
-import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
+import { useFriendship } from "@/features/friends"; 
+import { FriendsModal } from "@/features/auth";
+import { useLists, ListDetails } from "@/features/lists";
+
 
 
 export function PublicProfile() {
+   const navigate = useNavigate();
+
    const { username: profileUsername } = useParams<{ username: string }>();
    
    const { movies, loading, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
    const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
    const filters = useMovieFilters(movies);
+
+   const { lists, loading: listsLoading } = useLists(profileId || undefined);
+   const [selectedList, setSelectedList] = useState<CustomList | null>(null);
+
+   const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [showLoginModal, setShowLoginModal] = useState(false);
@@ -38,6 +47,8 @@ export function PublicProfile() {
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
    const [showFriendsModal, setShowFriendsModal] = useState(false);
+
+
 
    if (loading) {
       return (
@@ -97,6 +108,12 @@ export function PublicProfile() {
                   onClick={() => filters.setViewMode("watchlist")}
                >
                   Watchlist
+               </button>
+               <button
+                  className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`} // Use styles.viewBtnActive no desktop
+                  onClick={() => filters.setViewMode("lists")}
+               >
+                  Listas
                </button>
             </div>
          </div>
@@ -169,12 +186,18 @@ export function PublicProfile() {
 
             <div className={styles.subheader}>
                <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
-                  <span className={styles.movieCount}>
-                     {filters.filteredMovies.length === 1
-                        ? "Exibindo 1 filme"
-                        : `Exibindo ${filters.filteredMovies.length} filmes`}
-                  </span>
-
+                     <span className={styles.movieCount}>
+                        {filters.viewMode === "lists" 
+                           ? (listsLoading ? "Carregando..." : `Exibindo ${lists.length} listas`)
+                           : loading
+                              ? "Carregando..."
+                              : filters.filteredMovies.length === movies.length
+                              ? `Todos os ${movies.length} filmes`
+                              : filters.filteredMovies.length === 1
+                                 ? "Exibindo 1 filme"
+                                 : `Exibindo ${filters.filteredMovies.length} filmes`
+                        }
+                     </span>
                   <div className={styles.viewToggle}>
                      <button
                         className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
@@ -187,6 +210,12 @@ export function PublicProfile() {
                         onClick={() => filters.setViewMode("watchlist")}
                      >
                         Watchlist
+                     </button>
+                     <button
+                        className={`${styles.viewBtn} ${filters.viewMode === "lists" ? styles.viewBtnActive : ""}`}
+                        onClick={() => filters.setViewMode("lists")}
+                     >
+                        Listas
                      </button>
                   </div>
                </div>
@@ -213,7 +242,54 @@ export function PublicProfile() {
                </div>
             </div>
 
-            {filters.filteredMovies.length === 0 ? (
+            {filters.viewMode === "lists" ? (
+               selectedList ? (
+                  <ListDetails
+                     list={selectedList}
+                     allMovies={movies}
+                     currentUserId={session?.user.id}
+                     onBack={() => setSelectedList(null)}
+                     // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
+                     onListDeleted={() => {}}
+                     onListUpdated={() => {}}
+                     onUpdateList={async () => false}
+                     onRemoveMovie={async () => false}
+                     onAddMovieClick={() => {}}
+                     onMovieClick={(m) => setSelectedMovie(m)}
+                  />
+               ) : (
+                  <div className={styles.listsContainer}>
+                     <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
+                        <h4 className="m-0 text-white fw-bold">Listas de @{profileName}</h4>
+                     </div>
+
+                     {listsLoading ? (
+                        <div className="text-center py-5 text-muted">A procurar listas...</div>
+                     ) : lists.length === 0 ? (
+                        <div className="text-center py-5 text-muted">
+                           @{profileName} ainda não criou nenhuma lista temática.
+                        </div>
+                     ) : (
+                        <div className="row g-3">
+                           {lists.map((list) => (
+                              <div key={list.id} className="col-12 col-md-6 col-lg-4">
+                                 <div 
+                                    className="p-4 rounded h-100" 
+                                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                                    onClick={() => setSelectedList(list)}
+                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
+                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                                 >
+                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem' }}>{list.name}</h5>
+                                    <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               )
+            ) : filters.filteredMovies.length === 0 ? (
                <div className={styles.emptyState}>
                   <h5>Nenhum filme encontrado.</h5>
                </div>
@@ -247,6 +323,10 @@ export function PublicProfile() {
             onHide={() => setShowAddModal(false)}
             onSuccess={() => {}} 
             movieToEdit={movieToEdit}
+            lists={myLists}
+            addMovieToList={addMovieToList}
+            createList={createList}
+            preselectedListId=""
          />
 
          <LoginModal
@@ -275,7 +355,10 @@ export function PublicProfile() {
          <BottomNav
             session={session}
             avatarUrl={loggedInAvatar}
-            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onHomeClick={() => {
+               navigate("/");
+               window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);

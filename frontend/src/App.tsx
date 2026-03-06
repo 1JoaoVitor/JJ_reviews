@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
+import { Dices, Plus, Star, Bookmark, Swords, ListPlus} from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import type { MovieData } from "@/types";
+import type { MovieData, CustomList } from "@/types";
 
 // ─── Features ───
-import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
+import { useAuth, LoginModal, ProfileModal, FriendsModal } from "@/features/auth";
 import {
    MovieCard,
+   MovieCardSkeleton,
    MovieModal,
    AddMovieModal,
    useMovies,
@@ -20,11 +21,10 @@ import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
+import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
-import { MovieCardSkeleton } from "@/features/movies/components/MovieCardSkeleton/MovieCardSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
-import { FriendsModal } from "@/features/auth/components/FriendsModal/FriendsModal";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -46,15 +46,13 @@ export default function App() {
 }
 
 function MainApp() {
+
+   const navigate = useNavigate();
+   
    const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
 
    const isPageLoading = authLoading || moviesLoading;
-
-   // Scroll to top on mount (F5 / navegação)
-   useEffect(() => {
-      window.scrollTo(0, 0);
-   }, []);
 
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
@@ -70,6 +68,21 @@ function MainApp() {
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
+
+   const { lists, loading: listsLoading, createList, fetchLists, 
+      updateList, removeMovieFromList, addMovieToList } = useLists(session?.user.id);
+
+   const [showCreateListModal, setShowCreateListModal] = useState(false);
+   const [preselectedListId, setPreselectedListId] = useState<string>("");
+   const [selectedList, setSelectedList] = useState<CustomList | null>(null);
+
+
+
+   // Scroll to top on mount (F5 / navegação)
+   useEffect(() => {
+      window.scrollTo(0, 0);
+   }, []);
+
 
    // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
@@ -170,6 +183,12 @@ function MainApp() {
                   >
                      Watchlist
                   </button>
+                  <button
+                     className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`}
+                     onClick={() => filters.setViewMode("lists")}
+                  >
+                     Listas
+                  </button>
                </div>
             </div>
          )}
@@ -183,13 +202,16 @@ function MainApp() {
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
                      <span className={styles.movieCount}>
-                        {isPageLoading
-                           ? "Carregando..."
-                           : filters.filteredMovies.length === movies.length
-                           ? `Todos os ${movies.length} filmes`
-                           : filters.filteredMovies.length === 1
-                              ? "Exibindo 1 filme"
-                              : `Exibindo ${filters.filteredMovies.length} filmes`}
+                        {filters.viewMode === "lists" 
+                           ? (listsLoading ? "Carregando..." : `Exibindo ${lists.length} listas`)
+                           : isPageLoading
+                              ? "Carregando..."
+                              : filters.filteredMovies.length === movies.length
+                              ? `Todos os ${movies.length} filmes`
+                              : filters.filteredMovies.length === 1
+                                 ? "Exibindo 1 filme"
+                                 : `Exibindo ${filters.filteredMovies.length} filmes`
+                        }
                      </span>
 
                      <div className={styles.viewToggle}>
@@ -204,6 +226,12 @@ function MainApp() {
                            onClick={() => filters.setViewMode("watchlist")}
                         >
                            Watchlist
+                        </button>
+                        <button
+                           className={`${styles.viewBtn} ${filters.viewMode === "lists" ? styles.viewBtnActive : ""}`}
+                           onClick={() => filters.setViewMode("lists")} 
+                        >
+                           Minhas Listas
                         </button>
                      </div>
 
@@ -225,6 +253,7 @@ function MainApp() {
                               className={styles.addBtn}
                               onClick={() => {
                                  setMovieToEdit(null);
+                                 setPreselectedListId("");
                                  setShowAddModal(true);
                               }}
                            >
@@ -266,7 +295,7 @@ function MainApp() {
                      <MovieCardSkeleton key={i} />
                   ))}
                </div>
-               ) : !session ? (
+            ) : !session ? (
                <div className={styles.landingContainer}>
                   <div className={styles.heroSection}>
                      <h1 className={styles.heroTitle}>Sua jornada cinematográfica<br/>começa aqui.</h1>
@@ -299,6 +328,67 @@ function MainApp() {
                      </div>
                   </div>
                </div>
+            ) : filters.viewMode === "lists" ? (
+               selectedList ? (
+                  <ListDetails
+                     list={selectedList}
+                     allMovies={movies}
+                     currentUserId={session?.user.id}
+                     onBack={() => setSelectedList(null)}
+                     onListDeleted={() => {
+                        setSelectedList(null);
+                        fetchLists();
+                     }}
+                     onListUpdated={(updatedList) => {
+                        setSelectedList(updatedList);
+                        fetchLists();
+                     }}
+                     onUpdateList={updateList}
+                     onRemoveMovie={removeMovieFromList}
+                     onAddMovieClick={() => {
+                        setMovieToEdit(null);
+                        setPreselectedListId(selectedList.id);
+                        setShowAddModal(true);
+                     }}
+                     onMovieClick={handleOpenModal}
+                  />
+               ) : (
+                  <div className={styles.listsContainer}>
+                     <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
+                        <h4 className="m-0 text-white fw-bold">Minhas Listas</h4>
+                        <button onClick={() => setShowCreateListModal(true)} style={{ background: 'var(--gold)', color: 'var(--bg-page)', border: 'none', padding: '0.5rem 1rem', borderRadius: '50rem', fontWeight: 600 }}>
+                           <ListPlus size={18} className="me-2" />
+                           Nova Lista
+                        </button>
+                     </div>
+
+                     {listsLoading ? (
+                        <div className="text-center py-5 text-muted">Carregando listas...</div>
+                     ) : lists.length === 0 ? (
+                        <div className="text-center py-5 text-muted">
+                           Você ainda não criou nenhuma lista. Que tal começar agora?
+                        </div>
+                     ) : (
+                        <div className="row g-3">
+                           {lists.map((list) => (
+                              <div key={list.id} className="col-12 col-md-6 col-lg-4">
+                                 <div 
+                                    className="p-4 rounded h-100" 
+                                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                                    onClick={() => setSelectedList(list)}
+                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
+                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                                 >
+                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem', wordBreak: 'break-word' }}>{list.name}</h5>
+                                    <p className="text-muted small mb-0" style={{ wordBreak: 'break-word' }}>{list.description || "Sem descrição"}</p>
+                                    <p className="text-muted small mb-0 mt-2">{(list.movie_count ?? 0) === 1 ? "1 filme" : `${list.movie_count ?? 0} filmes`}</p>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               )
             ) : filters.filteredMovies.length === 0 ? (
                <EmptyState 
                   title="Nenhum filme por aqui"
@@ -310,6 +400,7 @@ function MainApp() {
                   actionText="Adicionar Filme"
                   onAction={() => {
                      setMovieToEdit(null);
+                     setPreselectedListId("");
                      setShowAddModal(true);
                   }}
                />
@@ -341,9 +432,16 @@ function MainApp() {
 
          <AddMovieModal
             show={showAddModal}
-            onHide={() => setShowAddModal(false)}
+            onHide={() => {
+               setShowAddModal(false);
+               setPreselectedListId(""); 
+            }}
             onSuccess={() => fetchMovies()}
             movieToEdit={movieToEdit}
+            lists={lists}
+            addMovieToList={addMovieToList}
+            createList={createList}
+            preselectedListId={preselectedListId}
          />
 
          <LoginModal
@@ -395,14 +493,24 @@ function MainApp() {
             session={session} 
          />
 
+         <CreateListModal
+            show={showCreateListModal}
+            onHide={() => setShowCreateListModal(false)}
+            onCreate={createList}
+         />
+
        { /* ─── Navegação Mobile ─── */}
          <BottomNav
             session={session}
             avatarUrl={avatarUrl}
-            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onHomeClick={() => {
+               navigate("/");
+               window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);
+               setPreselectedListId("");
                setShowAddModal(true);
             }}
             onProfileClick={() => setShowProfileModal(true)}

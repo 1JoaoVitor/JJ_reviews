@@ -11,7 +11,7 @@ export function useMovieFilters(movies: MovieData[]) {
    const [onlyOscar, setOnlyOscar] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
    const [selectedGenre, setSelectedGenre] = useState("");
-   const [viewMode, setViewMode] = useState<"watched" | "watchlist">("watched");
+   const [viewMode, setViewMode] = useState<"watched" | "watchlist" | "lists">("watched");
 
    const availableGenres = useMemo(
       () => Array.from(new Set(movies.flatMap((m) => m.genres || []))).sort(),

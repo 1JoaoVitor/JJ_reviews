@@ -73,7 +73,7 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          
          if (error) throw error;
          setStatus("accepted");
-         toast.success("Pedido aceite! Agora são amigos.");
+         toast.success("Pedido aceito! Agora vocês são amigos.");
       } catch (err) {
         if (err instanceof Error){
          toast.error("Erro ao aceitar pedido." + err.message);
