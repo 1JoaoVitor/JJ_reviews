@@ -42,25 +42,61 @@ export function useLists(userId?: string) {
       fetchLists();
    }, [fetchLists]);
 
-   const createList = async (name: string, description: string) => {
+   const createList = async (
+      name: string, 
+      description: string, 
+      type: "private" | "partial_shared" | "full_shared" = "private",
+      collaboratorIds: string[] = []
+   ) => {
       if (!userId) return null;
-      
+      setLoading(true);
+
       try {
-         const { data, error } = await supabase
+         const { data: newList, error } = await supabase
             .from("lists")
-            .insert([{ name, description, owner_id: userId }])
+            .insert([{ owner_id: userId, name, description, type }])
             .select()
             .single();
 
          if (error) throw error;
-         
-         toast.success("Lista criada com sucesso!");
-         fetchLists(); // Recarrega as listas
-         return data;
+
+         // Se for uma lista compartilhada e tiver convidados, adiciona eles
+         if (type !== "private" && collaboratorIds.length > 0) {
+            
+            // Prepara os dados para a tabela list_collaborators
+            const collaboratorsData = collaboratorIds.map(friendId => ({
+               list_id: newList.id,
+               user_id: friendId,
+               role: 'member',
+               status: 'pending' // Ficam pendentes até aceitarem no sininho
+            }));
+
+            const { error: collabError } = await supabase
+               .from("list_collaborators")
+               .insert(collaboratorsData);
+
+            if (collabError) throw collabError;
+
+            // Dispara a notificação para cada amigo convidado
+            const notificationsData = collaboratorIds.map(friendId => ({
+               user_id: friendId,
+               sender_id: userId,
+               type: 'list_invite',
+               message: type === 'full_shared' 
+                  ? 'convidou você para uma Lista Totalmente Compartilhada!' 
+                  : 'convidou você para uma Lista Parcialmente Compartilhada!'
+            }));
+
+            await supabase.from("notifications").insert(notificationsData);
+         }
+
+         setLists((prev) => [newList as CustomList, ...prev]);
+         return newList as CustomList;
       } catch (error) {
          console.error("Erro ao criar lista:", error);
-         toast.error("Erro ao criar a lista.");
          return null;
+      } finally {
+         setLoading(false);
       }
    };
 

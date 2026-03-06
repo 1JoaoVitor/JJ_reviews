@@ -129,6 +129,20 @@
    transform: translateY(-1px);
 }
 
+.createListBtn { 
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background-color: var(--gold);
+   color: var(--bg-page);
+   border: none;
+   padding: 0.5rem 1rem;
+   font-size: 0.85rem; 
+   font-weight: 700;
+   border-radius: var(--radius-xl);;
+   height: 38px; 
+   transition: transform 0.2s;
+}
 /* Mobile filter row */
 .mobileFilters {
    display: flex;

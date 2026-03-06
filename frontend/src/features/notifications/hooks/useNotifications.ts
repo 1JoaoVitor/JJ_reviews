@@ -12,30 +12,44 @@ export function useNotifications(userId?: string) {
       setLoading(true);
       
       try {
-         // Traz as notificações ordenadas das mais recentes para as mais antigas
-         // E faz um JOIN (select sender(...)) para pegar a foto e nome de quem enviou
          const { data, error } = await supabase
             .from("notifications")
             .select(`
                *,
-               sender:profiles!notifications_sender_id_fkey(username, avatar_url)
+               sender:profiles!sender_id(username, avatar_url)
             `)
             .eq("user_id", userId)
             .order("created_at", { ascending: false })
-            .limit(50); // Pega as últimas 50 para não pesar
+            .limit(50);
 
-         if (error) throw error;
+         if (error) {
+            console.error("Erro do Supabase ao buscar notificações:", error.message);
+            throw error;
+         }
 
-         if (data) {
-            setNotifications(data as unknown as AppNotification[]);
-            setUnreadCount(data.filter((n) => !n.is_read).length);
+        if (data) {
+            // Cria um tipo temporário para o dado "bruto" que vem do banco
+            type RawNotification = Omit<AppNotification, "sender"> & {
+            sender?: { username: string; avatar_url: string } | { username: string; avatar_url: string }[];
+            };
+
+            const rawData = data as RawNotification[];
+
+            // O map e o filter sabem exatamente quem é o "notif" e o "n"
+            const formattedData = rawData.map((notif) => ({
+            ...notif,
+            sender: Array.isArray(notif.sender) ? notif.sender[0] : notif.sender
+            }));
+            
+            setNotifications(formattedData as AppNotification[]);
+            setUnreadCount(formattedData.filter((n) => !n.is_read).length);
          }
       } catch (error) {
-         console.error("Erro ao buscar notificações:", error);
+         console.error("Erro ao processar notificações:", error);
       } finally {
          setLoading(false);
       }
-   }, [userId]);
+    }, [userId]);
 
    // Marca uma notificação específica como lida
    const markAsRead = async (notificationId: string) => {
@@ -86,16 +100,13 @@ export function useNotifications(userId?: string) {
          .on(
             "postgres_changes",
             {
-               event: "INSERT", // Escuta apenas quando uma LINHA NOVA for criada
+               event: "INSERT",
                schema: "public",
                table: "notifications",
-               filter: `user_id=eq.${userId}` // Escuta SÓ as notificações deste usuário!
+               filter: `user_id=eq.${userId}`
             },
-            (payload) => {
-               // Quando chegar uma notificação nova, coloca ela no topo da lista e aumenta a bolinha vermelha
-               const newNotif = payload.new as AppNotification;
-               setNotifications((prev) => [newNotif, ...prev]);
-               setUnreadCount((prev) => prev + 1);
+            () => {
+               fetchNotifications();
             }
          )
          .subscribe();
