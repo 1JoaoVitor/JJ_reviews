@@ -116,6 +116,9 @@ function MainApp() {
       handleCloseModal();
       setMovieToEdit(movie);
       setShowAddModal(true);
+      if (selectedList) {
+         setPreselectedListId(selectedList.id);
+      }
    };
 
    // ─── Modo Batalha (tela inteira) ───

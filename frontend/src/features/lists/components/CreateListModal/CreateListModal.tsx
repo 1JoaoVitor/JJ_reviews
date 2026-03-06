@@ -137,6 +137,7 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      onChange={(e) => setName(e.target.value)}
                      className={styles.input}
                      required
+                     maxLength={50}
                   />
                </Form.Group>
 
@@ -149,6 +150,7 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      value={description}
                      onChange={(e) => setDescription(e.target.value)}
                      className={styles.input}
+                     maxLength={200}
                   />
                </Form.Group>
 

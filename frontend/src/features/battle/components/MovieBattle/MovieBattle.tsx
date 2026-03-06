@@ -20,6 +20,16 @@ type SelectionCriteria =
    | "oscar"
    | "national";
 
+// Fisher-Yates shuffle for unbiased randomization
+function shuffleArray<T>(array: T[]): T[] {
+   const shuffled = [...array];
+   for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+   }
+   return shuffled;
+}
+
 export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
    const [quantity, setQuantity] = useState(8);
@@ -101,7 +111,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
             selected.sort((a, b) => b.id - a.id);
             break;
          default:
-            selected.sort(() => Math.random() - 0.5);
+            shuffleArray(selected).forEach((m, i) => selected[i] = m);
             break;
       }
 
@@ -111,7 +121,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
       const fightersCount = participants.length - byesCount;
 
       if (criteria !== "random") {
-         participants.sort(() => Math.random() - 0.5);
+         shuffleArray(participants).forEach((m, i) => participants[i] = m);
       }
 
       const fighters = participants.slice(0, fightersCount);
@@ -136,7 +146,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
             setStage("winner");
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
          } else {
-            const shuffledNext = newNextRound.sort(() => Math.random() - 0.5);
+            const shuffledNext = shuffleArray(newNextRound);
             setCurrentRoundMovies(shuffledNext);
             setNextRoundMovies([]);
             setPairIndex(0);

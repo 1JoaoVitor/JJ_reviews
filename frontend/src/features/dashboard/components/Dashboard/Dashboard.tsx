@@ -29,7 +29,7 @@ export function Dashboard({ movies }: DashboardProps) {
       (m) => !m.countries?.includes("Estados Unidos"),
    ).length;
 
-   const nonUSPercentage = ((nonUSCount / totalMovies) * 100).toFixed(0);
+   const nonUSPercentage = totalMovies > 0 ? ((nonUSCount / totalMovies) * 100).toFixed(0) : "0";
 
    const directorCounts: Record<string, number> = {};
    movies.forEach((movie) => {

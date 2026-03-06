@@ -70,8 +70,13 @@ export async function enrichMovieWithTmdb(
  * Busca filmes pelo nome no TMDB (para o modal de adição).
  */
 export async function searchMovies(query: string) {
-   const { data } = await axios.get(
-      `${BASE_URL}/search/movie?api_key=${API_KEY}&language=pt-BR&query=${encodeURIComponent(query)}`,
-   );
-   return data.results.slice(0, 5);
+   try {
+      const { data } = await axios.get(
+         `${BASE_URL}/search/movie?api_key=${API_KEY}&language=pt-BR&query=${encodeURIComponent(query)}`,
+      );
+      return data.results.slice(0, 5);
+   } catch (err) {
+      console.error("Erro ao buscar filmes no TMDB:", err);
+      return [];
+   }
 }

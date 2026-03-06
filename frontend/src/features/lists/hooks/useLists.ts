@@ -14,7 +14,7 @@ export function useLists(userId?: string) {
          // Busca as listas que EU criei (Dono)
          const { data: myLists, error: err1 } = await supabase
             .from("lists")
-            .select("*")
+            .select("*, list_movies(count)")
             .eq("owner_id", userId)
             .order("created_at", { ascending: false });
 
@@ -23,7 +23,7 @@ export function useLists(userId?: string) {
          // Busca as listas onde EU sou colaborador aceito
          const { data: collabData, error: err2 } = await supabase
             .from("list_collaborators")
-            .select("list_id, lists(*)")
+            .select("list_id, lists(*, list_movies(count))")
             .eq("user_id", userId)
             .eq("status", "accepted");
 
@@ -40,7 +40,15 @@ export function useLists(userId?: string) {
          // Ordena pelas mais recentes
          uniqueLists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-         setLists(uniqueLists as CustomList[]);
+         // Mapeia o count agregado para movie_count
+         const listsWithCount = uniqueLists.map(list => ({
+            ...list,
+            movie_count: (list as Record<string, unknown>).list_movies
+               ? ((list as Record<string, unknown>).list_movies as { count: number }[])[0]?.count ?? 0
+               : 0,
+         }));
+
+         setLists(listsWithCount as CustomList[]);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
       } finally {
