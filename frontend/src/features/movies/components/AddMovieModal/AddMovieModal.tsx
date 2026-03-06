@@ -4,10 +4,12 @@ import toast from "react-hot-toast";
 import { Search, ArrowLeft } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
-import { searchMovies } from "@/features/movies/services/tmdbService";
+import { searchMovies } from "../../services/tmdbService";
+import { CreateListModal } from "@/features/lists";
+import { ListPlus } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
-import type { TmdbSearchResult, MovieData } from "@/types";
+import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
 import styles from "./AddMovieModal.module.css";
 
 interface AddMovieModalProps {
@@ -15,6 +17,10 @@ interface AddMovieModalProps {
    onHide: () => void;
    onSuccess: () => void;
    movieToEdit?: MovieData | null;
+   lists: CustomList[];
+   addMovieToList: (listId: string, tmdbId: number) => Promise<boolean>;
+   createList: (name: string, description: string) => Promise<CustomList | null>;
+   preselectedListId?: string;
 }
 
 export function AddMovieModal({
@@ -22,6 +28,10 @@ export function AddMovieModal({
    onHide,
    onSuccess,
    movieToEdit,
+   lists,
+   addMovieToList,
+   createList,
+   preselectedListId
 }: AddMovieModalProps) {
    const [step, setStep] = useState<"search" | "form">("search");
    const [searchQuery, setSearchQuery] = useState("");
@@ -35,9 +45,17 @@ export function AddMovieModal({
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
+   const [selectedListId, setSelectedListId] = useState<string>("");
+   const [showCreateList, setShowCreateList] = useState(false);
+
    useEffect(() => {
+      if (show) {
+         setSelectedListId(preselectedListId || "");
+      }
+
       if (show && movieToEdit) {
          setStep("form");
+         // ... o resto do seu useEffect original continua igual a partir daqui:
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -58,7 +76,8 @@ export function AddMovieModal({
          setRecommended("Vale a pena assistir");
          setFormStatus("watched");
       }
-   }, [show, movieToEdit]);
+   }, [show, movieToEdit, preselectedListId]); 
+
 
    const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
@@ -129,6 +148,10 @@ export function AddMovieModal({
          } else {
             const { error } = await supabase.from("reviews").insert([payload]);
             if (error) throw error;
+         }
+
+         if (selectedListId && selectedMovie) {
+            await addMovieToList(selectedListId, selectedMovie.id);
          }
 
          toast.success("Filme guardado com sucesso!");
@@ -263,6 +286,52 @@ export function AddMovieModal({
                         </p>
                      </div>
                   )}
+
+                  <Form.Group className="mt-4 mb-2">
+                     <Form.Label style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                        Adicionar a uma lista personalizada (Opcional)
+                     </Form.Label>
+                     {lists.length > 0 ? (
+                        <Form.Select 
+                           value={selectedListId} 
+                           onChange={(e) => setSelectedListId(e.target.value)}
+                           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                        >
+                           <option value="">Nenhuma lista selecionada</option>
+                           {lists.map(list => (
+                              <option key={list.id} value={list.id}>{list.name}</option>
+                           ))}
+                        </Form.Select>
+                     ) : (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                           Você ainda não tem listas.
+                        </p>
+                     )}
+                     <button
+                        type="button"
+                        onClick={() => setShowCreateList(true)}
+                        style={{
+                           background: 'none',
+                           border: 'none',
+                           color: 'var(--gold)',
+                           fontSize: '0.85rem',
+                           fontWeight: 600,
+                           padding: '0.4rem 0 0',
+                           cursor: 'pointer',
+                           display: 'flex',
+                           alignItems: 'center',
+                           gap: '0.3rem',
+                        }}
+                     >
+                        <ListPlus size={14} /> Criar nova lista
+                     </button>
+                  </Form.Group>
+
+                  <CreateListModal
+                     show={showCreateList}
+                     onHide={() => setShowCreateList(false)}
+                     onCreate={createList}
+                  />
                </Form>
             )}
          </Modal.Body>
