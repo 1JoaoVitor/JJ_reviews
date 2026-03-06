@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Dices, Plus, Star, Bookmark, Swords} from "lucide-react";
+import { Dices, Plus, Star, Bookmark, Swords, ListPlus} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData } from "@/types";
 
@@ -21,6 +21,7 @@ import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ShareCard, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
+import { useLists, CreateListModal } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { EmptyState } from "@/components/ui/EmptyState/EmptyState";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
@@ -69,6 +70,8 @@ function MainApp() {
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
+   const { lists, loading: listsLoading, createList } = useLists(session?.user.id);
+   const [showCreateListModal, setShowCreateListModal] = useState(false);
 
    // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
@@ -169,6 +172,12 @@ function MainApp() {
                   >
                      Watchlist
                   </button>
+                  <button
+                     className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`}
+                     onClick={() => filters.setViewMode("lists")}
+                  >
+                     Listas
+                  </button>
                </div>
             </div>
          )}
@@ -203,6 +212,12 @@ function MainApp() {
                            onClick={() => filters.setViewMode("watchlist")}
                         >
                            Watchlist
+                        </button>
+                        <button
+                           className={`${styles.viewBtn} ${filters.viewMode === "lists" ? styles.viewBtnActive : ""}`}
+                           onClick={() => filters.setViewMode("lists")} 
+                        >
+                           Minhas Listas
                         </button>
                      </div>
 
@@ -265,7 +280,7 @@ function MainApp() {
                      <MovieCardSkeleton key={i} />
                   ))}
                </div>
-               ) : !session ? (
+            ) : !session ? (
                <div className={styles.landingContainer}>
                   <div className={styles.heroSection}>
                      <h1 className={styles.heroTitle}>Sua jornada cinematográfica<br/>começa aqui.</h1>
@@ -297,6 +312,35 @@ function MainApp() {
                         <p>Coloque seus filmes frente a frente num torneio mata-mata para definir o seu favorito de verdade.</p>
                      </div>
                   </div>
+               </div>
+            ) : filters.viewMode === "lists" ? (
+               <div className={styles.listsContainer}>
+                  <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
+                     <h4 className="m-0 text-white fw-bold">Minhas Listas</h4>
+                     <button onClick={() => setShowCreateListModal(true)} style={{ background: 'var(--gold)', color: 'var(--bg-page)', border: 'none', padding: '0.5rem 1rem', borderRadius: '50rem', fontWeight: 600 }}>
+                        <ListPlus size={18} className="me-2" />
+                        Nova Lista
+                     </button>
+                  </div>
+
+                  {listsLoading ? (
+                     <div className="text-center py-5 text-muted">Carregando listas...</div>
+                  ) : lists.length === 0 ? (
+                     <div className="text-center py-5 text-muted">
+                        Você ainda não criou nenhuma lista. Que tal começar agora?
+                     </div>
+                  ) : (
+                     <div className="row g-3">
+                        {lists.map((list) => (
+                           <div key={list.id} className="col-12 col-md-6 col-lg-4">
+                              <div className="p-4 rounded" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer' }}>
+                                 <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem' }}>{list.name}</h5>
+                                 <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  )}
                </div>
             ) : filters.filteredMovies.length === 0 ? (
                <EmptyState 
@@ -392,6 +436,12 @@ function MainApp() {
             show={showFriendsModal} 
             onHide={() => setShowFriendsModal(false)} 
             session={session} 
+         />
+
+         <CreateListModal
+            show={showCreateListModal}
+            onHide={() => setShowCreateListModal(false)}
+            onCreate={createList}
          />
 
        { /* ─── Navegação Mobile ─── */}

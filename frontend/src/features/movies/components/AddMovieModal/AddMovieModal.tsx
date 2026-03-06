@@ -5,6 +5,9 @@ import { Search, ArrowLeft } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies } from "../../services/tmdbService";
+import { useAuth } from "@/features/auth";
+import { useLists, CreateListModal } from "@/features/lists";
+import { ListPlus } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData } from "@/types";
@@ -34,6 +37,11 @@ export function AddMovieModal({
    const [recommended, setRecommended] = useState("Vale a pena assistir");
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
+
+   const { session } = useAuth();
+   const { lists, addMovieToList, createList } = useLists(session?.user.id);
+   const [selectedListId, setSelectedListId] = useState<string>("");
+   const [showCreateList, setShowCreateList] = useState(false);
 
    useEffect(() => {
       if (show && movieToEdit) {
@@ -129,6 +137,10 @@ export function AddMovieModal({
          } else {
             const { error } = await supabase.from("reviews").insert([payload]);
             if (error) throw error;
+         }
+
+         if (selectedListId && selectedMovie) {
+            await addMovieToList(selectedListId, selectedMovie.id);
          }
 
          toast.success("Filme guardado com sucesso!");
@@ -263,6 +275,52 @@ export function AddMovieModal({
                         </p>
                      </div>
                   )}
+
+                  <Form.Group className="mt-4 mb-2">
+                     <Form.Label style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                        Adicionar a uma lista personalizada (Opcional)
+                     </Form.Label>
+                     {lists.length > 0 ? (
+                        <Form.Select 
+                           value={selectedListId} 
+                           onChange={(e) => setSelectedListId(e.target.value)}
+                           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                        >
+                           <option value="">Nenhuma lista selecionada</option>
+                           {lists.map(list => (
+                              <option key={list.id} value={list.id}>{list.name}</option>
+                           ))}
+                        </Form.Select>
+                     ) : (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                           Você ainda não tem listas.
+                        </p>
+                     )}
+                     <button
+                        type="button"
+                        onClick={() => setShowCreateList(true)}
+                        style={{
+                           background: 'none',
+                           border: 'none',
+                           color: 'var(--gold)',
+                           fontSize: '0.85rem',
+                           fontWeight: 600,
+                           padding: '0.4rem 0 0',
+                           cursor: 'pointer',
+                           display: 'flex',
+                           alignItems: 'center',
+                           gap: '0.3rem',
+                        }}
+                     >
+                        <ListPlus size={14} /> Criar nova lista
+                     </button>
+                  </Form.Group>
+
+                  <CreateListModal
+                     show={showCreateList}
+                     onHide={() => setShowCreateList(false)}
+                     onCreate={createList}
+                  />
                </Form>
             )}
          </Modal.Body>

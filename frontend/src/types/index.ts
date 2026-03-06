@@ -68,3 +68,20 @@ export interface FriendProfile {
   status: 'pending' | 'accepted' | 'declined';
   is_requester: boolean; 
 }
+
+export interface CustomList {
+   id: string;
+   name: string;
+   description: string | null;
+   owner_id: string;
+   created_at: string;
+   // Campos extras preenchidos pelo frontend/joins
+   movie_count?: number; 
+}
+
+export interface ListMovie {
+   list_id: string;
+   tmdb_id: number;
+   added_by: string;
+   created_at: string;
+}
