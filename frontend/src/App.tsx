@@ -358,7 +358,7 @@ function MainApp() {
                   <div className={styles.listsContainer}>
                      <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
                         <h4 className="m-0 text-white fw-bold">Minhas Listas</h4>
-                        <button onClick={() => setShowCreateListModal(true)} style={{ background: 'var(--gold)', color: 'var(--bg-page)', border: 'none', padding: '0.5rem 1rem', borderRadius: '50rem', fontWeight: 600 }}>
+                        <button onClick={() => setShowCreateListModal(true)} className={styles.createListBtn}>
                            <ListPlus size={18} className="me-2" />
                            Nova Lista
                         </button>
