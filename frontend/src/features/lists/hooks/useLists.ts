@@ -8,31 +8,41 @@ export function useLists(userId?: string) {
    const [loading, setLoading] = useState(true);
 
    const fetchLists = useCallback(async () => {
-      if (!userId) {
-         setLists([]);
-         setLoading(false);
-         return;
-      }
-
+      if (!userId) return;
       setLoading(true);
       try {
-         // Busca as listas com contagem de filmes
-         const { data, error } = await supabase
+         // Busca as listas que EU criei (Dono)
+         const { data: myLists, error: err1 } = await supabase
             .from("lists")
-            .select("*, list_movies(count)")
+            .select("*")
             .eq("owner_id", userId)
             .order("created_at", { ascending: false });
 
-         if (error) throw error;
-         const listsWithCount = (data || []).map((list: CustomList & { list_movies?: { count: number }[] }) => ({
-            ...list,
-            movie_count: list.list_movies?.[0]?.count ?? 0,
-            list_movies: undefined,
-         }));
-         setLists(listsWithCount);
+         if (err1) throw err1;
+
+         // Busca as listas onde EU sou colaborador aceito
+         const { data: collabData, error: err2 } = await supabase
+            .from("list_collaborators")
+            .select("list_id, lists(*)")
+            .eq("user_id", userId)
+            .eq("status", "accepted");
+
+         if (err2) throw err2;
+
+         const sharedLists = collabData?.map(item => item.lists) || [];
+
+         // Junta tudo, remove possíveis duplicatas e atualiza o estado
+         const allLists = [...(myLists || []), ...sharedLists];
+         
+         // Remove duplicadas baseadas no ID (caso haja algum bug no banco)
+         const uniqueLists = Array.from(new Map(allLists.map(item => [item.id, item])).values());
+
+         // Ordena pelas mais recentes
+         uniqueLists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+         setLists(uniqueLists as CustomList[]);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
-         toast.error("Não foi possível carregar suas listas.");
       } finally {
          setLoading(false);
       }

@@ -55,7 +55,6 @@ export function AddMovieModal({
 
       if (show && movieToEdit) {
          setStep("form");
-         // ... o resto do seu useEffect original continua igual a partir daqui:
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
@@ -77,7 +76,6 @@ export function AddMovieModal({
          setFormStatus("watched");
       }
    }, [show, movieToEdit, preselectedListId]); 
-
 
    const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
@@ -103,10 +101,7 @@ export function AddMovieModal({
       setSaving(true);
 
       try {
-         const {
-            data: { user },
-            error: userError,
-         } = await supabase.auth.getUser();
+         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
          if (userError || !user) {
             toast.error("Você precisa estar logado para adicionar filmes.");
@@ -114,47 +109,76 @@ export function AddMovieModal({
             return;
          }
 
-         if (!movieToEdit) {
-            const { data: existingMovie } = await supabase
-               .from("reviews")
-               .select("id, status")
-               .eq("user_id", user.id)
-               .eq("tmdb_id", selectedMovie.id)
-               .maybeSingle();
+         //  Descobre o tipo da lista que o usuário selecionou (se houver alguma)
+         const selectedList = lists.find(l => l.id === selectedListId);
+         const isSharedList = selectedList && selectedList.type !== "private";
 
-            if (existingMovie) {
-               const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
-               toast.error(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
-               setSaving(false);
-               return;
-            }
-         }
+         // ─── LÓGICA DE LISTA COMPARTILHADA ───
+         if (isSharedList && formStatus === "watched") {
+            // Se for lista Totalmente Compartilhada (full_shared), o user_id fica NULO (avaliação do grupo)
+            // Se for Parcialmente Compartilhada (partial_shared), o user_id é o do usuário atual.
+            const reviewUserId = selectedList.type === "full_shared" ? null : user.id;
 
-         const payload = {
-            tmdb_id: selectedMovie.id,
-            rating: formStatus === "watched" ? rating : null,
-            review: formStatus === "watched" ? review : null,
-            recommended: formStatus === "watched" ? recommended : null,
-            status: formStatus,
-            user_id: user.id,
-         };
+            // Insere na tabela de avaliações exclusivas de listas
+            const { error: reviewError } = await supabase
+               .from("list_reviews")
+               .upsert({
+                  list_id: selectedListId,
+                  tmdb_id: selectedMovie.id,
+                  user_id: reviewUserId,
+                  rating: rating,
+                  review: review
+               }, { onConflict: 'list_id, tmdb_id, user_id' }); // Upsert atualiza se já existir
 
-         if (movieToEdit) {
-            const { error } = await supabase
-               .from("reviews")
-               .update(payload)
-               .eq("id", movieToEdit.id);
-            if (error) throw error;
-         } else {
-            const { error } = await supabase.from("reviews").insert([payload]);
-            if (error) throw error;
-         }
+            if (reviewError) throw reviewError;
 
-         if (selectedListId && selectedMovie) {
+            // Insere o filme na lista
             await addMovieToList(selectedListId, selectedMovie.id);
+            toast.success(`Filme avaliado e adicionado à lista ${selectedList.name}!`);
+
+         // ─── LÓGICA TRADICIONAL (Perfil Pessoal ou Lista Privada) ───
+         } else {
+            if (!movieToEdit) {
+               const { data: existingMovie } = await supabase
+                  .from("reviews")
+                  .select("id, status")
+                  .eq("user_id", user.id)
+                  .eq("tmdb_id", selectedMovie.id)
+                  .maybeSingle();
+
+               if (existingMovie) {
+                  const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
+                  toast.error(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
+                  setSaving(false);
+                  return;
+               }
+            }
+
+            const payload = {
+               tmdb_id: selectedMovie.id,
+               rating: formStatus === "watched" ? rating : null,
+               review: formStatus === "watched" ? review : null,
+               recommended: formStatus === "watched" ? recommended : null,
+               status: formStatus,
+               user_id: user.id,
+            };
+
+            if (movieToEdit) {
+               const { error } = await supabase.from("reviews").update(payload).eq("id", movieToEdit.id);
+               if (error) throw error;
+            } else {
+               const { error } = await supabase.from("reviews").insert([payload]);
+               if (error) throw error;
+            }
+
+            // Se for lista privada, apenas liga o filme à lista
+            if (selectedListId && selectedMovie) {
+               await addMovieToList(selectedListId, selectedMovie.id);
+            }
+
+            toast.success("Filme guardado no seu diário com sucesso!");
          }
 
-         toast.success("Filme guardado com sucesso!");
          onSuccess();
          onHide();
       } catch (err) {

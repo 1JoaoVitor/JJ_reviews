@@ -185,3 +185,17 @@
 .submitBtn:disabled{
    opacity: 0.6;
 }
+
+.cancelBtn {
+   background: transparent;
+   border: 1px solid var(--border-medium);
+   color: var(--text-primary);
+   padding: 0.5rem 1rem;
+   border-radius: var(--radius-pill);
+   font-weight: 600;
+   transition: var(--transition-fast);
+}
+
+.cancelBtn:hover:not(:disabled) {
+   background: var(--bg-elevated);
+}
