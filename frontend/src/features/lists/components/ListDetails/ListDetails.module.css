@@ -1,0 +1,143 @@
+.container {
+   animation: fadeIn var(--transition-fast);
+}
+
+.header {
+   margin-bottom: 2rem;
+   padding-bottom: 1.5rem;
+   border-bottom: 1px solid var(--border-medium);
+}
+
+.backBtn {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background: transparent;
+   border: none;
+   color: var(--text-muted);
+   font-weight: 600;
+   padding: 0;
+   margin-bottom: 1.5rem;
+   transition: color 0.2s;
+}
+
+.backBtn:hover {
+   color: var(--text-primary);
+}
+
+.titleSection {
+   display: flex;
+   justify-content: space-between;
+   align-items: flex-start;
+   gap: 1rem;
+}
+
+.title {
+   font-weight: 800;
+   color: var(--gold);
+   margin-bottom: 0.5rem;
+   font-size: 2rem;
+}
+
+.description {
+   color: var(--text-secondary);
+   font-size: 1rem;
+   margin-bottom: 0.5rem;
+   max-width: 600px;
+}
+
+.metaInfo {
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+   margin: 0;
+}
+
+.actions {
+   display: flex;
+   gap: 0.5rem;
+}
+
+.actionBtn {
+   background: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   color: var(--text-secondary);
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   transition: all 0.2s;
+}
+
+.actionBtn:hover {
+   background: var(--bg-surface);
+   color: var(--text-primary);
+   border-color: var(--border-medium);
+}
+
+.deleteBtn:hover {
+   color: #EF4444;
+   border-color: #EF4444;
+   background: rgba(239, 68, 68, 0.1);
+}
+
+.toolbar {
+   display: flex;
+   justify-content: flex-end;
+   margin-bottom: 1.5rem;
+}
+
+.addBtn {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background: transparent;
+   border: 1px solid var(--gold);
+   color: var(--gold);
+   padding: 0.5rem 1rem;
+   border-radius: var(--radius-pill);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   transition: all 0.2s;
+}
+
+.addBtn:hover {
+   background: var(--gold);
+   color: var(--bg-page);
+}
+
+.emptyState {
+   text-align: center;
+   padding: 4rem 1rem;
+   color: var(--text-muted);
+   background: var(--bg-elevated);
+   border-radius: var(--radius-lg);
+   border: 1px dashed var(--border-medium);
+}
+
+.emptyAddBtn {
+   background: var(--gold);
+   color: var(--bg-page);
+   border: none;
+   padding: 0.5rem 1.5rem;
+   border-radius: var(--radius-pill);
+   font-weight: 700;
+   margin-top: 1rem;
+   transition: transform 0.2s;
+}
+
+.emptyAddBtn:hover {
+   transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+   from { opacity: 0; transform: translateY(10px); }
+   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+   .titleSection {
+      flex-direction: column;
+   }
+}
