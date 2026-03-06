@@ -16,15 +16,20 @@ export function useLists(userId?: string) {
 
       setLoading(true);
       try {
-         // Busca as listas onde o usuário é o dono
+         // Busca as listas com contagem de filmes
          const { data, error } = await supabase
             .from("lists")
-            .select("*")
+            .select("*, list_movies(count)")
             .eq("owner_id", userId)
             .order("created_at", { ascending: false });
 
          if (error) throw error;
-         setLists(data || []);
+         const listsWithCount = (data || []).map((list: CustomList & { list_movies?: { count: number }[] }) => ({
+            ...list,
+            movie_count: list.list_movies?.[0]?.count ?? 0,
+            list_movies: undefined,
+         }));
+         setLists(listsWithCount);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
          toast.error("Não foi possível carregar suas listas.");

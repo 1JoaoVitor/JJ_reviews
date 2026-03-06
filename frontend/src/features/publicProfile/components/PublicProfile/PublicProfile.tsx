@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams} from "react-router-dom";
+import { useParams, useNavigate} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
@@ -21,6 +21,8 @@ import { useLists, ListDetails } from "@/features/lists";
 
 
 export function PublicProfile() {
+   const navigate = useNavigate();
+
    const { username: profileUsername } = useParams<{ username: string }>();
    
    const { movies, loading, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
@@ -29,6 +31,8 @@ export function PublicProfile() {
 
    const { lists, loading: listsLoading } = useLists(profileId || undefined);
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
+
+   const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [showLoginModal, setShowLoginModal] = useState(false);
@@ -43,6 +47,8 @@ export function PublicProfile() {
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
    const [showFriendsModal, setShowFriendsModal] = useState(false);
+
+
 
    if (loading) {
       return (
@@ -180,12 +186,18 @@ export function PublicProfile() {
 
             <div className={styles.subheader}>
                <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
-                  <span className={styles.movieCount}>
-                     {filters.filteredMovies.length === 1
-                        ? "Exibindo 1 filme"
-                        : `Exibindo ${filters.filteredMovies.length} filmes`}
-                  </span>
-
+                     <span className={styles.movieCount}>
+                        {filters.viewMode === "lists" 
+                           ? (listsLoading ? "Carregando..." : `Exibindo ${lists.length} listas`)
+                           : loading
+                              ? "Carregando..."
+                              : filters.filteredMovies.length === movies.length
+                              ? `Todos os ${movies.length} filmes`
+                              : filters.filteredMovies.length === 1
+                                 ? "Exibindo 1 filme"
+                                 : `Exibindo ${filters.filteredMovies.length} filmes`
+                        }
+                     </span>
                   <div className={styles.viewToggle}>
                      <button
                         className={`${styles.viewBtn} ${filters.viewMode === "watched" ? styles.viewBtnActive : ""}`}
@@ -198,6 +210,12 @@ export function PublicProfile() {
                         onClick={() => filters.setViewMode("watchlist")}
                      >
                         Watchlist
+                     </button>
+                     <button
+                        className={`${styles.viewBtn} ${filters.viewMode === "lists" ? styles.viewBtnActive : ""}`}
+                        onClick={() => filters.setViewMode("lists")}
+                     >
+                        Listas
                      </button>
                   </div>
                </div>
@@ -305,6 +323,10 @@ export function PublicProfile() {
             onHide={() => setShowAddModal(false)}
             onSuccess={() => {}} 
             movieToEdit={movieToEdit}
+            lists={myLists}
+            addMovieToList={addMovieToList}
+            createList={createList}
+            preselectedListId=""
          />
 
          <LoginModal
@@ -333,7 +355,10 @@ export function PublicProfile() {
          <BottomNav
             session={session}
             avatarUrl={loggedInAvatar}
-            onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onHomeClick={() => {
+               navigate("/");
+               window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);

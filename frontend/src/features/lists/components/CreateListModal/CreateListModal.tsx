@@ -40,13 +40,15 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                   <Form.Label className={styles.label}>Nome da Lista *</Form.Label>
                   <Form.Control
                      type="text"
-                     placeholder="Ex: Filmes para chorar, filmes com plot grandes twist"
+                     placeholder="Ex: Filmes para chorar, filmes com plot twist"
                      value={name}
                      onChange={(e) => setName(e.target.value)}
                      className={styles.input}
                      required
                      autoFocus
+                     maxLength={50}
                   />
+                  <Form.Text className="text-muted">{name.length}/50</Form.Text>
                </Form.Group>
                <Form.Group className="mb-4">
                   <Form.Label className={styles.label}>Descrição (Opcional)</Form.Label>
@@ -57,7 +59,9 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      value={description}
                      onChange={(e) => setDescription(e.target.value)}
                      className={styles.input}
+                     maxLength={200}
                   />
+                  <Form.Text className="text-muted">{description.length}/200</Form.Text>
                </Form.Group>
                <div className="d-flex justify-content-end gap-2">
                   <button type="button" onClick={onHide} className={styles.cancelBtn} disabled={isSubmitting}>

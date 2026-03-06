@@ -53,7 +53,9 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
                      onChange={(e) => setName(e.target.value)}
                      className={styles.input}
                      required
+                     maxLength={50}
                   />
+                  <Form.Text className="text-muted">{name.length}/50</Form.Text>
                </Form.Group>
                <Form.Group className="mb-4">
                   <Form.Label className={styles.label}>Descrição (Opcional)</Form.Label>
@@ -64,7 +66,9 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
                      value={description}
                      onChange={(e) => setDescription(e.target.value)}
                      className={styles.input}
+                     maxLength={200}
                   />
+                  <Form.Text className="text-muted">{description.length}/200</Form.Text>
                </Form.Group>
                <div className="d-flex justify-content-end gap-2">
                   <button type="button" onClick={onHide} className={styles.cancelBtn} disabled={isSubmitting}>

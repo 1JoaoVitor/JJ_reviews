@@ -1,4 +1,5 @@
 import { Search, Swords, LogOut, LogIn, User, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
@@ -63,10 +64,10 @@ export function AppNavbar({
       <nav className={styles.navbar}>
          {/* ─── Row 1: Brand + Search + User ─── */}
          <div className={styles.topRow}>
-            <a href="#" className={styles.brand}>
+            <Link to="/" className={styles.brand}>
                <div className={styles.brandCircle}>JJ</div>
                <span className={styles.brandText}>Reviews</span>
-            </a>
+            </Link>
 
             {/* Search */}
             <div className={styles.searchWrapper}>
