@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Modal, Form, Spinner} from "react-bootstrap";
 import toast from "react-hot-toast";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search, ArrowLeft, ListPlus } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies } from "../../services/tmdbService";
 import { CreateListModal } from "@/features/lists";
-import { ListPlus } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
@@ -19,7 +18,7 @@ interface AddMovieModalProps {
    movieToEdit?: MovieData | null;
    lists: CustomList[];
    addMovieToList: (listId: string, tmdbId: number) => Promise<boolean>;
-   createList: (name: string, description: string) => Promise<CustomList | null>;
+   createList: (name: string, description: string, type?: "private" | "partial_shared" | "full_shared", collaboratorIds?: string[]) => Promise<CustomList | null>;
    preselectedListId?: string;
 }
 
@@ -47,7 +46,13 @@ export function AddMovieModal({
 
    const [selectedListId, setSelectedListId] = useState<string>("");
    const [showCreateList, setShowCreateList] = useState(false);
+   
+   const [exclusiveToList, setExclusiveToList] = useState(false);
 
+   const selectedListDetails = lists.find(l => l.id === selectedListId);
+   const isSharedList = selectedListDetails && selectedListDetails.type !== "private";
+
+   // Inicializa os dados do modal
    useEffect(() => {
       if (show) {
          setSelectedListId(preselectedListId || "");
@@ -74,8 +79,41 @@ export function AddMovieModal({
          setReview("");
          setRecommended("Vale a pena assistir");
          setFormStatus("watched");
+         setExclusiveToList(false);
       }
    }, [show, movieToEdit, preselectedListId]); 
+
+   // Verifica se o filme já existe no perfil privado 
+   useEffect(() => {
+      const checkProfileExistence = async () => {
+         if (step === "form" && selectedMovie) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+               const { data } = await supabase
+                  .from("reviews")
+                  .select("id")
+                  .eq("user_id", user.id)
+                  .eq("tmdb_id", selectedMovie.id)
+                  .maybeSingle();
+               
+               setExclusiveToList(!data);
+            }
+         }
+      };
+
+      // Só faz essa checagem se estiver editando em uma lista partilhada
+      if (show && isSharedList && selectedMovie) {
+         checkProfileExistence();
+      }
+   }, [step, selectedMovie, show, isSharedList]);
+
+   // Reseta o toggle se trocar para uma lista não-partilhada
+   useEffect(() => {
+      if (!isSharedList) {
+         setExclusiveToList(false);
+      }
+   }, [isSharedList]);
+
 
    const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
@@ -109,51 +147,25 @@ export function AddMovieModal({
             return;
          }
 
-         //  Descobre o tipo da lista que o usuário selecionou (se houver alguma)
-         const selectedList = lists.find(l => l.id === selectedListId);
-         const isSharedList = selectedList && selectedList.type !== "private";
+         // Verifica duplicatas apenas se estiver criando um filme NOVO no perfil pessoal
+         if (!exclusiveToList && !movieToEdit) {
+            const { data: existingMovie } = await supabase
+               .from("reviews")
+               .select("id, status")
+               .eq("user_id", user.id)
+               .eq("tmdb_id", selectedMovie.id)
+               .maybeSingle();
 
-         // ─── LÓGICA DE LISTA COMPARTILHADA ───
-         if (isSharedList && formStatus === "watched") {
-            // Se for lista Totalmente Compartilhada (full_shared), o user_id fica NULO (avaliação do grupo)
-            // Se for Parcialmente Compartilhada (partial_shared), o user_id é o do usuário atual.
-            const reviewUserId = selectedList.type === "full_shared" ? null : user.id;
-
-            // Insere na tabela de avaliações exclusivas de listas
-            const { error: reviewError } = await supabase
-               .from("list_reviews")
-               .upsert({
-                  list_id: selectedListId,
-                  tmdb_id: selectedMovie.id,
-                  user_id: reviewUserId,
-                  rating: rating,
-                  review: review
-               }, { onConflict: 'list_id, tmdb_id, user_id' }); // Upsert atualiza se já existir
-
-            if (reviewError) throw reviewError;
-
-            // Insere o filme na lista
-            await addMovieToList(selectedListId, selectedMovie.id);
-            toast.success(`Filme avaliado e adicionado à lista ${selectedList.name}!`);
-
-         // ─── LÓGICA TRADICIONAL (Perfil Pessoal ou Lista Privada) ───
-         } else {
-            if (!movieToEdit) {
-               const { data: existingMovie } = await supabase
-                  .from("reviews")
-                  .select("id, status")
-                  .eq("user_id", user.id)
-                  .eq("tmdb_id", selectedMovie.id)
-                  .maybeSingle();
-
-               if (existingMovie) {
-                  const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
-                  toast.error(`Você já adicionou este filme! Ele está na aba "${statusNome}".`);
-                  setSaving(false);
-                  return;
-               }
+            if (existingMovie) {
+               const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
+               toast.error(`Este filme já está no seu perfil na aba "${statusNome}".`);
+               setSaving(false);
+               return;
             }
+         }
 
+         // SALVAR NO PERFIL PESSOAL (Se o toggle estiver desligado)
+         if (!exclusiveToList) {
             const payload = {
                tmdb_id: selectedMovie.id,
                rating: formStatus === "watched" ? rating : null,
@@ -163,26 +175,70 @@ export function AddMovieModal({
                user_id: user.id,
             };
 
-            if (movieToEdit) {
-               const { error } = await supabase.from("reviews").update(payload).eq("id", movieToEdit.id);
-               if (error) throw error;
+            const { data: existingPersonalReview } = await supabase
+               .from("reviews")
+               .select("id")
+               .eq("user_id", user.id)
+               .eq("tmdb_id", selectedMovie.id)
+               .maybeSingle();
+
+            if (existingPersonalReview) {
+               await supabase.from("reviews").update(payload).eq("id", existingPersonalReview.id);
             } else {
-               const { error } = await supabase.from("reviews").insert([payload]);
-               if (error) throw error;
+               await supabase.from("reviews").insert([payload]);
             }
+         }
 
-            // Se for lista privada, apenas liga o filme à lista
-            if (selectedListId && selectedMovie) {
-               await addMovieToList(selectedListId, selectedMovie.id);
+         // SALVAR NA LISTA (Se houver alguma selecionada)
+         if (selectedListId && selectedListDetails) {
+            await addMovieToList(selectedListId, selectedMovie.id);
+
+            if (isSharedList && formStatus === "watched") {
+               if (selectedListDetails.type === "full_shared") {
+                  const { data: existingGroupReview } = await supabase
+                     .from('list_reviews')
+                     .select('id')
+                     .eq('list_id', selectedListId)
+                     .eq('tmdb_id', selectedMovie.id)
+                     .is('user_id', null)
+                     .maybeSingle();
+
+                  if (existingGroupReview) {
+                     await supabase.from('list_reviews').update({ rating, review }).eq('id', existingGroupReview.id);
+                  } else {
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: null, rating, review });
+                  }
+               } else {
+                  const { data: existingUserReview } = await supabase
+                     .from('list_reviews')
+                     .select('id')
+                     .eq('list_id', selectedListId)
+                     .eq('tmdb_id', selectedMovie.id)
+                     .eq('user_id', user.id)
+                     .maybeSingle();
+
+                  if (existingUserReview) {
+                     await supabase.from('list_reviews').update({ rating, review }).eq('id', existingUserReview.id);
+                  } else {
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review });
+                  }
+               }
             }
+         }
 
+         // Feedbacks visuais
+         if (exclusiveToList) {
+            toast.success(`Filme guardado exclusivamente na lista "${selectedListDetails?.name}"!`);
+         } else if (selectedListId) {
+            toast.success("Filme guardado no seu perfil e na lista!");
+         } else {
             toast.success("Filme guardado no seu diário com sucesso!");
          }
 
          onSuccess();
          onHide();
       } catch (err) {
-         toast.error("Erro ao salvar. Verifique sua conexão e tente novamente.");
+         toast.error("Erro ao salvar. Verifique a sua conexão.");
          console.error(err);
       } finally {
          setSaving(false);
@@ -331,6 +387,25 @@ export function AddMovieModal({
                            Você ainda não tem listas.
                         </p>
                      )}
+
+                     {isSharedList && (
+                        <div className="mt-3 p-3" style={{ background: 'var(--bg-surface)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                           <Form.Check 
+                              type="switch"
+                              id="exclusive-to-list-switch"
+                              className={styles.customSwitch}
+                              label={<span style={{ fontWeight: 600, color: 'var(--gold)' }}>Salvar exclusivamente nesta lista partilhada</span>}
+                              checked={exclusiveToList}
+                              onChange={(e) => setExclusiveToList(e.target.checked)}
+                           />
+                           <Form.Text style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>
+                              {exclusiveToList 
+                                 ? "Este filme NÃO vai aparecer no seu perfil pessoal (Estatísticas/Diário)." 
+                                 : "Este filme será adicionado ao seu perfil pessoal E também a esta lista."}
+                           </Form.Text>
+                        </div>
+                     )}
+
                      <button
                         type="button"
                         onClick={() => setShowCreateList(true)}
@@ -340,7 +415,7 @@ export function AddMovieModal({
                            color: 'var(--gold)',
                            fontSize: '0.85rem',
                            fontWeight: 600,
-                           padding: '0.4rem 0 0',
+                           padding: '0.8rem 0 0',
                            cursor: 'pointer',
                            display: 'flex',
                            alignItems: 'center',
