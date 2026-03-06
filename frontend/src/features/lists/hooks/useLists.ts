@@ -79,5 +79,43 @@ export function useLists(userId?: string) {
       }
    };
 
-   return { lists, loading, fetchLists, createList, addMovieToList};
+   // Função para editar nome e descrição da lista
+   const updateList = async (listId: string, name: string, description: string) => {
+      try {
+         const { error } = await supabase
+            .from("lists")
+            .update({ name, description })
+            .eq("id", listId);
+
+         if (error) throw error;
+         
+         toast.success("Lista atualizada com sucesso!");
+         fetchLists(); 
+         return true;
+      } catch (error) {
+         console.error("Erro ao atualizar lista:", error);
+         toast.error("Erro ao atualizar a lista.");
+         return false;
+      }
+   };
+
+   // Função para remover um filme de uma lista
+   const removeMovieFromList = async (listId: string, tmdbId: number) => {
+      try {
+         const { error } = await supabase
+            .from("list_movies")
+            .delete()
+            .match({ list_id: listId, tmdb_id: tmdbId });
+
+         if (error) throw error;
+         toast.success("Filme removido da lista.");
+         return true;
+      } catch (error) {
+         console.error("Erro ao remover filme da lista:", error);
+         toast.error("Erro ao remover o filme.");
+         return false;
+      }
+   };
+
+   return { lists, loading, fetchLists, createList, addMovieToList, updateList, removeMovieFromList};
 }
