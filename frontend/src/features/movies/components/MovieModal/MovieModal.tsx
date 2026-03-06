@@ -123,7 +123,7 @@ export function MovieModal({
                         <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
                            Sua Avaliação
                         </h5>
-                        {movie.rating !== null ? (
+                        {movie.rating !== null && movie.rating !== undefined ? (
                            <StarRating value={movie.rating} readOnly={true} />
                         ) : (
                            <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
