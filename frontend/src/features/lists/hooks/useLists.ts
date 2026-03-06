@@ -25,7 +25,7 @@ export function useLists(userId?: string) {
             .from("list_collaborators")
             .select("list_id, lists(*, list_movies(count))")
             .eq("user_id", userId)
-            .eq("status", "accepted");
+            .in("status", ["accepted", "pending"]);
 
          if (err2) throw err2;
 
@@ -126,14 +126,17 @@ export function useLists(userId?: string) {
             .insert({ list_id: listId, tmdb_id: tmdbId, added_by: userId });
             
          if (error) {
-            // Se o erro for de duplicação (filme já está na lista), ignoramos
             if (error.code === '23505') return true; 
             throw error;
          }
+
+         setLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
+         ));
+
          return true;
       } catch (error) {
          console.error("Erro ao adicionar filme à lista:", error);
-         toast.error("Erro ao guardar filme na lista customizada.");
          return false;
       }
    };
@@ -167,14 +170,18 @@ export function useLists(userId?: string) {
             .match({ list_id: listId, tmdb_id: tmdbId });
 
          if (error) throw error;
+         
+         setLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, movie_count: Math.max(0, (list.movie_count || 0) - 1) } : list
+         ));
+
          toast.success("Filme removido da lista.");
          return true;
       } catch (error) {
          console.error("Erro ao remover filme da lista:", error);
-         toast.error("Erro ao remover o filme.");
          return false;
       }
-   };
+   }
 
    return { lists, loading, fetchLists, createList, addMovieToList, updateList, removeMovieFromList};
 }

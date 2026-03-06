@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
+import { enrichMovieWithTmdb } from "@/features/movies/services/tmdbService";
 import { Spinner } from "react-bootstrap";
-import { ArrowLeft, Pencil, Trash2, Plus, X, Check } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, X, Check, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { MovieCard } from "@/features/movies";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
@@ -42,7 +43,10 @@ export function ListDetails({
    const [movieToRemove, setMovieToRemove] = useState<number | null>(null);
    const [isRemovingMovie, setIsRemovingMovie] = useState(false);
 
-   // ─── ESTADOS DE COLABORAÇÃO ───
+   const [memberToRemove, setMemberToRemove] = useState<{id: string, username: string} | null>(null);
+   const [isRemovingMember, setIsRemovingMember] = useState(false);
+   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+   const [isLeaving, setIsLeaving] = useState(false);
    const [currentUserStatus, setCurrentUserStatus] = useState<'owner' | 'accepted' | 'pending' | 'none'>('none');
    const [listOwner, setListOwner] = useState<{ username: string; avatar_url: string } | null>(null);
    const [activeMembers, setActiveMembers] = useState<{ id: string; username: string; avatar_url: string }[]>([]);
@@ -58,22 +62,74 @@ export function ListDetails({
    
    const [loading, setLoading] = useState(!listCache[list.id]);
 
-   // Busca os filmes da lista
+   // Busca os filmes da lista e junta com as avaliações corretas
    const fetchListMovies = useCallback(async () => {
-      if (!listCache[list.id]) setLoading(true);
+      setLoading(true); 
       try {
-         const { data, error } = await supabase.from("list_movies").select("tmdb_id").eq("list_id", list.id);
-         if (error) throw error;
+         // Busca os IDs na tabela da lista
+         const { data: listMoviesData, error: lmError } = await supabase
+            .from("list_movies")
+            .select("tmdb_id")
+            .eq("list_id", list.id);
+            
+         if (lmError) throw lmError;
 
-         const tmdbIds = data?.map(d => d.tmdb_id) || [];
-         listCache[list.id] = tmdbIds;
-         setListMovies(allMovies.filter(m => tmdbIds.includes(m.tmdb_id)));
+         const tmdbIds = listMoviesData?.map(d => d.tmdb_id) || [];
+         
+         if (tmdbIds.length === 0) {
+            setListMovies([]);
+            return;
+         }
+
+         // Buscar as notas corretas
+         const reviewsMap: Record<number, Partial<MovieData>> = {};
+
+         if (list.type === "private") {
+            // Se a lista for privada, a nota vem do diário pessoal do dono da lista
+            const { data: personalReviews } = await supabase
+               .from("reviews")
+               .select("*")
+               .eq("user_id", list.owner_id)
+               .in("tmdb_id", tmdbIds);
+               
+            personalReviews?.forEach(r => reviewsMap[r.tmdb_id] = r);
+         } else {
+            // Se a lista for partilhada, a nota vem da tabela isolada da lista (list_reviews)
+            let query = supabase.from("list_reviews").select("*").eq("list_id", list.id).in("tmdb_id", tmdbIds);
+            
+            if (list.type === "partial_shared" && currentUserId) {
+               // No clube do filme, puxa a SUA nota específica
+               query = query.eq("user_id", currentUserId);
+            } else if (list.type === "full_shared") {
+               // No casal, puxa a nota da lista (user_id é nulo)
+               query = query.is("user_id", null);
+            }
+            
+            const { data: listReviews } = await query;
+            listReviews?.forEach(r => reviewsMap[r.tmdb_id] = r);
+         }
+
+         // Junta as notas com os "esqueletos" (Resolvendo também a tipagem do TypeScript de forma segura)
+         const rawMovies = tmdbIds.map(id => {
+            const reviewData = reviewsMap[id] || {};
+            return {
+               ...reviewData, // Injeta as estrelas, review, status, etc.
+               tmdb_id: id
+            } as unknown as Record<string, unknown> & { tmdb_id: number };
+         });
+
+         // Vai ao TMDB buscar as capas
+         const fullListMovies = await Promise.all(
+            rawMovies.map(movie => enrichMovieWithTmdb(movie))
+         );
+
+         setListMovies(fullListMovies);
       } catch (error) {
-         console.error(error);
+         console.error("Erro ao buscar filmes da lista:", error);
       } finally {
          setLoading(false);
       }
-   }, [list.id, allMovies]);
+   }, [list.id, list.type, list.owner_id, currentUserId]);
 
    // Busca os colaboradores e o status do usuário logado
    const fetchCollaborators = useCallback(async () => {
@@ -215,6 +271,54 @@ export function ListDetails({
       }
    };
 
+   // Ação: Convidado sai da lista
+   const handleLeaveList = async () => {
+      if (!currentUserId) return;
+      setIsLeaving(true);
+      try {
+         // 1Apaga as avaliações que ele fez ESPECIFICAMENTE para esta lista 
+         // (Se for uma lista de casal onde o user_id é nulo, isto não apaga nada, o que é o comportamento correto)
+         await supabase.from('list_reviews').delete().eq('list_id', list.id).eq('user_id', currentUserId);
+
+         // emove o utilizador dos colaboradores
+         const { error } = await supabase.from('list_collaborators').delete().eq('list_id', list.id).eq('user_id', currentUserId);
+         if (error) throw error;
+         
+         toast.success("Você saiu da lista.");
+         onBack();
+         onListDeleted(); 
+      } catch (err) {
+         console.log("Erro: " + err);
+         toast.error("Erro ao sair da lista.");
+      } finally {
+         setIsLeaving(false);
+         setShowLeaveConfirm(false);
+      }
+   };
+
+   // Ação: Dono expulsa um membro
+   const confirmRemoveMember = async () => {
+      if (!memberToRemove) return;
+      setIsRemovingMember(true);
+      try {
+         // Apaga as avaliações do membro expulso
+         await supabase.from('list_reviews').delete().eq('list_id', list.id).eq('user_id', memberToRemove.id);
+
+         // Remove o membro dos colaboradores
+         const { error } = await supabase.from('list_collaborators').delete().eq('list_id', list.id).eq('user_id', memberToRemove.id);
+         if (error) throw error;
+         
+         toast.success(`${memberToRemove.username} foi removido da lista.`);
+         fetchCollaborators(); 
+      } catch (err) {
+         console.log("Erro: " + err);
+         toast.error("Erro ao remover membro.");
+      } finally {
+         setIsRemovingMember(false);
+         setMemberToRemove(null);
+      }
+   };
+
    return (
       <div className={styles.container}>
          <div className={styles.header}>
@@ -260,11 +364,15 @@ export function ListDetails({
                            
                            {/* Avatares dos Membros Aceitos */}
                            {activeMembers.map(member => (
-                              member.avatar_url ? (
-                                 <img key={member.id} src={member.avatar_url} alt={member.username} className={styles.avatarCircle} />
-                              ) : (
-                                 <div key={member.id} className={styles.avatarCircle}>{member.username.charAt(0).toUpperCase()}</div>
-                              )
+                              <img 
+                                 key={member.id} 
+                                 src={member.avatar_url || ""} 
+                                 alt={member.username} 
+                                 className={styles.avatarCircle} 
+                                 style={{ cursor: isOwner ? "pointer" : "default" }}
+                                 onClick={() => isOwner && setMemberToRemove(member)}
+                                 title={isOwner ? `Clique para remover ${member.username}` : member.username}
+                              />
                            ))}
                         </div>
                      )}
@@ -275,6 +383,11 @@ export function ListDetails({
                   {canEditListInfo && (
                      <button className={styles.actionBtn} onClick={() => setShowEditModal(true)} title="Editar Lista">
                         <Pencil size={18} />
+                     </button>
+                  )}
+                  {currentUserStatus === 'accepted' && (
+                     <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => setShowLeaveConfirm(true)} title="Sair da Lista">
+                        <LogOut size={18} />
                      </button>
                   )}
                   {isOwner && (
@@ -305,7 +418,7 @@ export function ListDetails({
          ) : (
             <div className="movie-grid">
                {listMovies.map((movie) => (
-                  <div key={movie.id} className={styles.movieWrapper}>
+                  <div key={movie.tmdb_id} className={styles.movieWrapper}>
                      <MovieCard movie={movie} onClick={() => onMovieClick(movie)} />
                      {canEditMovies && (
                         <button 
@@ -353,6 +466,26 @@ export function ListDetails({
             message="Tem certeza que deseja remover este filme desta lista?"
             confirmText="Sim, remover"
             isProcessing={isRemovingMovie}
+         />
+
+         <ConfirmModal
+            show={showLeaveConfirm}
+            onHide={() => setShowLeaveConfirm(false)}
+            onConfirm={handleLeaveList}
+            title="Sair da Lista"
+            message={`Tem a certeza que deseja abandonar a lista "${list.name}"?`}
+            confirmText="Sim, sair"
+            isProcessing={isLeaving}
+         />
+
+         <ConfirmModal
+            show={memberToRemove !== null}
+            onHide={() => setMemberToRemove(null)}
+            onConfirm={confirmRemoveMember}
+            title="Remover Membro"
+            message={`Tem a certeza que deseja remover ${memberToRemove?.username} desta lista?`}
+            confirmText="Sim, remover"
+            isProcessing={isRemovingMember}
          />
       </div>
    );

@@ -1,13 +1,13 @@
 import { Dropdown, Spinner } from "react-bootstrap";
 import { Bell, UserPlus, List, Film, Check } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 import styles from "./NotificationBell.module.css";
 
 interface NotificationBellProps {
    userId?: string;
 }
 
-// Função simples para calcular o "tempo atrás"
 function timeAgo(dateString: string) {
    const date = new Date(dateString);
    const now = new Date();
@@ -21,16 +21,28 @@ function timeAgo(dateString: string) {
 
 export function NotificationBell({ userId }: NotificationBellProps) {
    const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications(userId);
+   const navigate = useNavigate();
 
    if (!userId) return null;
 
-   // Escolhe o ícone dependendo do tipo da notificação
    const getNotificationIcon = (type: string) => {
       switch (type) {
          case "friend_request": return <UserPlus size={20} />;
          case "list_invite": return <List size={20} />;
          case "movie_added": return <Film size={20} />;
          default: return <Bell size={20} />;
+      }
+   };
+
+   // ─── FUNÇÃO DE NAVEGAÇÃO ───
+   const handleNotificationClick = (notif: { id: string; is_read: boolean; type: string }) => {
+      if (!notif.is_read) markAsRead(notif.id);
+      
+      // Redireciona dependendo do tipo da notificação
+      if (notif.type === "list_invite" || notif.type === "movie_added") {
+         navigate("/lists");
+      } else if (notif.type === "friend_request") {
+         navigate("/profile"); 
       }
    };
 
@@ -70,13 +82,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                   <div 
                      key={notif.id} 
                      className={`${styles.notificationItem} ${!notif.is_read ? styles.unread : ""}`}
-                     onClick={() => {
-                        if (!notif.is_read) markAsRead(notif.id);
-                        // No futuro, aqui podemos fazer um navigate() para a tela certa
-                        // dependendo de ser um pedido de amizade ou um convite de lista!
-                     }}
+                     onClick={() => handleNotificationClick(notif)}
                   >
-                     {/* Se a notificação veio de alguém, mostra a foto dessa pessoa */}
                      {notif.sender?.avatar_url ? (
                         <img src={notif.sender.avatar_url} alt="Avatar" className={styles.avatar} />
                      ) : (
