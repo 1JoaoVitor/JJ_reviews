@@ -10,12 +10,14 @@ import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
 import { MovieBattle } from "@/features/battle";
-import type { MovieData } from "@/types";
+import type { MovieData, CustomList } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
 import { useFriendship } from "@/features/friends"; 
 import { FriendsModal } from "@/features/auth";
+import { useLists, ListDetails } from "@/features/lists";
+
 
 
 export function PublicProfile() {
@@ -24,6 +26,9 @@ export function PublicProfile() {
    const { movies, loading, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
    const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
    const filters = useMovieFilters(movies);
+
+   const { lists, loading: listsLoading } = useLists(profileId || undefined);
+   const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [showLoginModal, setShowLoginModal] = useState(false);
@@ -97,6 +102,12 @@ export function PublicProfile() {
                   onClick={() => filters.setViewMode("watchlist")}
                >
                   Watchlist
+               </button>
+               <button
+                  className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`} // Use styles.viewBtnActive no desktop
+                  onClick={() => filters.setViewMode("lists")}
+               >
+                  Listas
                </button>
             </div>
          </div>
@@ -213,7 +224,54 @@ export function PublicProfile() {
                </div>
             </div>
 
-            {filters.filteredMovies.length === 0 ? (
+            {filters.viewMode === "lists" ? (
+               selectedList ? (
+                  <ListDetails
+                     list={selectedList}
+                     allMovies={movies}
+                     currentUserId={session?.user.id}
+                     onBack={() => setSelectedList(null)}
+                     // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
+                     onListDeleted={() => {}}
+                     onListUpdated={() => {}}
+                     onUpdateList={async () => false}
+                     onRemoveMovie={async () => false}
+                     onAddMovieClick={() => {}}
+                     onMovieClick={(m) => setSelectedMovie(m)}
+                  />
+               ) : (
+                  <div className={styles.listsContainer}>
+                     <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
+                        <h4 className="m-0 text-white fw-bold">Listas de @{profileName}</h4>
+                     </div>
+
+                     {listsLoading ? (
+                        <div className="text-center py-5 text-muted">A procurar listas...</div>
+                     ) : lists.length === 0 ? (
+                        <div className="text-center py-5 text-muted">
+                           @{profileName} ainda não criou nenhuma lista temática.
+                        </div>
+                     ) : (
+                        <div className="row g-3">
+                           {lists.map((list) => (
+                              <div key={list.id} className="col-12 col-md-6 col-lg-4">
+                                 <div 
+                                    className="p-4 rounded h-100" 
+                                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                                    onClick={() => setSelectedList(list)}
+                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
+                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                                 >
+                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem' }}>{list.name}</h5>
+                                    <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
+               )
+            ) : filters.filteredMovies.length === 0 ? (
                <div className={styles.emptyState}>
                   <h5>Nenhum filme encontrado.</h5>
                </div>

@@ -66,7 +66,7 @@ function MainApp() {
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
 
-   const { lists, loading: listsLoading, createList, fetchLists } = useLists(session?.user.id);
+   const { lists, loading: listsLoading, createList, fetchLists, updateList, removeMovieFromList } = useLists(session?.user.id);
    const [showCreateListModal, setShowCreateListModal] = useState(false);
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
@@ -76,12 +76,6 @@ function MainApp() {
       window.scrollTo(0, 0);
    }, []);
 
-   // Limpa a lista selecionada se o usuário mudar de aba
-   useEffect(() => {
-      if (filters.viewMode !== "lists") {
-         setSelectedList(null);
-      }
-   }, [filters.viewMode]);
 
    // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
@@ -327,13 +321,19 @@ function MainApp() {
                selectedList ? (
                   <ListDetails
                      list={selectedList}
+                     allMovies={movies}
                      currentUserId={session?.user.id}
                      onBack={() => setSelectedList(null)}
                      onListDeleted={() => {
                         setSelectedList(null);
                         fetchLists();
                      }}
-                     onListUpdated={fetchLists}
+                     onListUpdated={(updatedList) => {
+                        setSelectedList(updatedList);
+                        fetchLists();
+                     }}
+                     onUpdateList={updateList}
+                     onRemoveMovie={removeMovieFromList}
                      onAddMovieClick={() => {
                         setMovieToEdit(null);
                         setShowAddModal(true);
