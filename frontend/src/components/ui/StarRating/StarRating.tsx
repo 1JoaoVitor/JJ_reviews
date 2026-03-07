@@ -61,7 +61,9 @@ export function StarRating({ value, onChange, max = 10, readOnly = false }: Star
       setHover(null);
    };
 
-   const displayValue = hover !== null ? hover : value;
+   // Garante que se o value vier como undefined, ele assume 0 para não quebrar o .toFixed()
+   const safeValue = value ?? 0;
+   const displayValue = hover !== null ? hover : safeValue;
 
    return (
       <div className={styles.starContainer}>
