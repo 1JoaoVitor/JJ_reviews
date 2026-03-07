@@ -9,6 +9,7 @@ import { EditListModal } from "../EditListModal/EditListModal";
 import toast from "react-hot-toast";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
+import { calculateAverageBadge } from "@/utils/badges";
 
 const listCache: Record<string, number[]> = {};
 
@@ -19,7 +20,7 @@ interface ListDetailsProps {
    onBack: () => void;
    onListDeleted: () => void;
    onListUpdated: (updatedList: CustomList) => void;
-   onUpdateList: (id: string, name: string, description: string) => Promise<boolean>;
+   onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null) => Promise<boolean>;
    onRemoveMovie: (listId: string, tmdbId: number) => Promise<boolean>;
    onAddMovieClick: () => void;
    onMovieClick: (movie: MovieData) => void;
@@ -94,7 +95,7 @@ export function ListDetails({
                reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
             });
          } else {
-            // Se for partilhada, busca TODAS as reviews (de todos os membros) para calcular a média
+            // Se for compartilhada, busca TODAS as reviews (de todos os membros) para calcular a média
             const { data: listReviews } = await supabase
                .from("list_reviews")
                .select("*, user:profiles(id, username, avatar_url)")
@@ -110,6 +111,7 @@ export function ListDetails({
                   user_id: r.user_id,
                   rating: r.rating,
                   review: r.review,
+                  recommended: r.recommended,
                   user: Array.isArray(r.user) ? r.user[0] : r.user
                }));
 
@@ -119,16 +121,21 @@ export function ListDetails({
                   ? validRatings.reduce((acc, r) => acc + (r.rating || 0), 0) / validRatings.length 
                   : undefined;
 
+               // Calcula a Média do Veredito (Badge) 
+               const avgBadge = calculateAverageBadge(groupReviews.map(r => r.recommended));
+
                // Descobre qual é a "minha" review (para o modal e botão de editar funcionarem com a minha nota)
                const myReview = groupReviews.find(r => r.user_id === currentUserId);
 
                reviewsMap[id] = {
                   list_type: list.type,
                   list_average_rating: avg,
+                  list_average_recommended: avgBadge,
                   list_group_reviews: groupReviews,
                   // Se for totalmente compartilhada, a nota base é única (a primeira). Se for parcialmente, o rating base é o MEU rating.
                   rating: list.type === "full_shared" ? groupReviews[0]?.rating : myReview?.rating,
                   review: list.type === "full_shared" ? groupReviews[0]?.review : myReview?.review,
+                  recommended: list.type === "full_shared" ? groupReviews[0]?.recommended : myReview?.recommended,
                };
             });
          }
@@ -412,6 +419,36 @@ export function ListDetails({
                   
                   <div className="d-flex align-items-center gap-3 mt-2">
                      <p className={styles.metaInfo}>{listMovies.length} filmes na lista</p>
+
+                     {/* ─── NOTA DA LISTA ─── */}
+                     {list.has_rating && (
+                        <div 
+                           className="d-flex align-items-center gap-1" 
+                           style={{ 
+                              background: 'rgba(255, 193, 7, 0.1)', 
+                              padding: '0.2rem 0.6rem', 
+                              borderRadius: 'var(--radius-pill)',
+                              border: '1px solid var(--gold)'
+                           }}
+                           title={list.rating_type === 'manual' ? "Nota Manual" : "Média dos Filmes"}
+                        >
+                           <span style={{ fontSize: '14px' }}>⭐</span>
+                           <span style={{ fontWeight: 'bold', color: 'var(--gold)', fontSize: '0.9rem' }}>
+                              {list.rating_type === 'manual' 
+                                 ? list.manual_rating?.toFixed(1)
+                                 : (() => {
+                                    // Calcula a média em tempo real
+                                    const validRatings = listMovies
+                                       .map(m => m.list_type === "partial_shared" && m.list_average_rating ? m.list_average_rating : m.rating)
+                                       .filter(r => r !== null && r !== undefined) as number[];
+                                    
+                                    if (validRatings.length === 0) return "-";
+                                    return (validRatings.reduce((a, b) => a + b, 0) / validRatings.length).toFixed(1);
+                                 })()
+                              }
+                           </span>
+                        </div>
+                     )}
                      
                      {/* ─── EXIBIÇÃO DOS AVATARES (MEMBROS) ─── */}
                      {list.type !== 'private' && (
@@ -502,9 +539,9 @@ export function ListDetails({
             show={showEditModal}
             onHide={() => setShowEditModal(false)}
             list={list}
-            onUpdate={async (id, name, desc) => {
-               const success = await onUpdateList(id, name, desc);
-               if (success) onListUpdated({ ...list, name, description: desc });
+            onUpdate={async (id, name, desc, has_rating, rating_type, manual_rating) => {
+               const success = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating);
+               if (success) onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating });
                return success;
             }}
          />

@@ -14,12 +14,14 @@ const mockList: CustomList = {
 };
 
 describe("EditListModal", () => {
+
+   type OnUpdateType = (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null) => Promise<boolean>;
    let onHide: () => void;
-   let onUpdate: (id: string, name: string, description: string) => Promise<boolean>;
+   let onUpdate: OnUpdateType;
 
    beforeEach(() => {
       onHide = vi.fn<() => void>();
-      onUpdate = vi.fn<(id: string, name: string, description: string) => Promise<boolean>>().mockResolvedValue(true);
+      onUpdate = vi.fn<OnUpdateType>().mockResolvedValue(true);
    });
 
    it("renderiza com os dados da lista pré-preenchidos", () => {
@@ -49,7 +51,7 @@ describe("EditListModal", () => {
       await userEvent.type(nameInput, "Lista Atualizada");
 
       await userEvent.click(screen.getByText("Salvar Alterações"));
-      expect(onUpdate).toHaveBeenCalledWith("list-1", "Lista Atualizada", "Descrição da lista");
+      expect(onUpdate).toHaveBeenCalledWith("list-1", "Lista Atualizada", "Descrição da lista", false, null, null);
    });
 
    it("chama onHide ao clicar em Cancelar", async () => {

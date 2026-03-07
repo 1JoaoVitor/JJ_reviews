@@ -33,10 +33,12 @@ export interface MovieData {
    providers?: TmdbProvider[];
    list_type?: "private" | "partial_shared" | "full_shared";
    list_average_rating?: number;
+   list_average_recommended?: string;
    list_group_reviews?: {
       user_id?: string | null;
       rating?: number;
       review?: string;
+      recommended?: string;
       user?: { username: string; avatar_url: string | null };
    }[];
 }
@@ -107,6 +109,9 @@ export interface CustomList {
    type: "private" | "partial_shared" | "full_shared"; 
    created_at: string;
    movie_count?: number; 
+   has_rating?: boolean;
+   rating_type?: "manual" | "average" | null;
+   manual_rating?: number | null;
 }
 
 export interface ListCollaborator {
