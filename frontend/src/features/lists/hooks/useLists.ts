@@ -57,8 +57,38 @@ export function useLists(userId?: string) {
    }, [userId]);
 
    useEffect(() => {
-      fetchLists();
-   }, [fetchLists]);
+      if (userId) {
+         fetchLists();
+      }
+   }, [userId, fetchLists]);
+
+   useEffect(() => {
+      if (!userId) return;
+
+      const listsChannel = supabase
+         .channel('custom-all-lists-changes')
+         .on(
+            'postgres_changes',
+            { event: 'DELETE', schema: 'public', table: 'custom_lists' },
+            () => {
+               fetchLists(); 
+            }
+         )
+         // Ouve se o usuário foi removido de alguma lista (ex: recusou convite ou foi expulso)
+         .on(
+            'postgres_changes',
+            { event: 'DELETE', schema: 'public', table: 'list_members', filter: `user_id=eq.${userId}` },
+            () => {
+               fetchLists(); // Recarrega as listas do usuário
+            }
+         )
+         .subscribe();
+
+      // Limpeza do canal quando o componente for desmontado
+      return () => {
+         supabase.removeChannel(listsChannel);
+      };
+   }, [userId, fetchLists]);
 
    const createList = async (
       name: string, 
@@ -101,8 +131,9 @@ export function useLists(userId?: string) {
                sender_id: userId,
                type: 'list_invite',
                message: type === 'full_shared' 
-                  ? 'convidou você para uma Lista Unificada!' 
-                  : 'convidou você para uma Lista Colaborativa!'
+                  ? 'convidou você para uma Lista Unificada!'
+                  : 'convidou você para uma Lista Colaborativa!',
+               reference_id: newList.id,
             }));
 
             await supabase.from("notifications").insert(notificationsData);

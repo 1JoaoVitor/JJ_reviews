@@ -34,15 +34,17 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       }
    };
 
-   // ─── FUNÇÃO DE NAVEGAÇÃO ───
-   const handleNotificationClick = (notif: { id: string; is_read: boolean; type: string }) => {
+   // ─── FUNÇÃO DE NAVEGAÇÃO INTELIGENTE ───
+   const handleNotificationClick = (notif: { id: string; is_read: boolean; type: string; reference_id?: string; sender?: { username?: string } }) => {
       if (!notif.is_read) markAsRead(notif.id);
       
       // Redireciona dependendo do tipo da notificação
       if (notif.type === "list_invite" || notif.type === "movie_added") {
-         navigate("/lists");
+         navigate("/", { state: { openLists: true, targetListId: notif.reference_id } });
       } else if (notif.type === "friend_request") {
-         navigate("/profile"); 
+         if (notif.sender?.username) {
+            navigate(`/perfil/${notif.sender.username}`);
+         }
       }
    };
 

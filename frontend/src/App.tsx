@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -46,6 +46,7 @@ export default function App() {
 function MainApp() {
 
    const navigate = useNavigate();
+   const location = useLocation();
    
    const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
@@ -76,6 +77,27 @@ function MainApp() {
    useEffect(() => {
       window.scrollTo(0, 0);
    }, []);
+
+
+   // Ouve redirecionamentos do Sininho de Notificação
+   useEffect(() => {
+      if (location.state?.openLists) {
+         filters.setViewMode("lists");
+         
+         const targetId = location.state.targetListId;
+
+         // Se tiver um ID alvo, espera as listas carregarem para abri-la
+         if (targetId) {
+            if (!listsLoading && lists.length > 0) {
+               const listToOpen = lists.find(l => l.id === targetId);
+               if (listToOpen) setSelectedList(listToOpen);
+               navigate(".", { replace: true, state: {} });
+            }
+         } else {
+            navigate(".", { replace: true, state: {} });
+         }
+      }
+   }, [location.state, filters, navigate, lists, listsLoading]);
 
    const handleOpenModal = (movie: MovieData) => {
       setSelectedMovie(movie);
