@@ -16,6 +16,7 @@ export default defineConfig({
       setupFiles: "./src/__tests__/setup.ts",
       css: { modules: { classNameStrategy: "non-scoped" } },
       include: ["src/**/*.test.{ts,tsx}"],
+      exclude: ['node_modules', 'dist', 'dev-dist', '.idea', '.git', '.cache'],
    },
    plugins: [
       react(),
