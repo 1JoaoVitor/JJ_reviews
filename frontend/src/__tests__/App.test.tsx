@@ -61,6 +61,7 @@ vi.mock("@/features/roulette", () => ({
 
 vi.mock("@/features/share", () => ({
    ShareCard: () => null,
+   ShareModal: () => null,
    useShare: () => ({
       shareRef: { current: null },
       sharingMovie: null,

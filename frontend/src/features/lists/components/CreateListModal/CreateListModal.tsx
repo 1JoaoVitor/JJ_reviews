@@ -4,6 +4,7 @@ import { Lock, Users, Share2, Check } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/features/auth";
+import { StarRating } from "@/components/ui/StarRating/StarRating";
 import type { CustomList } from "@/types";
 import styles from "./CreateListModal.module.css";
 
@@ -14,7 +15,10 @@ interface CreateListModalProps {
       name: string, 
       description: string, 
       type: "private" | "partial_shared" | "full_shared", 
-      collaboratorIds: string[]
+      collaboratorIds: string[],
+      has_rating: boolean,
+      rating_type: "manual" | "average" | null,
+      manual_rating: number | null,
    ) => Promise<CustomList | null>;
 }
 
@@ -32,6 +36,10 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
    const [loadingFriends, setLoadingFriends] = useState(false);
    
    const [loading, setLoading] = useState(false);
+
+   const [hasRating, setHasRating] = useState(false);
+   const [ratingType, setRatingType] = useState<"manual" | "average">("average");
+   const [manualRating, setManualRating] = useState<number>(5);
 
    // Traz a lista de amigos REAIS do usuário logado usando a abordagem de duas etapas
    useEffect(() => {
@@ -111,7 +119,10 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
       }
 
       setLoading(true);
-      const success = await onCreate(name.trim(), description.trim(), type, selectedFriends);
+      const success = await onCreate(
+         name.trim(), description.trim(), type, selectedFriends, 
+         hasRating, hasRating ? ratingType : null, hasRating && ratingType === "manual" ? manualRating : null
+      );
       setLoading(false);
 
       if (success) {
@@ -153,6 +164,38 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      maxLength={200}
                   />
                </Form.Group>
+
+               {/* ─── OPÇÕES DE NOTA DA LISTA ─── */}
+               <div className="mb-4 p-3" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
+                  <Form.Check 
+                     type="switch"
+                     id="has-rating-switch"
+                     label={<span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Dar uma nota a esta lista?</span>}
+                     checked={hasRating}
+                     onChange={(e) => setHasRating(e.target.checked)}
+                  />
+                  
+                  {hasRating && (
+                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <Form.Label className={styles.label}>Como a nota será calculada?</Form.Label>
+                        <Form.Select 
+                           value={ratingType} 
+                           onChange={(e) => setRatingType(e.target.value as "manual" | "average")}
+                           className={`${styles.input} mb-3`}
+                        >
+                           <option value="average">Média Automática dos Filmes</option>
+                           <option value="manual">Nota Manual (Ex: Trilogias)</option>
+                        </Form.Select>
+
+                        {ratingType === "manual" && (
+                           <div>
+                              <Form.Label className={styles.label}>Sua nota para o conjunto:</Form.Label>
+                              <StarRating value={manualRating} onChange={setManualRating} max={10} />
+                           </div>
+                        )}
+                     </div>
+                  )}
+               </div>
 
                <Form.Label className={styles.label}>Tipo de Lista</Form.Label>
                <div className={styles.typeGrid}>
