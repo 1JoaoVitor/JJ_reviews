@@ -192,7 +192,10 @@ export function AddMovieModal({
 
          // SALVAR NA LISTA (Se houver alguma selecionada)
          if (selectedListId && selectedListDetails) {
-            await addMovieToList(selectedListId, selectedMovie.id);
+            const added = await addMovieToList(selectedListId, selectedMovie.id);
+            if (!added) {
+               throw new Error("Sem permissão para adicionar filmes nesta lista.");
+            }
 
             if (isSharedList && formStatus === "watched") {
                if (selectedListDetails.type === "full_shared") {
@@ -205,9 +208,9 @@ export function AddMovieModal({
                      .maybeSingle();
 
                   if (existingGroupReview) {
-                     await supabase.from('list_reviews').update({ rating, review }).eq('id', existingGroupReview.id);
+                     await supabase.from('list_reviews').update({ rating, review, recommended }).eq('id', existingGroupReview.id);
                   } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: null, rating, review });
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: null, rating, review, recommended });
                   }
                } else {
                   const { data: existingUserReview } = await supabase
@@ -219,9 +222,9 @@ export function AddMovieModal({
                      .maybeSingle();
 
                   if (existingUserReview) {
-                     await supabase.from('list_reviews').update({ rating, review }).eq('id', existingUserReview.id);
+                     await supabase.from('list_reviews').update({ rating, review, recommended }).eq('id', existingUserReview.id);
                   } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review });
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended });
                   }
                }
             }

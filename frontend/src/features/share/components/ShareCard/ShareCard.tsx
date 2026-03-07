@@ -16,7 +16,18 @@ interface ShareCardProps {
 
 export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
    ({ movie }, ref) => {
-      const badgeStyle = getBadgeStyle(movie.recommended);
+
+      // NOTA COMPARTILHADA
+      const isPartialShared = movie.list_type === "partial_shared";
+      const displayRating = isPartialShared && movie.list_average_rating !== undefined
+         ? movie.list_average_rating.toFixed(1)
+         : movie.rating;
+
+      const displayRecommended = isPartialShared && movie.list_average_recommended !== undefined
+         ? movie.list_average_recommended
+         : movie.recommended;
+
+      const badgeStyle = getBadgeStyle(displayRecommended || "");
 
       const posterUrl = movie.poster_path
          ? `https://image.tmdb.org/t/p/w780${movie.poster_path}?v=1`
@@ -159,7 +170,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   </p>
 
                   {/* Nota */}
-                  {movie.rating !== null && (
+                  {displayRating !== null && (
                      <div
                         style={{
                            display: "flex",
@@ -181,13 +192,13 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                               color: "#fff",
                            }}
                         >
-                           {movie.rating}
+                           {displayRating}
                         </span>
                      </div>
                   )}
 
                   {/* Veredito */}
-                  {movie.recommended && (
+                  {displayRecommended && (
                      <div
                         style={{
                            fontSize: "40px",
@@ -195,7 +206,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                            textAlign: "center",
                            backgroundColor: badgeStyle.bg,
                            color: badgeStyle.color,
-                           padding: "20px 60px",
+                           padding: "15px 40px",
                            borderRadius: "15px",
                            fontWeight: "bold",
                            maxWidth: "90%",
@@ -205,7 +216,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                            letterSpacing: "1px",
                         }}
                      >
-                        {movie.recommended}
+                        {displayRecommended}
                      </div>
                   )}
                </div>
