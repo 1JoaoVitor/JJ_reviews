@@ -1,4 +1,5 @@
-import { Search, Swords, LogOut, LogIn, User, Users } from "lucide-react";
+import { useState } from "react";
+import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react"; // 👈 Filter adicionado
 import { Link } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
@@ -53,6 +54,8 @@ export function AppNavbar({
    onFriendsClick,
 }: AppNavbarProps) {
 
+   const [isFiltersOpen, setIsFiltersOpen] = useState(false); 
+
    const sortOptions: Record<string, string> = {
       default: "Recentes",
       rating: "Melhores Notas",
@@ -60,86 +63,112 @@ export function AppNavbar({
       alpha: "Ordem A-Z",
    };
 
-
    return (
       <nav className={styles.navbar}>
          {/* ─── Row 1: Brand + Search + User ─── */}
-         <div className={styles.topRow}>
-            <Link to="/" className={styles.brand}>
+         <div className={styles.topRow} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+            
+            {/* LOGO  */}
+            <Link to="/" className={styles.brand} style={{ flexShrink: 0 }}>
                <div className={styles.brandCircle}>JJ</div>
-               <span className={styles.brandText}>Reviews</span>
+               <span className={`${styles.brandText} d-none d-sm-inline`}>Reviews</span>
             </Link>
 
-            {/* Search */}
-            <div className={styles.searchWrapper}>
-               <div style={{ position: "relative" }}>
-                  <Search size={16} className={styles.searchIcon} />
-                  <input
-                     type="search"
-                     placeholder="Buscar filmes..."
-                     value={searchTerm}
-                     onChange={(e) => setSearchTerm(e.target.value)}
-                     className={styles.searchInput}
-                  />
+            {/* BUSCA + FILTRO */}
+            <div className={styles.searchWrapper} style={{ flex: 1, minWidth: 0 }}>
+               <div style={{ position: "relative", display: "flex", gap: "0.5rem", width: "100%" }}>
+                  <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                     <Search size={16} className={styles.searchIcon} />
+                     <input
+                        type="search"
+                        placeholder="Buscar filmes..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={styles.searchInput}
+                        style={{ width: '100%', textOverflow: 'ellipsis' }}
+                     />
+                  </div>
+                  
+                  {showFilters && (
+                     <button
+                        type="button"
+                        onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+                        style={{
+                           display: 'flex', alignItems: 'center', gap: '0.4rem',
+                           padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)',
+                           border: `1px solid ${isFiltersOpen ? 'var(--gold)' : 'var(--border-subtle)'}`,
+                           background: isFiltersOpen ? 'rgba(232, 177, 0, 0.1)' : 'transparent',
+                           color: isFiltersOpen ? 'var(--gold)' : 'var(--text-secondary)',
+                           cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
+                        }}
+                     >
+                        <Filter size={16} />
+                        <span className="d-none d-lg-inline" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                           Filtros
+                        </span>
+                     </button>
+                  )}
                </div>
             </div>
 
-            {/* User actions */}
-            <div className={styles.userActions}>
-               {/* Battle button */}
-               {showBattle && (
-                  <button
-                     className={styles.iconBtn}
-                     onClick={onStartBattle}
-                     title="Modo Batalha"
-                  >
-                     <Swords size={18} />
-                  </button>
-               )}
-
-               {/* Botão de amigos */}
-               {session && onFriendsClick && (
-                  <button onClick={onFriendsClick} className={styles.friendsBtn} title="Central de Amigos">
-                     <Users size={20} />
-                     Amigos
-                  </button>
-               )}
-
+            {/*AÇÕES DO USUÁRIO */}
+            <div className={styles.userActions} style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: '0.5rem' }}>
                {session ? (
                   <>
                      <NotificationBell userId={session.user.id} />
 
-                     <button className={styles.avatarBtn} onClick={onProfileClick}>
-                        {avatarUrl ? (
-                           <img src={avatarUrl} alt="Avatar" className={styles.avatarImg} />
-                        ) : (
-                           <span className={styles.avatarPlaceholder}>
-                              <User size={16} />
-                           </span>
+                     {/* ELEMENTOS EXCLUSIVOS DO DESKTOP */}
+                     <div className="d-none d-md-flex align-items-center gap-2">
+                        {showBattle && (
+                           <button
+                              className={styles.iconBtn}
+                              onClick={onStartBattle}
+                              title="Modo Batalha"
+                           >
+                              <Swords size={18} />
+                           </button>
                         )}
-                        <span className={styles.desktopOnly}>{username || "Perfil"}</span>
-                     </button>
-                     <button
-                        className={`${styles.btnGhost} ${styles.btnDanger}`}
-                        onClick={onLogout}
-                        title="Sair"
-                     >
-                        <LogOut size={16} />
-                        <span className={styles.desktopOnly}>Sair</span>
-                     </button>
+
+                        {onFriendsClick && (
+                           <button onClick={onFriendsClick} className={styles.friendsBtn} title="Central de Amigos">
+                              <Users size={20} />
+                              Amigos
+                           </button>
+                        )}
+
+                        <button className={styles.avatarBtn} onClick={onProfileClick}>
+                           {avatarUrl ? (
+                              <img src={avatarUrl} alt="Avatar" className={styles.avatarImg} />
+                           ) : (
+                              <span className={styles.avatarPlaceholder}>
+                                 <User size={16} />
+                              </span>
+                           )}
+                           <span className={styles.desktopOnly}>{username || "Perfil"}</span>
+                        </button>
+
+                        <button
+                           className={`${styles.btnGhost} ${styles.btnDanger}`}
+                           onClick={onLogout}
+                           title="Sair"
+                        >
+                           <LogOut size={16} />
+                           <span className={styles.desktopOnly}>Sair</span>
+                        </button>
+                     </div>
                   </>
                ) : (
                   <button className={styles.btnPrimary} onClick={onLoginClick}>
                      <LogIn size={16} />
-                     Entrar
+                     <span className="d-none d-sm-inline ms-1">Entrar</span>
                   </button>
                )}
             </div>
          </div>
 
          {/* ─── Row 2: Filters ─── */}
-         {showFilters && (
-            <div className={styles.filtersRow}>
+         {showFilters && isFiltersOpen && (
+            <div className={styles.filtersRow} style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
                {/* Filter chips */}
                <button
                   className={`${styles.chip} ${!onlyNational && !onlyOscar ? styles.chipActive : ""}`}
