@@ -134,12 +134,13 @@
 
 /* Footer buttons */
 .backBtn {
-   padding: 0.5rem 1rem;
+   padding: 0.6rem 1.25rem;
    border: 1px solid var(--border-subtle);
    border-radius: var(--radius-md);
    background: transparent;
    color: var(--text-secondary);
    font-weight: 600;
+   font-size: var(--font-sm);
    cursor: pointer;
    display: flex;
    align-items: center;
@@ -152,18 +153,49 @@
    color: var(--text-primary);
 }
 
+/* ─── Botão de Cancelar Melhorado ─── */
 .closeBtn {
-   padding: 0.5rem 1rem;
-   border: none;
+   padding: 0.6rem 1.25rem;
+   border: 1px solid var(--border-medium);
    border-radius: var(--radius-md);
-   background: transparent;
-   color: var(--text-muted);
+   background: var(--bg-surface);
+   color: var(--text-secondary);
+   font-weight: 600;
+   font-size: var(--font-sm);
    cursor: pointer;
-   transition: color 0.2s;
+   transition: all 0.2s;
 }
 
 .closeBtn:hover {
    color: var(--text-primary);
+   background: var(--bg-elevated);
+   border-color: var(--border-strong);
+}
+
+/* ─── Novo Botão da Metralhadora (Salvar e Adicionar) ─── */
+.saveAndAddBtn {
+   padding: 0.6rem 1.25rem;
+   border: 1px solid var(--gold);
+   border-radius: var(--radius-md);
+   background: transparent;
+   color: var(--gold);
+   font-weight: 600;
+   font-size: var(--font-sm);
+   cursor: pointer;
+   transition: all 0.2s;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.saveAndAddBtn:hover:not(:disabled) {
+   background: rgba(232, 177, 0, 0.1);
+   color: var(--gold-hover);
+}
+
+.saveAndAddBtn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
 }
 
 .saveBtn {
@@ -173,6 +205,7 @@
    background: var(--gold);
    color: var(--bg-page);
    font-weight: 700;
+   font-size: var(--font-sm);
    cursor: pointer;
    transition: background 0.2s, transform 0.15s;
 }
@@ -197,7 +230,6 @@
    box-shadow: 0 0 0 0.25rem rgba(232, 177, 0, 0.25) !important;
    border-color: var(--gold) !important;
 }
-
 
 /* Força a bolinha a continuar cinza/branca quando recebe foco mas está desligada */
 .customSwitch input:not(:checked):focus {

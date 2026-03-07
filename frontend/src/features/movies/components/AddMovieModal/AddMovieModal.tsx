@@ -134,7 +134,8 @@ export function AddMovieModal({
       setStep("form");
    };
 
-   const handleSave = async () => {
+   // ─── Lógica Atualizada com o parâmetro keepOpen ───
+   const handleSave = async (keepOpen = false) => {
       if (!selectedMovie) return;
       setSaving(true);
 
@@ -236,7 +237,22 @@ export function AddMovieModal({
          }
 
          onSuccess();
-         onHide();
+         
+         if (movieToEdit) {
+            onHide(); // Edição sempre fecha o modal
+         } else if (keepOpen) {
+            // Volta para a barra de pesquisa limpinha
+            setStep("search");
+            setSearchQuery("");
+            setSearchResults([]);
+            setSelectedMovie(null);
+            setRating(5);
+            setReview("");
+            setRecommended("Vale a pena assistir");
+         } else {
+            onHide(); // Adição normal também fecha o modal
+         }
+
       } catch (err) {
          toast.error("Erro ao salvar. Verifique a sua conexão.");
          console.error(err);
@@ -400,8 +416,8 @@ export function AddMovieModal({
                            />
                            <Form.Text style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>
                               {exclusiveToList 
-                                 ? "Este filme NÃO vai aparecer no seu perfil pessoal (Estatísticas/Diário)." 
-                                 : "Este filme será adicionado ao seu perfil pessoal E também a esta lista."}
+                                 ? "Este filme NÃO vai aparecer no seu perfil pessoal." 
+                                 : "Este filme será adicionado ao seu perfil pessoal E também nesta lista."}
                            </Form.Text>
                         </div>
                      )}
@@ -441,14 +457,30 @@ export function AddMovieModal({
                   <ArrowLeft size={16} /> Buscar Outro
                </button>
             )}
-            <button className={styles.closeBtn} onClick={onHide}>
-               Fechar
-            </button>
-            {step === "form" && (
-               <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
-                  {saving ? "Salvando..." : "Salvar Review"}
+            
+            <div className="ms-auto d-flex gap-2 align-items-center">
+               <button className={styles.closeBtn} onClick={onHide}>
+                  Cancelar
                </button>
-            )}
+               
+               {/* Só mostra o botão duplo se for um NOVO filme */}
+               {step === "form" && !movieToEdit && (
+                  <button 
+                     className={styles.saveAndAddBtn} 
+                     onClick={() => handleSave(true)} 
+                     disabled={saving}
+                     title="Salva este filme e volta para buscar o próximo"
+                  >
+                     {saving ? "..." : "Salvar e Adicionar Outro"}
+                  </button>
+               )}
+               
+               {step === "form" && (
+                  <button className={styles.saveBtn} onClick={() => handleSave(false)} disabled={saving}>
+                     {saving ? "Salvando..." : "Salvar"}
+                  </button>
+               )}
+            </div>
          </Modal.Footer>
       </Modal>
    );
