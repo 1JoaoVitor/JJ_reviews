@@ -12,12 +12,13 @@ vi.mock("@/features/auth", () => ({
 }));
 
 describe("CreateListModal", () => {
+   type OnCreateType = (name: string, description: string, type: "private" | "partial_shared" | "full_shared", collaboratorIds: string[], has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null) => Promise<CustomList | null>;
    let onHide: () => void;
-   let onCreate: (name: string, description: string, type: "private" | "partial_shared" | "full_shared", collaboratorIds: string[]) => Promise<CustomList | null>;
+   let onCreate: OnCreateType;
 
    beforeEach(() => {
       onHide = vi.fn<() => void>();
-      onCreate = vi.fn<(name: string, description: string, type: "private" | "partial_shared" | "full_shared", collaboratorIds: string[]) => Promise<CustomList | null>>().mockResolvedValue({ id: "new-list" } as CustomList);
+      onCreate = vi.fn<OnCreateType>().mockResolvedValue({ id: "new-list" } as CustomList);
    });
 
    it("renderiza título 'Nova Lista' quando aberto", () => {
@@ -122,7 +123,10 @@ describe("CreateListModal", () => {
          "Lista Teste",
          "",
          "private",
-         []
+         [],
+         false, 
+         null, 
+         null
       );
    });
 });
