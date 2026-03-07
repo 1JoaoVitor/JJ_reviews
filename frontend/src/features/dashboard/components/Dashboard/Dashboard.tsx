@@ -7,32 +7,31 @@ interface DashboardProps {
 }
 
 export function Dashboard({ movies }: DashboardProps) {
-   if (movies.length === 0) return null;
+   const watchedMovies = movies.filter(m => m.status === "watched");
 
-   const ratedMovies = movies.filter(
-      (m) => m.rating !== null && m.rating !== undefined,
-   );
+   if (watchedMovies.length === 0) return null;
 
-   const totalMovies = ratedMovies.length;
 
-   const totalRating = ratedMovies.reduce(
+   const totalMovies = watchedMovies.length;
+
+   const totalRating = watchedMovies.reduce(
       (acc, movie) => acc + (movie.rating || 0),
       0,
    );
 
    const averageRating =
-      ratedMovies.length > 0
-         ? (totalRating / ratedMovies.length).toFixed(1)
+      watchedMovies.length > 0
+         ? (totalRating / watchedMovies.length).toFixed(1)
          : "0.0";
 
-   const nonUSCount = movies.filter(
+   const nonUSCount = watchedMovies.filter(
       (m) => !m.countries?.includes("Estados Unidos"),
    ).length;
 
    const nonUSPercentage = totalMovies > 0 ? ((nonUSCount / totalMovies) * 100).toFixed(0) : "0";
 
    const directorCounts: Record<string, number> = {};
-   movies.forEach((movie) => {
+   watchedMovies.forEach((movie) => {
       const mainDirector =
          movie.director?.split(",")[0].trim() || "Desconhecido";
       if (mainDirector !== "Desconhecido") {
