@@ -27,3 +27,7 @@ dist-ssr
 dist
 dist-ssr
 dev-dist
+
+# Capacitor / Mobile
+android/
+ios/

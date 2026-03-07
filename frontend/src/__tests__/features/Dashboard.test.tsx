@@ -37,8 +37,8 @@ describe("Dashboard", () => {
 
    it("exibe o total de filmes assistidos (ignora watchlist)", () => {
       const movies = createMovies([
-         { rating: 8, status: "watched" },
-         { rating: 6, status: "watched" },
+         { rating: 8, status: "watched", director: "Diretor A", countries: ["Brasil"] },
+         { rating: 6, status: "watched", director: "Diretor B", countries: ["Estados Unidos"] },
          { rating: null, status: "watchlist" },
       ]);
       render(<Dashboard movies={movies} />);

@@ -166,23 +166,23 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      <span className={styles.typeDesc}>Apenas você. Funciona como uma pasta para organizar os seus filmes.</span>
                   </div>
 
-                  {/* Opção 2: Parcialmente Compartilhada */}
+                  {/* Opção 2: Colaborativa*/}
                   <div 
                      className={`${styles.typeCard} ${type === "partial_shared" ? styles.typeCardActive : ""}`}
                      onClick={() => setType("partial_shared")}
                   >
                      <Users size={20} className={styles.typeIcon} />
-                     <span className={styles.typeTitle}>Parcialmente Compartilhada</span>
+                     <span className={styles.typeTitle}>Colaborativa</span>
                      <span className={styles.typeDesc}>Ideal para grupos. Todos dão notas separadas e o sistema faz a média.</span>
                   </div>
 
-                  {/* Opção 3: Totalmente Compartilhada */}
+                  {/* Opção 3: Unificada*/}
                   <div 
                      className={`${styles.typeCard} ${type === "full_shared" ? styles.typeCardActive : ""}`}
                      onClick={() => setType("full_shared")}
                   >
                      <Share2 size={20} className={styles.typeIcon} />
-                     <span className={styles.typeTitle}>Totalmente Compartilhada</span>
+                     <span className={styles.typeTitle}>Unificada</span>
                      <span className={styles.typeDesc}>Uma única nota e avaliação colaborativa gerenciada por todos os membros.</span>
                   </div>
                </div>
