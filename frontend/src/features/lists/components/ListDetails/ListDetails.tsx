@@ -9,6 +9,7 @@ import { EditListModal } from "../EditListModal/EditListModal";
 import toast from "react-hot-toast";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
+import { calculateAverageBadge } from "@/utils/badges";
 
 const listCache: Record<string, number[]> = {};
 
@@ -110,6 +111,7 @@ export function ListDetails({
                   user_id: r.user_id,
                   rating: r.rating,
                   review: r.review,
+                  recommended: r.recommended,
                   user: Array.isArray(r.user) ? r.user[0] : r.user
                }));
 
@@ -119,16 +121,21 @@ export function ListDetails({
                   ? validRatings.reduce((acc, r) => acc + (r.rating || 0), 0) / validRatings.length 
                   : undefined;
 
+               // Calcula a Média do Veredito (Badge) 
+               const avgBadge = calculateAverageBadge(groupReviews.map(r => r.recommended));
+
                // Descobre qual é a "minha" review (para o modal e botão de editar funcionarem com a minha nota)
                const myReview = groupReviews.find(r => r.user_id === currentUserId);
 
                reviewsMap[id] = {
                   list_type: list.type,
                   list_average_rating: avg,
+                  list_average_recommended: avgBadge,
                   list_group_reviews: groupReviews,
                   // Se for totalmente compartilhada, a nota base é única (a primeira). Se for parcialmente, o rating base é o MEU rating.
                   rating: list.type === "full_shared" ? groupReviews[0]?.rating : myReview?.rating,
                   review: list.type === "full_shared" ? groupReviews[0]?.review : myReview?.review,
+                  recommended: list.type === "full_shared" ? groupReviews[0]?.recommended : myReview?.recommended,
                };
             });
          }

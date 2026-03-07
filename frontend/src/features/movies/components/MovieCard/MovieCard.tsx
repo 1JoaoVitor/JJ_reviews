@@ -9,8 +9,7 @@ interface MovieCardProps {
 }
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
-   const badgeStyle = getBadgeStyle(movie.recommended);
-   
+
    // Lógicas de Lista Compartilhada
    const isPartialShared = movie.list_type === "partial_shared";
    const isFullShared = movie.list_type === "full_shared";
@@ -20,7 +19,13 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
       ? movie.list_average_rating.toFixed(1)
       : movie.rating;
 
+   const displayRecommended = isPartialShared && movie.list_average_recommended !== undefined
+      ? movie.list_average_recommended
+      : movie.recommended;
+
    const isWatchlist = displayRating === null || displayRating === undefined;
+
+   const badgeStyle = getBadgeStyle(displayRecommended || "");
 
    return (
       <div
@@ -76,22 +81,28 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             <div className={styles.divider} />
 
             <div className={styles.footerInfo}>
-               {movie.recommended ? (
+               {displayRecommended ? (
                   <span
                      className={styles.recommendBadge}
                      style={{
                         backgroundColor: badgeStyle.bg,
                         color: badgeStyle.color,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: (isPartialShared || isFullShared) ? "130px" : "100%", // Encolhe se tiver avatares do lado
+                        display: "inline-block"
                      }}
+                     title={displayRecommended}
                   >
-                     {movie.recommended}
+                     {displayRecommended}
                   </span>
                ) : isWatchlist ? (
                   <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
                ) : <div style={{ flex: 1 }}></div>}
 
                {/* Avatares dos membros que já avaliaram */}
-               {(isPartialShared || isFullShared) && movie.list_group_reviews && movie.list_group_reviews.length > 0 && (
+               {isPartialShared && movie.list_group_reviews && movie.list_group_reviews.length > 0 && (
                   <div className={styles.avatarsContainer}>
                      {movie.list_group_reviews.filter(r => r.rating !== null).map((review, idx) => (
                         review.user?.avatar_url ? (

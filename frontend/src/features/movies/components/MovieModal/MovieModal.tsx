@@ -26,9 +26,16 @@ export function MovieModal({
    onDelete,
    onShare,
 }: MovieModalProps) {
-   const badgeStyle = getBadgeStyle(movie?.recommended ?? "");
+
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
+
+   const isPartialShared = movie?.list_type === "partial_shared";
+   const displayRecommended = isPartialShared && movie?.list_average_recommended !== undefined
+      ? movie.list_average_recommended
+      : movie?.recommended;
+
+   const badgeStyle = getBadgeStyle(displayRecommended || "");
 
    if (!movie) return null;
 
@@ -125,6 +132,23 @@ export function MovieModal({
                            <span className={styles.groupAverageBadge}>
                               Média: {movie.list_average_rating ? movie.list_average_rating.toFixed(1) : "N/A"}
                            </span>
+
+                           {displayRecommended && (
+                              <span
+                                 className={styles.recommendBadge}
+                                 style={{
+                                    backgroundColor: badgeStyle.bg,
+                                    color: badgeStyle.color,
+                                    padding: "0.2rem 0.8rem",
+                                    borderRadius: "var(--radius-pill)",
+                                    fontSize: "0.85rem",
+                                    fontWeight: "bold"
+                                 }}
+                              >
+                                 Veredito: {displayRecommended}
+                              </span>
+                           )}
+
                         </div>
 
                         <div className={styles.groupReviewsContainer}>
@@ -139,7 +163,22 @@ export function MovieModal({
                                        </div>
                                     )}
                                     <div className={styles.reviewerInfo}>
-                                       <strong>@{groupRev.user?.username || "Membro"}</strong>
+                                       <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
+                                          <strong style={{ lineHeight: '2' }}>@{groupRev.user?.username || "Membro"}</strong>
+                                          {groupRev.recommended && (
+                                                <span style={{
+                                                   fontSize: '0.65rem',
+                                                   padding: '0.15rem 0.4rem',
+                                                   borderRadius: 'var(--radius-pill)',
+                                                   backgroundColor: getBadgeStyle(groupRev.recommended).bg,
+                                                   color: getBadgeStyle(groupRev.recommended).color,
+                                                   fontWeight: 'bold',
+                                                   textTransform: 'uppercase'
+                                                }}>
+                                                   {groupRev.recommended}
+                                                </span>
+                                          )}
+                                       </div>
                                        {groupRev.rating !== null && groupRev.rating !== undefined ? (
                                           <div className={styles.reviewerStars}>
                                              <StarRating value={groupRev.rating} max={10} readOnly={true} />
