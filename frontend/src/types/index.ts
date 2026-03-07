@@ -31,6 +31,14 @@ export interface MovieData {
    isOscar?: boolean;
    genres?: string[];
    providers?: TmdbProvider[];
+   list_type?: "private" | "partial_shared" | "full_shared";
+   list_average_rating?: number;
+   list_group_reviews?: {
+      user_id?: string | null;
+      rating?: number;
+      review?: string;
+      user?: { username: string; avatar_url: string | null };
+   }[];
 }
 
 export interface TmdbProvider {

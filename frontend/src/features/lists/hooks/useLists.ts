@@ -101,8 +101,8 @@ export function useLists(userId?: string) {
                sender_id: userId,
                type: 'list_invite',
                message: type === 'full_shared' 
-                  ? 'convidou você para uma Lista Totalmente Compartilhada!' 
-                  : 'convidou você para uma Lista Parcialmente Compartilhada!'
+                  ? 'convidou você para uma Lista Unificada!' 
+                  : 'convidou você para uma Lista Colaborativa!'
             }));
 
             await supabase.from("notifications").insert(notificationsData);
@@ -123,13 +123,13 @@ export function useLists(userId?: string) {
       try {
          const { error } = await supabase
             .from("list_movies")
-            .insert({ list_id: listId, tmdb_id: tmdbId, added_by: userId });
+            .upsert(
+               { list_id: listId, tmdb_id: tmdbId, added_by: userId },
+               { onConflict: 'list_id, tmdb_id', ignoreDuplicates: true }
+            );
             
-         if (error) {
-            if (error.code === '23505') return true; 
-            throw error;
-         }
-
+         if (error) throw error;
+         
          setLists(prev => prev.map(list => 
             list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
          ));

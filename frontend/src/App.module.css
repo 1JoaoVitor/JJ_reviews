@@ -259,8 +259,9 @@
 }
 
 .featuresGrid {
-   display: grid;
-   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: center;
    gap: 2rem;
    width: 100%;
    max-width: 1100px;
@@ -269,6 +270,8 @@
 }
 
 .featureCard {
+   flex: 1 1 300px; /* Permite crescer e encolher, com tamanho base de 300px */
+   max-width: 340px; /* Evita que os cards de baixo fiquem gigantescos */
    background: var(--bg-surface);
    border: 1px solid var(--border-subtle);
    border-radius: var(--radius-lg);

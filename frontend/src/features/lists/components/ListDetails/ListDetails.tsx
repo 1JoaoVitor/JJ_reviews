@@ -64,7 +64,6 @@ export function ListDetails({
 
    // Busca os filmes da lista e junta com as avaliações corretas
    const fetchListMovies = useCallback(async () => {
-      setLoading(true); 
       try {
          // Busca os IDs na tabela da lista
          const { data: listMoviesData, error: lmError } = await supabase
@@ -81,32 +80,57 @@ export function ListDetails({
             return;
          }
 
-         // Buscar as notas corretas
+         // Buscar as notas de TODOS os membros e calcular a Média!
          const reviewsMap: Record<number, Partial<MovieData>> = {};
 
          if (list.type === "private") {
-            // Se a lista for privada, a nota vem do diário pessoal do dono da lista
             const { data: personalReviews } = await supabase
                .from("reviews")
                .select("*")
                .eq("user_id", list.owner_id)
                .in("tmdb_id", tmdbIds);
                
-            personalReviews?.forEach(r => reviewsMap[r.tmdb_id] = r);
+            personalReviews?.forEach(r => {
+               reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
+            });
          } else {
-            // Se a lista for partilhada, a nota vem da tabela isolada da lista (list_reviews)
-            let query = supabase.from("list_reviews").select("*").eq("list_id", list.id).in("tmdb_id", tmdbIds);
+            // Se for partilhada, busca TODAS as reviews (de todos os membros) para calcular a média
+            const { data: listReviews } = await supabase
+               .from("list_reviews")
+               .select("*, user:profiles(id, username, avatar_url)")
+               .eq("list_id", list.id)
+               .in("tmdb_id", tmdbIds);
             
-            if (list.type === "partial_shared" && currentUserId) {
-               // No clube do filme, puxa a SUA nota específica
-               query = query.eq("user_id", currentUserId);
-            } else if (list.type === "full_shared") {
-               // No casal, puxa a nota da lista (user_id é nulo)
-               query = query.is("user_id", null);
-            }
-            
-            const { data: listReviews } = await query;
-            listReviews?.forEach(r => reviewsMap[r.tmdb_id] = r);
+            tmdbIds.forEach(id => {
+               // Filtra as reviews apenas deste filme
+               const movieReviews = listReviews?.filter(r => r.tmdb_id === id) || [];
+               
+               // Formata o array de reviews do grupo (Múltiplas opiniões)
+               const groupReviews = movieReviews.map(r => ({
+                  user_id: r.user_id,
+                  rating: r.rating,
+                  review: r.review,
+                  user: Array.isArray(r.user) ? r.user[0] : r.user
+               }));
+
+               // Calcula a Média (ignorando quem não deu nota)
+               const validRatings = groupReviews.filter(r => r.rating != null);
+               const avg = validRatings.length > 0 
+                  ? validRatings.reduce((acc, r) => acc + (r.rating || 0), 0) / validRatings.length 
+                  : undefined;
+
+               // Descobre qual é a "minha" review (para o modal e botão de editar funcionarem com a minha nota)
+               const myReview = groupReviews.find(r => r.user_id === currentUserId);
+
+               reviewsMap[id] = {
+                  list_type: list.type,
+                  list_average_rating: avg,
+                  list_group_reviews: groupReviews,
+                  // Se for totalmente compartilhada, a nota base é única (a primeira). Se for parcialmente, o rating base é o MEU rating.
+                  rating: list.type === "full_shared" ? groupReviews[0]?.rating : myReview?.rating,
+                  review: list.type === "full_shared" ? groupReviews[0]?.review : myReview?.review,
+               };
+            });
          }
 
          // Junta as notas com os "esqueletos" (Resolvendo também a tipagem do TypeScript de forma segura)
@@ -195,9 +219,46 @@ export function ListDetails({
    }, [list.id, list.type, list.owner_id, currentUserId]);
 
    useEffect(() => {
+      // Carregamento inicial
       fetchListMovies();
       fetchCollaborators();
-   }, [fetchListMovies, fetchCollaborators]);
+
+      if (!list.id) return;
+
+      // TEMPO REAL (Multiplayer & Sincronização) 
+      // Inscreve a página para ouvir qualquer mudança nos filmes desta lista
+      const channel = supabase
+         .channel(`list_updates_${list.id}`)
+         // Ouve novos filmes adicionados ou removidos da lista
+         .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "list_movies", filter: `list_id=eq.${list.id}` },
+            () => { fetchListMovies(); }
+         )
+         // Ouve mudanças nas notas exclusivas desta lista colaborativa
+         .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "list_reviews", filter: `list_id=eq.${list.id}` },
+            () => { fetchListMovies(); }
+         );
+
+      // Se o usuário estiver logado, também ouve as mudanças no diário pessoal dele
+      // (Porque a lista pode estar usando uma nota puxada do perfil dele)
+      if (currentUserId) {
+         channel.on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "reviews", filter: `user_id=eq.${currentUserId}` },
+            () => { fetchListMovies(); }
+         );
+      }
+
+      channel.subscribe();
+
+      // Limpa a inscrição quando sair da tela da lista
+      return () => {
+         supabase.removeChannel(channel);
+      };
+   }, [fetchListMovies, fetchCollaborators, list.id, currentUserId]);
 
    // Permissões Derivadas
    const isOwner = currentUserStatus === 'owner';
@@ -277,7 +338,7 @@ export function ListDetails({
       setIsLeaving(true);
       try {
          // 1Apaga as avaliações que ele fez ESPECIFICAMENTE para esta lista 
-         // (Se for uma lista de casal onde o user_id é nulo, isto não apaga nada, o que é o comportamento correto)
+         // (Se for uma lista de totalmente compartilhada  onde o user_id é nulo, isto não apaga nada, o que é o comportamento correto)
          await supabase.from('list_reviews').delete().eq('list_id', list.id).eq('user_id', currentUserId);
 
          // emove o utilizador dos colaboradores
