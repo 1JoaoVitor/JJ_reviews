@@ -39,8 +39,8 @@ describe("CreateListModal", () => {
          <CreateListModal show={true} onHide={onHide} onCreate={onCreate} />
       );
       expect(screen.getByText("Particular")).toBeInTheDocument();
-      expect(screen.getByText("Parcialmente Compartilhada")).toBeInTheDocument();
-      expect(screen.getByText("Totalmente Compartilhada")).toBeInTheDocument();
+      expect(screen.getByText("Colaborativa")).toBeInTheDocument();
+      expect(screen.getByText("Unificada")).toBeInTheDocument();
    });
 
    it("começa com o tipo 'private' (Particular) selecionado", () => {
@@ -92,7 +92,7 @@ describe("CreateListModal", () => {
          <CreateListModal show={true} onHide={onHide} onCreate={onCreate} />
       );
 
-      await userEvent.click(screen.getByText("Parcialmente Compartilhada"));
+      await userEvent.click(screen.getByText("Colaborativa"));
       expect(screen.getByText("Convide seus amigos:")).toBeInTheDocument();
    });
 
@@ -101,7 +101,7 @@ describe("CreateListModal", () => {
          <CreateListModal show={true} onHide={onHide} onCreate={onCreate} />
       );
 
-      await userEvent.click(screen.getByText("Parcialmente Compartilhada"));
+      await userEvent.click(screen.getByText("Colaborativa"));
       expect(screen.getByText("Convide seus amigos:")).toBeInTheDocument();
 
       await userEvent.click(screen.getByText("Particular"));
