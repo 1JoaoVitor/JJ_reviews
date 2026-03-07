@@ -109,6 +109,9 @@ export interface CustomList {
    type: "private" | "partial_shared" | "full_shared"; 
    created_at: string;
    movie_count?: number; 
+   has_rating?: boolean;
+   rating_type?: "manual" | "average" | null;
+   manual_rating?: number | null;
 }
 
 export interface ListCollaborator {

@@ -94,7 +94,10 @@ export function useLists(userId?: string) {
       name: string, 
       description: string, 
       type: "private" | "partial_shared" | "full_shared" = "private",
-      collaboratorIds: string[] = []
+      collaboratorIds: string[] = [],
+      has_rating: boolean = false, 
+      rating_type: "manual" | "average" | null = null,
+      manual_rating: number | null = null
    ) => {
       if (!userId) return null;
       setLoading(true);
@@ -102,7 +105,7 @@ export function useLists(userId?: string) {
       try {
          const { data: newList, error } = await supabase
             .from("lists")
-            .insert([{ owner_id: userId, name, description, type }])
+            .insert([{ owner_id: userId, name, description, type, has_rating, rating_type, manual_rating }])
             .select()
             .single();
 
@@ -173,11 +176,19 @@ export function useLists(userId?: string) {
    };
 
    // Função para editar nome e descrição da lista
-   const updateList = async (listId: string, name: string, description: string) => {
+   const updateList = async (
+      listId: string, 
+      name: string, 
+      description: string,
+      has_rating: boolean,
+      rating_type: "manual" | "average" | null,
+      manual_rating: number | null,
+      ) => {
+
       try {
          const { error } = await supabase
             .from("lists")
-            .update({ name, description })
+            .update({ name, description, has_rating, rating_type, manual_rating })
             .eq("id", listId);
 
          if (error) throw error;
