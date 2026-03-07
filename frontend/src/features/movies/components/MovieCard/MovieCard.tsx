@@ -1,7 +1,7 @@
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieCard.module.css";
-import { Star } from "lucide-react";
+import { Star, Users } from "lucide-react";
 
 interface MovieCardProps {
    movie: MovieData;
@@ -10,7 +10,17 @@ interface MovieCardProps {
 
 export function MovieCard({ movie, onClick }: MovieCardProps) {
    const badgeStyle = getBadgeStyle(movie.recommended);
-   const isWatchlist = movie.rating === null;
+   
+   // Lógicas de Lista Compartilhada
+   const isPartialShared = movie.list_type === "partial_shared";
+   const isFullShared = movie.list_type === "full_shared";
+   
+   // Se for Parcialmente, mostra a Média. Senão, mostra a nota normal.
+   const displayRating = isPartialShared && movie.list_average_rating !== undefined
+      ? movie.list_average_rating.toFixed(1)
+      : movie.rating;
+
+   const isWatchlist = displayRating === null || displayRating === undefined;
 
    return (
       <div
@@ -39,8 +49,8 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   "Na Fila"
                ) : (
                   <>
-                     <Star size={12} fill="currentColor" strokeWidth={2} style={{ marginTop: "-1px" }} /> 
-                     {movie.rating}
+                     {isPartialShared ? <Users size={12} style={{ marginTop: "-1px" }} /> : <Star size={12} fill="currentColor" strokeWidth={2} style={{ marginTop: "-1px" }} />}
+                     {displayRating}
                   </>
                )}
             </div>
@@ -65,19 +75,36 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
 
             <div className={styles.divider} />
 
-            {movie.recommended ? (
-               <span
-                  className={styles.recommendBadge}
-                  style={{
-                     backgroundColor: badgeStyle.bg,
-                     color: badgeStyle.color,
-                  }}
-               >
-                  {movie.recommended}
-               </span>
-            ) : isWatchlist ? (
-               <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
-            ) : null}
+            <div className={styles.footerInfo}>
+               {movie.recommended ? (
+                  <span
+                     className={styles.recommendBadge}
+                     style={{
+                        backgroundColor: badgeStyle.bg,
+                        color: badgeStyle.color,
+                     }}
+                  >
+                     {movie.recommended}
+                  </span>
+               ) : isWatchlist ? (
+                  <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
+               ) : <div style={{ flex: 1 }}></div>}
+
+               {/* Avatares dos membros que já avaliaram */}
+               {(isPartialShared || isFullShared) && movie.list_group_reviews && movie.list_group_reviews.length > 0 && (
+                  <div className={styles.avatarsContainer}>
+                     {movie.list_group_reviews.filter(r => r.rating !== null).map((review, idx) => (
+                        review.user?.avatar_url ? (
+                           <img key={idx} src={review.user.avatar_url} alt="User" className={styles.avatarCircle} />
+                        ) : (
+                           <div key={idx} className={styles.avatarCircle}>
+                              {review.user?.username?.charAt(0).toUpperCase() || "?"}
+                           </div>
+                        )
+                     ))}
+                  </div>
+               )}
+            </div>
          </div>
       </div>
    );

@@ -8,31 +8,49 @@ export function useLists(userId?: string) {
    const [loading, setLoading] = useState(true);
 
    const fetchLists = useCallback(async () => {
-      if (!userId) {
-         setLists([]);
-         setLoading(false);
-         return;
-      }
-
+      if (!userId) return;
       setLoading(true);
       try {
-         // Busca as listas com contagem de filmes
-         const { data, error } = await supabase
+         // Busca as listas que EU criei (Dono)
+         const { data: myLists, error: err1 } = await supabase
             .from("lists")
             .select("*, list_movies(count)")
             .eq("owner_id", userId)
             .order("created_at", { ascending: false });
 
-         if (error) throw error;
-         const listsWithCount = (data || []).map((list: CustomList & { list_movies?: { count: number }[] }) => ({
+         if (err1) throw err1;
+
+         // Busca as listas onde EU sou colaborador aceito
+         const { data: collabData, error: err2 } = await supabase
+            .from("list_collaborators")
+            .select("list_id, lists(*, list_movies(count))")
+            .eq("user_id", userId)
+            .in("status", ["accepted", "pending"]);
+
+         if (err2) throw err2;
+
+         const sharedLists = collabData?.map(item => item.lists) || [];
+
+         // Junta tudo, remove possíveis duplicatas e atualiza o estado
+         const allLists = [...(myLists || []), ...sharedLists];
+         
+         // Remove duplicadas baseadas no ID (caso haja algum bug no banco)
+         const uniqueLists = Array.from(new Map(allLists.map(item => [item.id, item])).values());
+
+         // Ordena pelas mais recentes
+         uniqueLists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+         // Mapeia o count agregado para movie_count
+         const listsWithCount = uniqueLists.map(list => ({
             ...list,
-            movie_count: list.list_movies?.[0]?.count ?? 0,
-            list_movies: undefined,
+            movie_count: (list as Record<string, unknown>).list_movies
+               ? ((list as Record<string, unknown>).list_movies as { count: number }[])[0]?.count ?? 0
+               : 0,
          }));
-         setLists(listsWithCount);
+
+         setLists(listsWithCount as CustomList[]);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
-         toast.error("Não foi possível carregar suas listas.");
       } finally {
          setLoading(false);
       }
@@ -42,25 +60,61 @@ export function useLists(userId?: string) {
       fetchLists();
    }, [fetchLists]);
 
-   const createList = async (name: string, description: string) => {
+   const createList = async (
+      name: string, 
+      description: string, 
+      type: "private" | "partial_shared" | "full_shared" = "private",
+      collaboratorIds: string[] = []
+   ) => {
       if (!userId) return null;
-      
+      setLoading(true);
+
       try {
-         const { data, error } = await supabase
+         const { data: newList, error } = await supabase
             .from("lists")
-            .insert([{ name, description, owner_id: userId }])
+            .insert([{ owner_id: userId, name, description, type }])
             .select()
             .single();
 
          if (error) throw error;
-         
-         toast.success("Lista criada com sucesso!");
-         fetchLists(); // Recarrega as listas
-         return data;
+
+         // Se for uma lista compartilhada e tiver convidados, adiciona eles
+         if (type !== "private" && collaboratorIds.length > 0) {
+            
+            // Prepara os dados para a tabela list_collaborators
+            const collaboratorsData = collaboratorIds.map(friendId => ({
+               list_id: newList.id,
+               user_id: friendId,
+               role: 'member',
+               status: 'pending' // Ficam pendentes até aceitarem no sininho
+            }));
+
+            const { error: collabError } = await supabase
+               .from("list_collaborators")
+               .insert(collaboratorsData);
+
+            if (collabError) throw collabError;
+
+            // Dispara a notificação para cada amigo convidado
+            const notificationsData = collaboratorIds.map(friendId => ({
+               user_id: friendId,
+               sender_id: userId,
+               type: 'list_invite',
+               message: type === 'full_shared' 
+                  ? 'convidou você para uma Lista Unificada!' 
+                  : 'convidou você para uma Lista Colaborativa!'
+            }));
+
+            await supabase.from("notifications").insert(notificationsData);
+         }
+
+         setLists((prev) => [newList as CustomList, ...prev]);
+         return newList as CustomList;
       } catch (error) {
          console.error("Erro ao criar lista:", error);
-         toast.error("Erro ao criar a lista.");
          return null;
+      } finally {
+         setLoading(false);
       }
    };
 
@@ -69,17 +123,20 @@ export function useLists(userId?: string) {
       try {
          const { error } = await supabase
             .from("list_movies")
-            .insert({ list_id: listId, tmdb_id: tmdbId, added_by: userId });
+            .upsert(
+               { list_id: listId, tmdb_id: tmdbId, added_by: userId },
+               { onConflict: 'list_id, tmdb_id', ignoreDuplicates: true }
+            );
             
-         if (error) {
-            // Se o erro for de duplicação (filme já está na lista), ignoramos
-            if (error.code === '23505') return true; 
-            throw error;
-         }
+         if (error) throw error;
+         
+         setLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
+         ));
+
          return true;
       } catch (error) {
          console.error("Erro ao adicionar filme à lista:", error);
-         toast.error("Erro ao guardar filme na lista customizada.");
          return false;
       }
    };
@@ -113,14 +170,18 @@ export function useLists(userId?: string) {
             .match({ list_id: listId, tmdb_id: tmdbId });
 
          if (error) throw error;
+         
+         setLists(prev => prev.map(list => 
+            list.id === listId ? { ...list, movie_count: Math.max(0, (list.movie_count || 0) - 1) } : list
+         ));
+
          toast.success("Filme removido da lista.");
          return true;
       } catch (error) {
          console.error("Erro ao remover filme da lista:", error);
-         toast.error("Erro ao remover o filme.");
          return false;
       }
-   };
+   }
 
    return { lists, loading, fetchLists, createList, addMovieToList, updateList, removeMovieFromList};
 }

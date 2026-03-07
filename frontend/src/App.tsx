@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
 import { Routes, Route, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Dices, Plus, Star, Bookmark, Swords, ListPlus} from "lucide-react";
+import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
 
@@ -36,12 +36,8 @@ import styles from "./App.module.css";
 export default function App() {
    return (
       <Routes>
-         {/* Se a URL for apenas "/", carrega o seu sistema completo */}
          <Route path="/" element={<MainApp />} />
-         
-         {/* Se a URL for "/perfil/algum-nome", carrega a tela de visitante */}
          <Route path="/perfil/:username" element={<PublicProfile />} />
-
          <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
    );
@@ -59,7 +55,6 @@ function MainApp() {
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
 
-   // ─── Estado local apenas de UI ───
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [showModal, setShowModal] = useState(false);
    const [showAddModal, setShowAddModal] = useState(false);
@@ -78,15 +73,10 @@ function MainApp() {
    const [preselectedListId, setPreselectedListId] = useState<string>("");
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
-
-
-   // Scroll to top on mount (F5 / navegação)
    useEffect(() => {
       window.scrollTo(0, 0);
    }, []);
 
-
-   // ─── Handlers ───
    const handleOpenModal = (movie: MovieData) => {
       setSelectedMovie(movie);
       setShowModal(true);
@@ -116,9 +106,11 @@ function MainApp() {
       handleCloseModal();
       setMovieToEdit(movie);
       setShowAddModal(true);
+      if (selectedList) {
+         setPreselectedListId(selectedList.id);
+      }
    };
 
-   // ─── Modo Batalha (tela inteira) ───
    if (isBattleMode) {
       return (
          <div className={styles.page}>
@@ -129,6 +121,39 @@ function MainApp() {
          </div>
       );
    }
+
+   // ─── Lógica para separar os tipos de listas ───
+   const privateLists = lists.filter(l => l.type === "private" || !l.type);
+   const partialSharedLists = lists.filter(l => l.type === "partial_shared");
+   const fullSharedLists = lists.filter(l => l.type === "full_shared");
+
+   const renderListGroup = (title: string, groupLists: CustomList[], icon: React.ReactNode) => {
+      if (groupLists.length === 0) return null;
+      return (
+         <div className="mb-5">
+            <h5 className="mb-3 d-flex align-items-center gap-2" style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '1.05rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem' }}>
+               {icon} {title}
+            </h5>
+            <div className="row g-3">
+               {groupLists.map((list) => (
+                  <div key={list.id} className="col-12 col-md-6 col-lg-4">
+                     <div 
+                        className="p-4 rounded h-100" 
+                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s, transform 0.2s' }}
+                        onClick={() => setSelectedList(list)}
+                        onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--gold)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                        onMouseOut={(e) => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.transform = 'translateY(0)' }}
+                     >
+                        <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem', wordBreak: 'break-word' }}>{list.name}</h5>
+                        <p className="text-muted small mb-0" style={{ wordBreak: 'break-word' }}>{list.description || "Sem descrição"}</p>
+                        <p className="text-muted small mb-0 mt-2" style={{ fontWeight: 600 }}>{(list.movie_count ?? 0) === 1 ? "1 filme" : `${list.movie_count ?? 0} filmes`}</p>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+      );
+   };
 
    return (
       <div className={styles.page}>
@@ -169,7 +194,6 @@ function MainApp() {
             onFriendsClick={() => setShowFriendsModal(true)}
          />
 
-
          {session && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
@@ -195,7 +219,6 @@ function MainApp() {
             </div>
          )}
          
-
          <Container className="px-4 pb-5">
             {session && (
                <>
@@ -250,7 +273,8 @@ function MainApp() {
                               </button>
                            )}
 
-                        {session && (
+                        {/* Botão Global escondido quando estamos nas listas */}
+                        {session && filters.viewMode !== "lists" && (
                            <button
                               className={styles.addBtn}
                               onClick={() => {
@@ -298,11 +322,12 @@ function MainApp() {
                   ))}
                </div>
             ) : !session ? (
+               /* ─── LANDING PAGE ATUALIZADA ─── */
                <div className={styles.landingContainer}>
                   <div className={styles.heroSection}>
                      <h1 className={styles.heroTitle}>Sua jornada cinematográfica<br/>começa aqui.</h1>
                      <p className={styles.heroSubtitle}>
-                        O JJ Reviews é a sua plataforma pessoal para avaliar filmes, montar sua Watchlist, descobrir seu próximo filme e muito mais!
+                        O JJ Reviews é a sua plataforma pessoal para avaliar filmes, montar sua Watchlist, criar listas com amigos e compartilhar suas opiniões com o mundo!
                      </p>
                      <button
                         className={styles.heroBtn}
@@ -321,7 +346,17 @@ function MainApp() {
                      <div className={styles.featureCard}>
                         <div className={styles.featureIcon}><Bookmark size={28} /></div>
                         <h3>Sua Watchlist</h3>
-                        <p>Nunca mais esqueça o nome de um filme. Salve para ver depois e use a Roleta quando não souber o que escolher.</p>
+                        <p>Salve filmes para ver depois e use a Roleta quando não souber qual escolher para a noite.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Users size={28} /></div>
+                        <h3>Listas Compartilhadas</h3>
+                        <p>Convide os seus amigos para listas colaborativas. Avaliem filmes em grupo e descubram a nota média da galera.</p>
+                     </div>
+                     <div className={styles.featureCard}>
+                        <div className={styles.featureIcon}><Share2 size={28} /></div>
+                        <h3>Compartilhe Opiniões</h3>
+                        <p>Gere cards das suas avaliações para compartilhar facilmente nas suas redes sociais.</p>
                      </div>
                      <div className={styles.featureCard}>
                         <div className={styles.featureIcon}><Swords size={28} /></div>
@@ -356,9 +391,9 @@ function MainApp() {
                   />
                ) : (
                   <div className={styles.listsContainer}>
-                     <div className="d-flex justify-content-between align-items-center mb-4 mt-3">
-                        <h4 className="m-0 text-white fw-bold">Minhas Listas</h4>
-                        <button onClick={() => setShowCreateListModal(true)} style={{ background: 'var(--gold)', color: 'var(--bg-page)', border: 'none', padding: '0.5rem 1rem', borderRadius: '50rem', fontWeight: 600 }}>
+                     <div className="d-flex justify-content-between align-items-center mb-5 mt-3">
+                        <h4 className="m-0 text-white fw-bold">Gestão de Listas</h4>
+                        <button onClick={() => setShowCreateListModal(true)} className={styles.createListBtn}>
                            <ListPlus size={18} className="me-2" />
                            Nova Lista
                         </button>
@@ -368,25 +403,13 @@ function MainApp() {
                         <div className="text-center py-5 text-muted">Carregando listas...</div>
                      ) : lists.length === 0 ? (
                         <div className="text-center py-5 text-muted">
-                           Você ainda não criou nenhuma lista. Que tal começar agora?
+                           Você ainda não participa de nenhuma lista. Que tal começar agora?
                         </div>
                      ) : (
-                        <div className="row g-3">
-                           {lists.map((list) => (
-                              <div key={list.id} className="col-12 col-md-6 col-lg-4">
-                                 <div 
-                                    className="p-4 rounded h-100" 
-                                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s' }}
-                                    onClick={() => setSelectedList(list)}
-                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
-                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
-                                 >
-                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem', wordBreak: 'break-word' }}>{list.name}</h5>
-                                    <p className="text-muted small mb-0" style={{ wordBreak: 'break-word' }}>{list.description || "Sem descrição"}</p>
-                                    <p className="text-muted small mb-0 mt-2">{(list.movie_count ?? 0) === 1 ? "1 filme" : `${list.movie_count ?? 0} filmes`}</p>
-                                 </div>
-                              </div>
-                           ))}
+                        <div>
+                           {renderListGroup("Listas Particulares", privateLists, <Bookmark size={18} />)}
+                           {renderListGroup("Listas Colaborativas", partialSharedLists, <Users size={18} />)}
+                           {renderListGroup("Listas Unificadas", fullSharedLists, <Layers size={18} />)}
                         </div>
                      )}
                   </div>
@@ -396,7 +419,7 @@ function MainApp() {
                   title="Nenhum filme por aqui"
                   message={
                      filters.searchTerm
-                        ? `Não encontrámos nenhum resultado para "${filters.searchTerm}".`
+                        ? `Não encontramos nenhum resultado para "${filters.searchTerm}".`
                         : "Você ainda não adicionou nenhum filme à sua lista. Que tal começar a sua jornada cinematográfica agora?"
                   }
                   actionText="Adicionar Filme"
@@ -502,7 +525,6 @@ function MainApp() {
             onCreate={createList}
          />
 
-       { /* ─── Navegação Mobile ─── */}
          <BottomNav
             session={session}
             avatarUrl={avatarUrl}
@@ -523,4 +545,3 @@ function MainApp() {
       </div>
    );
 }
-

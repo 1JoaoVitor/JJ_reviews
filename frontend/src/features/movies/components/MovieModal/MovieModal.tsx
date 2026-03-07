@@ -117,48 +117,90 @@ export function MovieModal({
                </Col>
 
                <Col md={8}>
-                  {/* Rating + Recommendation */}
-                  <div className="d-flex align-items-center gap-4 mb-4 flex-wrap">
-                     <div>
-                        <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
-                           Sua Avaliação
-                        </h5>
-                        {movie.rating !== null ? (
-                           <StarRating value={movie.rating} readOnly={true} />
-                        ) : (
-                           <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
-                        )}
-                     </div>
-
-                     {movie.recommended && (
-                        <div className="ms-auto">
-                           <span
-                              className={styles.recommendBadge}
-                              style={{
-                                 backgroundColor: badgeStyle.bg,
-                                 color: badgeStyle.color,
-                                 padding: "0.5rem 1.25rem",
-                                 borderRadius: "var(--radius-pill)",
-                                 display: "inline-block",
-                              }}
-                           >
-                              {movie.recommended}
+                  {/* Se for uma Lista Parcial, mostra as opiniões de todo mundo */}
+                  {movie.list_type === "partial_shared" ? (
+                     <div className="mb-4">
+                        <div className="d-flex align-items-center gap-2 mb-4">
+                           <h5 className={styles.sectionTitle} style={{ margin: 0, border: 'none' }}>Avaliações do Grupo</h5>
+                           <span className={styles.groupAverageBadge}>
+                              Média: {movie.list_average_rating ? movie.list_average_rating.toFixed(1) : "N/A"}
                            </span>
                         </div>
-                     )}
-                  </div>
 
-                  {/* Review */}
-                  <div className="mb-4">
-                     <h5 className={styles.sectionTitle}>Review</h5>
-                     <p className={styles.reviewText}>
-                        &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
-                     </p>
-                  </div>
+                        <div className={styles.groupReviewsContainer}>
+                           {movie.list_group_reviews?.map((groupRev, idx) => (
+                              <div key={idx} className={styles.groupReviewCard}>
+                                 <div className={styles.reviewerHeader}>
+                                    {groupRev.user?.avatar_url ? (
+                                       <img src={groupRev.user.avatar_url} alt="Avatar" className={styles.reviewerAvatar} />
+                                    ) : (
+                                       <div className={styles.reviewerAvatar}>
+                                          {groupRev.user?.username?.charAt(0).toUpperCase() || "?"}
+                                       </div>
+                                    )}
+                                    <div className={styles.reviewerInfo}>
+                                       <strong>@{groupRev.user?.username || "Membro"}</strong>
+                                       {groupRev.rating !== null && groupRev.rating !== undefined ? (
+                                          <div className={styles.reviewerStars}>
+                                             <StarRating value={groupRev.rating} max={10} readOnly={true} />
+                                          </div>
+                                       ) : (
+                                          <span className="text-muted" style={{ fontSize: '0.8rem' }}>Ainda não avaliou</span>
+                                       )}
+                                    </div>
+                                 </div>
+                                 {groupRev.review && (
+                                    <p className={styles.reviewerText}>&ldquo;{groupRev.review}&rdquo;</p>
+                                 )}
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  ) : (
+                     /* Layout Tradicional (Perfil Privado ou Compartilhado Total) */
+                     <>
+                        <div className="d-flex align-items-center gap-4 mb-4 flex-wrap">
+                           <div>
+                              <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
+                                 {movie.list_type === "full_shared" ? "Avaliação Compartilhada" : "Sua Avaliação"}
+                              </h5>
+                              {movie.rating !== null && movie.rating !== undefined ? (
+                                 <StarRating value={movie.rating} readOnly={true} />
+                              ) : (
+                                 <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
+                              )}
+                           </div>
+
+                           {movie.recommended && (
+                              <div className="ms-auto">
+                                 <span
+                                    className={styles.recommendBadge}
+                                    style={{
+                                       backgroundColor: badgeStyle.bg,
+                                       color: badgeStyle.color,
+                                       padding: "0.5rem 1.25rem",
+                                       borderRadius: "var(--radius-pill)",
+                                       display: "inline-block",
+                                    }}
+                                 >
+                                    {movie.recommended}
+                                 </span>
+                              </div>
+                           )}
+                        </div>
+
+                        <div className="mb-4">
+                           <h5 className={styles.sectionTitle}>Review</h5>
+                           <p className={styles.reviewText}>
+                              &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
+                           </p>
+                        </div>
+                     </>
+                  )}
 
                   {/* Cast */}
                   {movie.cast && movie.cast.length > 0 && (
-                     <div className="mb-4">
+                     <div className="mb-4 mt-4">
                         <h6 className={styles.sectionTitle}>Elenco Principal</h6>
                         <div className="d-flex flex-wrap gap-2">
                            {movie.cast.map((actor, idx) => (
