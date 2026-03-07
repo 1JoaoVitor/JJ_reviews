@@ -95,7 +95,7 @@ export function ListDetails({
                reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
             });
          } else {
-            // Se for partilhada, busca TODAS as reviews (de todos os membros) para calcular a média
+            // Se for compartilhada, busca TODAS as reviews (de todos os membros) para calcular a média
             const { data: listReviews } = await supabase
                .from("list_reviews")
                .select("*, user:profiles(id, username, avatar_url)")

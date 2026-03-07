@@ -10,12 +10,20 @@ import { getBadgeStyle } from "@/utils/badges";
  * NÃO mover para CSS Modules.
  */
 
+export interface ShareOptions {
+   showTitle: boolean;
+   showDetails: boolean;
+   showRating: boolean;
+   showVerdict: boolean;
+}
+
 interface ShareCardProps {
    movie: MovieData;
+   options?: ShareOptions;
 }
 
 export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
-   ({ movie }, ref) => {
+   ({ movie, options = { showTitle: true, showDetails: true, showRating: true, showVerdict: true } }, ref) => {
 
       // NOTA COMPARTILHADA
       const isPartialShared = movie.list_type === "partial_shared";
@@ -29,9 +37,11 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
 
       const badgeStyle = getBadgeStyle(displayRecommended || "");
 
+      
+      // Usa um sufixo estático "?v=share" para forçar o navegador a baixar 
       const posterUrl = movie.poster_path
-         ? `https://image.tmdb.org/t/p/w780${movie.poster_path}?v=1`
-         : "https://via.placeholder.com/500x750?text=Sem+Imagem";
+         ? `https://image.tmdb.org/t/p/w780${movie.poster_path}?v=share`
+         : "";
 
       return (
          <div
@@ -51,20 +61,28 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
             }}
          >
             {/* Fundo desfocado */}
-            <div
-               style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  backgroundImage: `url(${posterUrl})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  filter: "blur(30px)",
-                  zIndex: 0,
-               }}
-            />
+            {posterUrl ? (
+               <img
+                  src={posterUrl}
+                  crossOrigin="anonymous"
+                  alt="background"
+                  style={{
+                     position: "absolute",
+                     top: 0,
+                     left: 0,
+                     width: "100%",
+                     height: "100%",
+                     objectFit: "cover", // Faz a imagem preencher a tela como um background
+                     filter: "blur(30px)",
+                     zIndex: 0,
+                  }}
+               />
+            ) : (
+               <div style={{
+                  position: "absolute", top: 0, left: 0, width: "100%", height: "100%", 
+                  backgroundColor: "#222", zIndex: 0 
+               }} />
+            )}
 
             {/* Máscara escura */}
             <div
@@ -119,18 +137,29 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      JJ REVIEWS
                   </h2>
 
-                  <img
-                     src={posterUrl}
-                     alt={movie.title}
-                     crossOrigin="anonymous"
-                     style={{
-                        width: "480px",
-                        height: "auto",
-                        borderRadius: "20px",
-                        boxShadow: "0 20px 60px rgba(0,0,0,0.9)",
-                        border: "2px solid rgba(255,255,255,0.1)",
-                     }}
-                  />
+                  {posterUrl ? (
+                     <img
+                        src={posterUrl}
+                        alt={movie.title}
+                        crossOrigin="anonymous"
+                        style={{
+                           width: "480px",
+                           height: "auto",
+                           borderRadius: "20px",
+                           boxShadow: "0 20px 60px rgba(0,0,0,0.9)",
+                           border: "2px solid rgba(255,255,255,0.1)",
+                        }}
+                     />
+                  ) : (
+                     <div style={{
+                        width: "480px", height: "720px", backgroundColor: "#333", 
+                        borderRadius: "20px", border: "2px solid rgba(255,255,255,0.1)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: "#777", fontSize: "2rem"
+                     }}>
+                        Sem Imagem
+                     </div>
+                  )}
                </div>
 
                {/* Meio */}
@@ -142,35 +171,39 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                      width: "100%",
                   }}
                >
-                  <h1
-                     style={{
-                        fontSize: "75px",
-                        textAlign: "center",
-                        fontWeight: "900",
-                        marginBottom: "20px",
-                        lineHeight: "1.1",
-                        textShadow: "0 4px 10px rgba(0,0,0,1)",
-                        maxWidth: "95%",
-                        color: "#ffffff",
-                     }}
-                  >
-                     {movie.title}
-                  </h1>
+                  {options.showTitle && (
+                     <h1
+                        style={{
+                           fontSize: "75px",
+                           textAlign: "center",
+                           fontWeight: "900",
+                           marginBottom: "20px",
+                           lineHeight: "1.1",
+                           textShadow: "0 4px 10px rgba(0,0,0,1)",
+                           maxWidth: "95%",
+                           color: "#ffffff",
+                        }}
+                     >
+                        {movie.title}
+                     </h1>
+                  )}
 
-                  <p
-                     style={{
-                        fontSize: "32px",
-                        color: "#dddddd",
-                        marginBottom: "50px",
-                        fontWeight: "500",
-                     }}
-                  >
-                     {movie.release_date?.split("-")[0]}{" "}
-                     {movie.director && `• ${movie.director}`}
-                  </p>
+                  {options.showDetails && (
+                     <p
+                        style={{
+                           fontSize: "32px",
+                           color: "#dddddd",
+                           marginBottom: "50px",
+                           fontWeight: "500",
+                        }}
+                     >
+                        {movie.release_date?.split("-")[0]}{" "}
+                        {movie.director && `• ${movie.director}`}
+                     </p>
+                  )}
 
                   {/* Nota */}
-                  {displayRating !== null && (
+                  {options.showRating && displayRating !== null && (
                      <div
                         style={{
                            display: "flex",
@@ -198,7 +231,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(
                   )}
 
                   {/* Veredito */}
-                  {displayRecommended && (
+                  {options.showVerdict && displayRecommended && (
                      <div
                         style={{
                            fontSize: "40px",

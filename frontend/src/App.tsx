@@ -19,7 +19,7 @@ import {
 import { Dashboard } from "@/features/dashboard";
 import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
-import { ShareCard, useShare } from "@/features/share";
+import { ShareCard, ShareModal, useShare } from "@/features/share";
 import { PublicProfile } from "@/features/publicProfile";
 import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
@@ -54,11 +54,13 @@ function MainApp() {
    const isPageLoading = authLoading || moviesLoading;
 
    const filters = useMovieFilters(movies);
-   const { shareRef, sharingMovie, isSharing, handleShare } = useShare();
+   const { shareRef, sharingMovie, isSharing} = useShare();
 
    const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
    const [showModal, setShowModal] = useState(false);
    const [showAddModal, setShowAddModal] = useState(false);
+   const [showShareModal, setShowShareModal] = useState(false);
+   const [movieToShare, setMovieToShare] = useState<MovieData | null>(null);
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showRoulette, setShowRoulette] = useState(false);
@@ -474,7 +476,19 @@ function MainApp() {
             isAdmin={!!session}
             onEdit={handleEditMovie}
             onDelete={handleDeleteMovie}
-            onShare={handleShare}
+            onShare={(movie) => {
+               setMovieToShare(movie);
+               setShowShareModal(true);
+            }} 
+         />
+
+         <ShareModal 
+            show={showShareModal}
+            movie={movieToShare}
+            onHide={() => {
+               setShowShareModal(false);
+               setMovieToShare(null);
+            }}
          />
 
          <AddMovieModal

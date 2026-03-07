@@ -101,13 +101,13 @@ export function AddMovieModal({
          }
       };
 
-      // Só faz essa checagem se estiver editando em uma lista partilhada
+      // Só faz essa checagem se estiver editando em uma lista compartilhada
       if (show && isSharedList && selectedMovie) {
          checkProfileExistence();
       }
    }, [step, selectedMovie, show, isSharedList]);
 
-   // Reseta o toggle se trocar para uma lista não-partilhada
+   // Reseta o toggle se trocar para uma lista não-compartilhada
    useEffect(() => {
       if (!isSharedList) {
          setExclusiveToList(false);
@@ -413,7 +413,7 @@ export function AddMovieModal({
                               type="switch"
                               id="exclusive-to-list-switch"
                               className={styles.customSwitch}
-                              label={<span style={{ fontWeight: 600, color: 'var(--gold)' }}>Salvar exclusivamente nesta lista partilhada</span>}
+                              label={<span style={{ fontWeight: 600, color: 'var(--gold)' }}>Salvar exclusivamente nesta lista compartilhada</span>}
                               checked={exclusiveToList}
                               onChange={(e) => setExclusiveToList(e.target.checked)}
                            />
