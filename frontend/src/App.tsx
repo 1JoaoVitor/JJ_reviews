@@ -246,7 +246,31 @@ function MainApp() {
          <Container className="px-4 pb-5">
             {session && (
                <>
-               {!isPageLoading && !filters.searchTerm && <Dashboard movies={movies} />}
+               {!isPageLoading && !filters.searchTerm &&
+               <Dashboard 
+                  movies={movies} 
+                  
+                  onFilterDirector={(director) => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setOnlyInternational(false);
+                     filters.setSelectedGenre("");
+                     
+                     filters.setSelectedDirector(director);
+                     window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }}
+                  onFilterNonUS={() => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setSelectedGenre("");
+                     filters.setSelectedDirector("");
+
+                     filters.setOnlyInternational(true);
+                     window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }}
+               />}
 
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
@@ -432,16 +456,48 @@ function MainApp() {
                      setShowAddModal(true);
                   }}
                />
-            ) : (
-               <div className="movie-grid">
-                  {filters.filteredMovies.map((movie) => (
-                     <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        onClick={handleOpenModal}
-                     />
-                  ))}
-               </div>
+           ) : (
+               <>
+                  {(filters.selectedDirector || filters.onlyInternational || filters.onlyNational || filters.onlyOscar || filters.selectedGenre) && (
+                     <div className={styles.activeFilters}>
+                        {filters.selectedDirector && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedDirector("")}>
+                              Diretor: {filters.selectedDirector} ✕
+                           </button>
+                        )}
+                        {filters.onlyInternational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyInternational(false)}>
+                              Fora dos EUA ✕
+                           </button>
+                        )}
+                        {filters.onlyNational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyNational(false)}>
+                              Cinema Nacional ✕
+                           </button>
+                        )}
+                        {filters.onlyOscar && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyOscar(false)}>
+                              Vencedores do Oscar ✕
+                           </button>
+                        )}
+                        {filters.selectedGenre && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedGenre("")}>
+                              Gênero: {filters.selectedGenre} ✕
+                           </button>
+                        )}
+                     </div>
+                  )}
+
+                  <div className="movie-grid">
+                     {filters.filteredMovies.map((movie) => (
+                        <MovieCard
+                           key={movie.id}
+                           movie={movie}
+                           onClick={handleOpenModal}
+                        />
+                     ))}
+                  </div>
+               </>
             )}
          </Container>
 
@@ -560,3 +616,4 @@ function MainApp() {
       </div>
    );
 }
+

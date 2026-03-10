@@ -19,6 +19,7 @@ export interface MovieData {
    review: string;
    recommended: string;
    location?: string;
+   runtime?: number;
    created_at: string;
    title?: string;
    poster_path?: string;
