@@ -112,6 +112,7 @@ export interface CustomList {
    has_rating?: boolean;
    rating_type?: "manual" | "average" | null;
    manual_rating?: number | null;
+   auto_sync?: boolean;
 }
 
 export interface ListCollaborator {

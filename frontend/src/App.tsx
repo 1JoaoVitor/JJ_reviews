@@ -314,27 +314,6 @@ function MainApp() {
                         )}
                      </div>
                   </div>
-
-                  <div className={styles.mobileFilters}>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : ""}`}
-                        onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
-                     >
-                        Todos
-                     </button>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${filters.onlyNational ? styles.mobileFilterBtnNationalActive : ""}`}
-                        onClick={() => filters.setOnlyNational(!filters.onlyNational)}
-                     >
-                        Nacionais
-                     </button>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${filters.onlyOscar ? styles.mobileFilterBtnOscarActive : ""}`}
-                        onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
-                     >
-                        Oscar
-                     </button>
-                  </div>
                </div>
                </>
             )}
