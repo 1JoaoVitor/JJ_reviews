@@ -8,21 +8,24 @@ import { StarRating } from "@/components/ui/StarRating/StarRating";
 import type { CustomList } from "@/types";
 import styles from "./CreateListModal.module.css";
 
+type ListType = "private" | "partial_shared" | "full_shared";
+
 interface CreateListModalProps {
    show: boolean;
    onHide: () => void;
    onCreate: (
       name: string, 
       description: string, 
-      type: "private" | "partial_shared" | "full_shared", 
+      type: ListType, 
       collaboratorIds: string[],
       has_rating: boolean,
       rating_type: "manual" | "average" | null,
       manual_rating: number | null,
+      auto_sync: boolean,
    ) => Promise<CustomList | null>;
 }
 
-type ListType = "private" | "partial_shared" | "full_shared";
+
 
 export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps) {
    const { session } = useAuth();
@@ -40,6 +43,7 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
    const [hasRating, setHasRating] = useState(false);
    const [ratingType, setRatingType] = useState<"manual" | "average">("average");
    const [manualRating, setManualRating] = useState<number>(5);
+   const [autoSync, setAutoSync] = useState(false);
 
    // Traz a lista de amigos REAIS do usuário logado usando a abordagem de duas etapas
    useEffect(() => {
@@ -121,7 +125,8 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
       setLoading(true);
       const success = await onCreate(
          name.trim(), description.trim(), type, selectedFriends, 
-         hasRating, hasRating ? ratingType : null, hasRating && ratingType === "manual" ? manualRating : null
+         hasRating, hasRating ? ratingType : null, hasRating && ratingType === "manual" ? manualRating : null,
+         autoSync,
       );
       setLoading(false);
 
@@ -196,6 +201,25 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                      </div>
                   )}
                </div>
+
+               {type !== "private" && (
+                  <div className="mb-4 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                     <Form.Check 
+                        type="switch"
+                        id="auto-sync-switch"
+                        label={
+                           <div>
+                              <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>
+                              <p className="text-muted small mb-0" style={{ fontSize: '0.8rem' }}>
+                                 Avaliações feitas nesta lista serão copiadas automaticamente para o perfil de todos os membros.
+                              </p>
+                           </div>
+                        }
+                        checked={autoSync}
+                        onChange={(e) => setAutoSync(e.target.checked)}
+                     />
+                  </div>
+               )}
 
                <Form.Label className={styles.label}>Tipo de Lista</Form.Label>
                <div className={styles.typeGrid}>

@@ -143,48 +143,6 @@
    height: 38px; 
    transition: transform 0.2s;
 }
-/* Mobile filter row */
-.mobileFilters {
-   display: flex;
-   gap: 0;
-   border: 1px solid var(--border-subtle);
-   border-radius: var(--radius-md);
-   overflow: hidden;
-   width: 100%;
-}
-
-@media (min-width: 768px) {
-   .mobileFilters {
-      display: none;
-   }
-}
-
-.mobileFilterBtn {
-   flex: 1;
-   padding: 0.45rem;
-   border: none;
-   background: transparent;
-   color: var(--text-muted);
-   font-weight: 600;
-   font-size: var(--font-sm);
-   cursor: pointer;
-   transition: background 0.2s, color 0.2s;
-}
-
-.mobileFilterBtnActive {
-   background: var(--gold);
-   color: var(--bg-page);
-}
-
-.mobileFilterBtnNationalActive {
-   background: #10B981;
-   color: #fff;
-}
-
-.mobileFilterBtnOscarActive {
-   background: var(--gold);
-   color: var(--bg-page);
-}
 
 /* ─── Landing Page (Não logado) ─── */
 .landingContainer {

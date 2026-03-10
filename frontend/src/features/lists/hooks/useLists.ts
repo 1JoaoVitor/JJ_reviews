@@ -97,7 +97,8 @@ export function useLists(userId?: string) {
       collaboratorIds: string[] = [],
       has_rating: boolean = false, 
       rating_type: "manual" | "average" | null = null,
-      manual_rating: number | null = null
+      manual_rating: number | null = null,
+      auto_sync: boolean = false,
    ) => {
       if (!userId) return null;
       setLoading(true);
@@ -105,7 +106,7 @@ export function useLists(userId?: string) {
       try {
          const { data: newList, error } = await supabase
             .from("lists")
-            .insert([{ owner_id: userId, name, description, type, has_rating, rating_type, manual_rating }])
+            .insert([{ owner_id: userId, name, description, type, has_rating, rating_type, manual_rating, auto_sync }])
             .select()
             .single();
 
@@ -155,15 +156,26 @@ export function useLists(userId?: string) {
    const addMovieToList = async (listId: string, tmdbId: number) => {
       if (!userId) return false;
       try {
-         const { error } = await supabase
+         // O filme já existe no banco? 
+         const { data: existingMovie, error: fetchError } = await supabase
             .from("list_movies")
-            .upsert(
-               { list_id: listId, tmdb_id: tmdbId, added_by: userId },
-               { onConflict: 'list_id, tmdb_id', ignoreDuplicates: true }
-            );
+            .select("id")
+            .match({ list_id: listId, tmdb_id: tmdbId })
+            .maybeSingle(); // Retorna o filme se achar, ou null se não existir
+
+         if (fetchError) throw fetchError;
+
+         if (existingMovie) {
+            return true; 
+         }
+
+         // Se é um filme inédito na lista, faz a inserção real
+         const { error: insertError } = await supabase
+            .from("list_movies")
+            .insert([{ list_id: listId, tmdb_id: tmdbId, added_by: userId }]);
             
-         if (error) throw error;
-         
+         if (insertError) throw insertError;
+
          setLists(prev => prev.map(list => 
             list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
          ));
@@ -183,12 +195,13 @@ export function useLists(userId?: string) {
       has_rating: boolean,
       rating_type: "manual" | "average" | null,
       manual_rating: number | null,
+      auto_sync: boolean,
       ) => {
 
       try {
          const { error } = await supabase
             .from("lists")
-            .update({ name, description, has_rating, rating_type, manual_rating })
+            .update({ name, description, has_rating, rating_type, manual_rating, auto_sync })
             .eq("id", listId);
 
          if (error) throw error;

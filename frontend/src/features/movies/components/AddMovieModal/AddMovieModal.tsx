@@ -227,6 +227,25 @@ export function AddMovieModal({
                      await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended });
                   }
                }
+
+               // ─── LÓGICA DE AUTO-SINCRONIZAÇÃO ───
+               // Se a lista tiver o auto-sync ligado e o utilizador NÃO marcou como exclusivo da lista,
+               // o banco de dados para clona a review para todos os amigos.
+               if (selectedListDetails.auto_sync && !exclusiveToList) {
+                  const { error: syncError } = await supabase.rpc('sync_review_to_list_members', {
+                     p_list_id: selectedListId,
+                     p_tmdb_id: selectedMovie.id,
+                     p_rating: rating,
+                     p_review: review,
+                     p_recommended: recommended,
+                     p_status: formStatus,
+                     p_added_by: user.id
+                  });
+
+                  if (syncError) {
+                     console.error("Erro ao sincronizar filme com membros da lista:", syncError);
+                  }
+               }
             }
          }
 
