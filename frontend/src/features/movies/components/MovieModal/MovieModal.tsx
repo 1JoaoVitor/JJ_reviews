@@ -1,5 +1,5 @@
 import { Modal, Row, Col } from "react-bootstrap";
-import { Pencil, Trash2, Share2 } from "lucide-react";
+import { Pencil, Trash2, Share2, MapPin } from "lucide-react";
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import type { MovieData } from "@/types";
@@ -208,7 +208,10 @@ export function MovieModal({
                               ) : (
                                  <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
                               )}
+                              
                            </div>
+
+                           
 
                            {movie.recommended && (
                               <div className="ms-auto">
@@ -229,7 +232,18 @@ export function MovieModal({
                         </div>
 
                         <div className="mb-4">
-                           <h5 className={styles.sectionTitle}>Review</h5>
+                           <div className="d-flex align-items-center gap-3 mb-2">
+                              <h5 className={styles.sectionTitle} style={{ margin: 0 }}>Review</h5>
+                              {movie.location && (
+                                 <span 
+                                    className="text-muted d-flex align-items-center gap-1" 
+                                    style={{ fontSize: "0.85rem", fontWeight: 500 }}
+                                 >
+                                    <MapPin size={14} /> {movie.location}
+                                 </span>
+                              )}
+                           </div>
+                           
                            <p className={styles.reviewText}>
                               &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
                            </p>
