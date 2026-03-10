@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Search, ArrowLeft, ListPlus } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
-import { searchMovies } from "../../services/tmdbService";
+import { searchMovies, getMovieDetails} from "../../services/tmdbService";
 import { CreateListModal } from "@/features/lists";
 
 import { supabase } from "@/lib/supabase";
@@ -137,12 +137,19 @@ export function AddMovieModal({
       setStep("form");
    };
 
-   // ─── Lógica Atualizada com o parâmetro keepOpen ───
    const handleSave = async (keepOpen = false) => {
       if (!selectedMovie) return;
       setSaving(true);
 
       try {
+         let movieRuntime = 0;
+         if (!movieToEdit) { // Só precisamos buscar se for um filme novo
+            const details = await getMovieDetails(selectedMovie.id);
+            if (details && details.runtime) {
+               movieRuntime = details.runtime;
+            }
+         }
+
          const { data: { user }, error: userError } = await supabase.auth.getUser();
 
          if (userError || !user) {
@@ -175,6 +182,7 @@ export function AddMovieModal({
                rating: formStatus === "watched" ? rating : null,
                review: formStatus === "watched" ? review : null,
                recommended: formStatus === "watched" ? recommended : null,
+               runtime: movieRuntime,
                location: formStatus === "watched" ? location : null,
                status: formStatus,
                user_id: user.id,
@@ -226,9 +234,9 @@ export function AddMovieModal({
                      .maybeSingle();
 
                   if (existingUserReview) {
-                     await supabase.from('list_reviews').update({ rating, review, recommended, location }).eq('id', existingUserReview.id);
+                     await supabase.from('list_reviews').update({ rating, review, recommended, location, runtime: movieRuntime}).eq('id', existingUserReview.id);
                   } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended, location });
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended, location, runtime: movieRuntime });
                   }
                }
 
@@ -245,6 +253,7 @@ export function AddMovieModal({
                      p_status: formStatus,
                      p_added_by: user.id,
                      p_location: location,
+                     p_runtime: movieRuntime,
                   });
 
                   if (syncError) {

@@ -9,8 +9,10 @@ export function useMovieFilters(movies: MovieData[]) {
    const [searchTerm, setSearchTerm] = useState("");
    const [onlyNational, setOnlyNational] = useState(false);
    const [onlyOscar, setOnlyOscar] = useState(false);
+   const [onlyInternational, setOnlyInternational] = useState(false);
    const [sortOrder, setSortOrder] = useState("default");
    const [selectedGenre, setSelectedGenre] = useState("");
+   const [selectedDirector, setSelectedDirector] = useState("");
    const [viewMode, setViewMode] = useState<"watched" | "watchlist" | "lists">("watched");
 
    const availableGenres = useMemo(
@@ -42,6 +44,9 @@ export function useMovieFilters(movies: MovieData[]) {
 
             if (onlyNational && !movie.isNational) return false;
             if (onlyOscar && !movie.isOscar) return false;
+            if (onlyInternational && movie.countries?.includes("Estados Unidos")) return false;
+            if (selectedDirector && movie.director?.toLowerCase() !== selectedDirector.toLowerCase()) return false;
+            
             if (selectedGenre && !movie.genres?.includes(selectedGenre))
                return false;
 
@@ -65,7 +70,7 @@ export function useMovieFilters(movies: MovieData[]) {
                return (a.title || "").localeCompare(b.title || "");
             return 0;
          });
-   }, [movies, viewMode, searchTerm, onlyNational, onlyOscar, selectedGenre, sortOrder]);
+   }, [movies, viewMode, searchTerm, onlyNational, onlyOscar, onlyInternational, selectedGenre, selectedDirector, sortOrder]);
 
    return {
       searchTerm,
@@ -74,10 +79,14 @@ export function useMovieFilters(movies: MovieData[]) {
       setOnlyNational,
       onlyOscar,
       setOnlyOscar,
+      onlyInternational,
+      setOnlyInternational,
       sortOrder,
       setSortOrder,
       selectedGenre,
       setSelectedGenre,
+      selectedDirector,
+      setSelectedDirector,
       viewMode,
       setViewMode,
       availableGenres,

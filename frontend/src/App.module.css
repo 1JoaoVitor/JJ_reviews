@@ -295,3 +295,30 @@
    color: var(--text-muted);
 }
 
+/* ─── Filtros Ativos (Badges) ─── */
+.activeFilters {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 0.5rem;
+   margin-bottom: 1.5rem;
+}
+
+.filterBadge {
+   display: flex;
+   align-items: center;
+   gap: 0.4rem;
+   background: rgba(255, 193, 7, 0.1);
+   color: var(--gold);
+   border: 1px solid var(--gold);
+   padding: 0.3rem 0.8rem;
+   border-radius: var(--radius-pill);
+   font-size: 0.85rem;
+   font-weight: 600;
+   cursor: pointer;
+   transition: all 0.2s ease;
+}
+
+.filterBadge:hover {
+   background: var(--gold);
+   color: #000;
+}
