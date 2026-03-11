@@ -40,7 +40,7 @@ export function PublicProfile() {
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [isBattleMode, setIsBattleMode] = useState(false);
 
-   const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel } = 
+   const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel, rejectRequest } = 
       useFriendship(session?.user.id, profileId ?? undefined);
 
    const [showAddModal, setShowAddModal] = useState(false);
