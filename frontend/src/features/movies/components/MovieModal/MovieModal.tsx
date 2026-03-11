@@ -1,12 +1,11 @@
 import { Modal, Row, Col } from "react-bootstrap";
-import { Pencil, Trash2, Share2, MapPin } from "lucide-react";
+import { Pencil, Trash2, Share2, MapPin, Image as ImageIcon } from "lucide-react"; // Adicionei o ImageIcon
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
 import { useState } from "react";
-import { useModalBack } from "@/hooks/useModalBack";
 
 interface MovieModalProps {
    show: boolean;
@@ -28,8 +27,6 @@ export function MovieModal({
    onShare,
 }: MovieModalProps) {
 
-
-   useModalBack(show, onHide);
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
 
@@ -127,7 +124,7 @@ export function MovieModal({
                </Col>
 
                <Col md={8}>
-                  {/* Se for uma Lista Parcial, mostra as opiniões de todo mundo */}
+                  {/* Se for uma Lista Colaborativa, mostra as opiniões de todo mundo */}
                   {movie.list_type === "partial_shared" ? (
                      <div className="mb-4">
                         <div className="d-flex align-items-center gap-2 mb-4">
@@ -151,7 +148,6 @@ export function MovieModal({
                                  Veredito: {displayRecommended}
                               </span>
                            )}
-
                         </div>
 
                         <div className={styles.groupReviewsContainer}>
@@ -211,10 +207,7 @@ export function MovieModal({
                               ) : (
                                  <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
                               )}
-                              
                            </div>
-
-                           
 
                            {movie.recommended && (
                               <div className="ms-auto">
@@ -250,6 +243,25 @@ export function MovieModal({
                            <p className={styles.reviewText}>
                               &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
                            </p>
+
+                           {/* EXIBIÇÃO DA IMAGEM ANEXADA  */}
+                           {movie.attachment_url && (
+                              <div className="mt-4 p-3" style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                                 <span className="d-flex align-items-center gap-2 mb-3 text-uppercase" style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--gold)' }}>
+                                    <ImageIcon size={14} /> Anexo
+                                 </span>
+                                 <img 
+                                    src={movie.attachment_url} 
+                                    alt="Anexo da avaliação" 
+                                    style={{ 
+                                       maxWidth: '100%', 
+                                       maxHeight: '400px', 
+                                       objectFit: 'contain', 
+                                       borderRadius: 'var(--radius-sm)' 
+                                    }} 
+                                 />
+                              </div>
+                           )}
                         </div>
                      </>
                   )}

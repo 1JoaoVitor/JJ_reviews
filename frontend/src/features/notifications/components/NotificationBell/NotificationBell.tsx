@@ -38,9 +38,13 @@ export function NotificationBell({ userId }: NotificationBellProps) {
    const handleNotificationClick = (notif: { id: string; is_read: boolean; type: string; reference_id?: string; sender?: { username?: string } }) => {
       if (!notif.is_read) markAsRead(notif.id);
       
-      // Redireciona dependendo do tipo da notificação
+      // Redireciona dependendo do tipo da notificação USANDO A URL DIRETAMENTE
       if (notif.type === "list_invite" || notif.type === "movie_added") {
-         navigate("/", { state: { openLists: true, targetListId: notif.reference_id } });
+         if (notif.reference_id) {
+            navigate(`/?aba=lists&listId=${notif.reference_id}`);
+         } else {
+            navigate(`/?aba=lists`);
+         }
       } else if (notif.type === "friend_request") {
          if (notif.sender?.username) {
             navigate(`/perfil/${notif.sender.username}`);
