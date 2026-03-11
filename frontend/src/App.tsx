@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, useSearchParams} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
+import { App as CapacitorApp } from '@capacitor/app';
 
 // ─── Features ───
 import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
@@ -64,7 +65,10 @@ function MainApp() {
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showRoulette, setShowRoulette] = useState(false);
-   const [isBattleMode, setIsBattleMode] = useState(false);
+
+   const [searchParams, setSearchParams] = useSearchParams();
+   const isBattleMode = searchParams.get("modo") === "batalha";
+
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
@@ -80,6 +84,28 @@ function MainApp() {
       window.scrollTo(0, 0);
    }, []);
 
+
+   // ───  BOTÃO NATIVO DO ANDROID ───
+   useEffect(() => {
+      const setupCapacitorBackButton = async () => {
+         // Fica escutando o botão físico/gesto de voltar do celular
+         CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+            // canGoBack é true se o histórico (modais ou abas) tiver algo
+            if (canGoBack) {
+               window.history.back(); // Obedece à lógica da Web (fecha modal/muda aba)
+            } else {
+               CapacitorApp.exitApp(); // Se for a tela inicial limpa, fecha o aplicativo de verdade
+            }
+         });
+      };
+
+      setupCapacitorBackButton();
+
+      // Limpeza de segurança
+      return () => {
+         CapacitorApp.removeAllListeners();
+      };
+   }, []);
 
    // Ouve redirecionamentos do Sininho de Notificação
    useEffect(() => {
@@ -179,6 +205,17 @@ function MainApp() {
       );
    };
 
+   const setIsBattleMode = (active: boolean) => {
+      setSearchParams(prev => {
+         if (active) {
+            prev.set("modo", "batalha");
+         } else {
+            prev.delete("modo");
+         }
+         return prev;
+      });
+   };
+
    return (
       <div className={styles.page}>
          
@@ -246,7 +283,31 @@ function MainApp() {
          <Container className="px-4 pb-5">
             {session && (
                <>
-               {!isPageLoading && !filters.searchTerm && <Dashboard movies={movies} />}
+               {!isPageLoading && !filters.searchTerm &&
+               <Dashboard 
+                  movies={movies} 
+                  
+                  onFilterDirector={(director) => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setOnlyInternational(false);
+                     filters.setSelectedGenre("");
+                     
+                     filters.setSelectedDirector(director);
+                     window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }}
+                  onFilterNonUS={() => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setSelectedGenre("");
+                     filters.setSelectedDirector("");
+
+                     filters.setOnlyInternational(true);
+                     window.scrollTo({ top: 500, behavior: 'smooth' });
+                  }}
+               />}
 
                <div className={styles.subheader}>
                   <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
@@ -313,27 +374,6 @@ function MainApp() {
                            </button>
                         )}
                      </div>
-                  </div>
-
-                  <div className={styles.mobileFilters}>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${!filters.onlyNational && !filters.onlyOscar ? styles.mobileFilterBtnActive : ""}`}
-                        onClick={() => { filters.setOnlyNational(false); filters.setOnlyOscar(false); }}
-                     >
-                        Todos
-                     </button>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${filters.onlyNational ? styles.mobileFilterBtnNationalActive : ""}`}
-                        onClick={() => filters.setOnlyNational(!filters.onlyNational)}
-                     >
-                        Nacionais
-                     </button>
-                     <button
-                        className={`${styles.mobileFilterBtn} ${filters.onlyOscar ? styles.mobileFilterBtnOscarActive : ""}`}
-                        onClick={() => filters.setOnlyOscar(!filters.onlyOscar)}
-                     >
-                        Oscar
-                     </button>
                   </div>
                </div>
                </>
@@ -453,16 +493,48 @@ function MainApp() {
                      setShowAddModal(true);
                   }}
                />
-            ) : (
-               <div className="movie-grid">
-                  {filters.filteredMovies.map((movie) => (
-                     <MovieCard
-                        key={movie.id}
-                        movie={movie}
-                        onClick={handleOpenModal}
-                     />
-                  ))}
-               </div>
+           ) : (
+               <>
+                  {(filters.selectedDirector || filters.onlyInternational || filters.onlyNational || filters.onlyOscar || filters.selectedGenre) && (
+                     <div className={styles.activeFilters}>
+                        {filters.selectedDirector && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedDirector("")}>
+                              Diretor: {filters.selectedDirector} ✕
+                           </button>
+                        )}
+                        {filters.onlyInternational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyInternational(false)}>
+                              Fora dos EUA ✕
+                           </button>
+                        )}
+                        {filters.onlyNational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyNational(false)}>
+                              Cinema Nacional ✕
+                           </button>
+                        )}
+                        {filters.onlyOscar && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyOscar(false)}>
+                              Vencedores do Oscar ✕
+                           </button>
+                        )}
+                        {filters.selectedGenre && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedGenre("")}>
+                              Gênero: {filters.selectedGenre} ✕
+                           </button>
+                        )}
+                     </div>
+                  )}
+
+                  <div className="movie-grid">
+                     {filters.filteredMovies.map((movie) => (
+                        <MovieCard
+                           key={movie.id}
+                           movie={movie}
+                           onClick={handleOpenModal}
+                        />
+                     ))}
+                  </div>
+               </>
             )}
          </Container>
 
@@ -581,3 +653,4 @@ function MainApp() {
       </div>
    );
 }
+

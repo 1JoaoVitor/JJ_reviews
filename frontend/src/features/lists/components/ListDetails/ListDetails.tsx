@@ -20,7 +20,7 @@ interface ListDetailsProps {
    onBack: () => void;
    onListDeleted: () => void;
    onListUpdated: (updatedList: CustomList) => void;
-   onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null) => Promise<boolean>;
+   onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null, auto_sync: boolean) => Promise<boolean>;
    onRemoveMovie: (listId: string, tmdbId: number) => Promise<boolean>;
    onAddMovieClick: () => void;
    onMovieClick: (movie: MovieData) => void;
@@ -539,9 +539,9 @@ export function ListDetails({
             show={showEditModal}
             onHide={() => setShowEditModal(false)}
             list={list}
-            onUpdate={async (id, name, desc, has_rating, rating_type, manual_rating) => {
-               const success = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating);
-               if (success) onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating });
+            onUpdate={async (id, name, desc, has_rating, rating_type, manual_rating, auto_sync) => {
+               const success = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating, auto_sync);
+               if (success) onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating, auto_sync });
                return success;
             }}
          />

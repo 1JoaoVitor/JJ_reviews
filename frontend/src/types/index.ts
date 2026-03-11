@@ -18,6 +18,8 @@ export interface MovieData {
    rating: number | null;
    review: string;
    recommended: string;
+   location?: string;
+   runtime?: number;
    created_at: string;
    title?: string;
    poster_path?: string;
@@ -112,6 +114,7 @@ export interface CustomList {
    has_rating?: boolean;
    rating_type?: "manual" | "average" | null;
    manual_rating?: number | null;
+   auto_sync?: boolean;
 }
 
 export interface ListCollaborator {
