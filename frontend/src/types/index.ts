@@ -43,6 +43,7 @@ export interface MovieData {
       recommended?: string;
       user?: { username: string; avatar_url: string | null };
    }[];
+   attachment_url?: string | null;
 }
 
 export interface TmdbProvider {
