@@ -106,6 +106,23 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
       }
    };
 
+   const rejectRequest = async () => {
+      if (!loggedUserId || !profileUserId) return;
+      try {
+         const { error } = await supabase
+            .from("friendships")
+            .delete()
+            .match({ requester_id: profileUserId, receiver_id: loggedUserId });
+         
+         if (error) throw error;
+         setStatus("none");
+         toast.success("Pedido recusado.");
+      } catch (err) {
+         console.error("Erro ao recusar pedido:", err);
+         toast.error("Erro ao recusar pedido.");
+      }
+   };
+
    const removeOrCancel = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
@@ -126,5 +143,5 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
       }
    };
 
-   return { status, loading, sendRequest, acceptRequest, removeOrCancel };
+   return { status, loading, sendRequest, acceptRequest, rejectRequest, removeOrCancel };
 }
