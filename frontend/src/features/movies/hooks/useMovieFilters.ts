@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import type { MovieData } from "@/types";
 
 /**
@@ -13,7 +14,24 @@ export function useMovieFilters(movies: MovieData[]) {
    const [sortOrder, setSortOrder] = useState("default");
    const [selectedGenre, setSelectedGenre] = useState("");
    const [selectedDirector, setSelectedDirector] = useState("");
-   const [viewMode, setViewMode] = useState<"watched" | "watchlist" | "lists">("watched");
+   const [searchParams, setSearchParams] = useSearchParams();
+
+
+   //  A URL é a nossa única fonte de verdade. Lemos direto dela a cada renderização.
+   const viewMode = (searchParams.get("aba") as "watched" | "watchlist" | "lists") || "watched";
+
+   // Quando clicamos na aba, apenas atualizamos a URL. O React re-renderiza automaticamente
+   const setViewMode = (newMode: "watched" | "watchlist" | "lists") => {
+      setSearchParams(prev => {
+         const newParams = new URLSearchParams(prev);
+         if (newMode === "watched") {
+            newParams.delete("aba"); // Mantém a URL limpa na home
+         } else {
+            newParams.set("aba", newMode);
+         }
+         return newParams;
+      });
+   };
 
    const availableGenres = useMemo(
       () => Array.from(new Set(movies.flatMap((m) => m.genres || []))).sort(),

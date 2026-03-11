@@ -1,0 +1,14 @@
+npm run build
+
+npx cap sync android
+
+npx cap open android
+
+
+Assim que o Android Studio abrir e terminar de carregar (esperar a barra de progresso no canto inferior direito terminar de rodar), fazer o seguinte:
+
+No menu superior, clique em Build.
+
+Vá a Build Bundle(s) / APK(s).
+
+Clique em Build APK(s).
