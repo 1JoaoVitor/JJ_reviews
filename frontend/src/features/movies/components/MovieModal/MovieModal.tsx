@@ -44,8 +44,8 @@ export function MovieModal({
 
    return (
       <>
-      <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down">
-         <Modal.Header closeButton className="border-0 pb-0">
+      <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down" contentClassName={styles.modalContent}>
+         <Modal.Header closeButton className={styles.header}>
             <Modal.Title className="fw-bold" style={{ fontSize: "1.75rem" }}>
                {movie.title}
             </Modal.Title>
@@ -81,7 +81,7 @@ export function MovieModal({
                ))}
             </div>
 
-            <Row>
+            <Row className="m-0">
                <Col md={4} className="mb-3">
                   {movie.poster_path ? (
                      <img
