@@ -88,10 +88,11 @@ export function useShare() {
 
    // ───  COMPARTILHAR COMO LINK (NOVO) ───
    const handleShareLink = useCallback(async (movie: MovieData) => {
-      // Pega a URL atual (seja a Home ou o Perfil Público) e adiciona o ?movie=
-      const url = new URL(window.location.href);
-      url.searchParams.set("movie", movie.id.toString());
-      const shareUrl = url.toString();
+      // Força a URL base da Vercel, mas mantém o caminho atual
+      const baseUrl = "https://jj-reviews.vercel.app";
+      const currentPath = window.location.pathname; // Ex: /perfil/usuario ou /
+      
+      const shareUrl = `${baseUrl}${currentPath}?movie=${movie.id}`;
       
       const title = `Review de ${movie.title}`;
       const text = `Confere a minha avaliação de ${movie.title} no JJ Reviews!`;
