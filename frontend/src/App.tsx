@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route, useNavigate, useLocation, useSearchParams} from "react-router-dom";
+import { Routes, Route, useNavigate, useSearchParams} from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
 import { App as CapacitorApp } from '@capacitor/app';
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ─── Features ───
 import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
@@ -47,10 +48,12 @@ export default function App() {
 function MainApp() {
 
    const navigate = useNavigate();
-   const location = useLocation();
    
    const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
+
+   //ATIVA AS NOTIFICAÇÕES NATIVAS
+   usePushNotifications(session?.user.id);
 
    const isPageLoading = authLoading || moviesLoading;
 
@@ -80,6 +83,10 @@ function MainApp() {
    const [preselectedListId, setPreselectedListId] = useState<string>("");
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
+   // Lê o ID do filme diretamente da URL
+   const movieIdInUrl = searchParams.get("movie");
+   const prevUrlMovieId = useRef<string | null>(null);
+
    useEffect(() => {
       window.scrollTo(0, 0);
    }, []);
@@ -107,34 +114,69 @@ function MainApp() {
       };
    }, []);
 
-   // Ouve redirecionamentos do Sininho de Notificação
+   // ─── LÓGICA MÁGICA PARA ABRIR LISTAS DIRETAMENTE PELA URL ───
+   const listIdInUrl = searchParams.get("listId");
+   
    useEffect(() => {
-      if (location.state?.openLists) {
-         filters.setViewMode("lists");
-         
-         const targetId = location.state.targetListId;
-
-         // Se tiver um ID alvo, espera as listas carregarem para abri-la
-         if (targetId) {
-            if (!listsLoading && lists.length > 0) {
-               const listToOpen = lists.find(l => l.id === targetId);
-               if (listToOpen) setSelectedList(listToOpen);
-               navigate(".", { replace: true, state: {} });
-            }
-         } else {
-            navigate(".", { replace: true, state: {} });
+      if (listIdInUrl && !listsLoading && lists.length > 0) {
+         const listToOpen = lists.find(l => l.id === listIdInUrl);
+         if (listToOpen) {
+            setSelectedList(listToOpen);
          }
       }
-   }, [location.state, filters, navigate, lists, listsLoading]);
+   }, [listIdInUrl, lists, listsLoading]);
+
+   
+   // ─── ESCUTA DA URL PARA O BOTÃO VOLTAR E F5 ───
+   useEffect(() => {
+      // Se a URL não mudou de verdade, ignora (Isso mata o atraso)
+      if (movieIdInUrl === prevUrlMovieId.current) return;
+
+      if (!movieIdInUrl) {
+         // A URL limpou (o usuário apertou Voltar nativo)
+         setShowModal(false);
+         setTimeout(() => setSelectedMovie(null), 200);
+      } else {
+         // F5 da página ou link do WhatsApp: Busca o filme no perfil e abre
+         const movieToOpen = movies.find(m => 
+            (m.id && m.id.toString() === movieIdInUrl) || 
+            (m.tmdb_id && m.tmdb_id.toString() === movieIdInUrl)
+         );
+         
+         if (movieToOpen) {
+            setSelectedMovie(movieToOpen);
+            setShowModal(true);
+         }
+      }
+
+      // Atualiza a memória
+      prevUrlMovieId.current = movieIdInUrl;
+   }, [movieIdInUrl, movies]);
 
    const handleOpenModal = (movie: MovieData) => {
+      const targetId = movie.tmdb_id || movie.id;
+      if (!targetId) return;
+
+      // 1Abre a interface com zero atraso
       setSelectedMovie(movie);
       setShowModal(true);
+
+      // Avisa a memória para ignorar a mudança da URL que vem a seguir (Zero piscada)
+      prevUrlMovieId.current = targetId.toString();
+
+      // Muda a URL em pano de fundo silenciosamente
+      setSearchParams(prev => {
+         prev.set("movie", targetId.toString());
+         return prev;
+      });
    };
 
    const handleCloseModal = () => {
-      setShowModal(false);
-      setSelectedMovie(null);
+      // Remove o filme da URL
+      setSearchParams(prev => {
+         prev.delete("movie");
+         return prev;
+      });
    };
 
    const handleDeleteMovie = async (movie: MovieData) => {
