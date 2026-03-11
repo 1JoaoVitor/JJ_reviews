@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
-import { ArrowLeft, UserPlus, UserCheck, Clock} from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Clock, X} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
 import { MovieCard, MovieModal, AddMovieModal, useMovieFilters } from "@/features/movies";
 import { Dashboard } from "@/features/dashboard";
@@ -48,6 +48,7 @@ export function PublicProfile() {
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
    const [showFriendsModal, setShowFriendsModal] = useState(false);
+   const [showRemoveFriend, setShowRemoveFriend] = useState(false);
 
 
    const movieIdInUrl = searchParams.get("movie");
@@ -177,14 +178,17 @@ export function PublicProfile() {
                            </button>
                         )}
                         {friendStatus === "pending_received" && (
-                           <button className={styles.acceptBtn} onClick={acceptRequest}>
-                              <UserCheck size={18} /> Aceitar Pedido
-                           </button>
+                           <div className="d-flex gap-2">
+                              <button className={styles.acceptBtn} onClick={acceptRequest}>
+                                 <UserCheck size={18} /> Aceitar
+                              </button>
+                              <button className={styles.pendingBtn} onClick={rejectRequest} style={{ background: '#dc3545', color: 'white', borderColor: '#dc3545' }}>
+                                 <X size={18} /> Recusar
+                              </button>
+                           </div>
                         )}
                         {friendStatus === "accepted" && (
-                           <button className={styles.friendsBtn} onClick={() => {
-                              if(window.confirm("Desfazer amizade?")) removeOrCancel();
-                           }}>
+                           <button className={styles.friendsBtn} onClick={() => setShowRemoveFriend(true)}>
                               <UserCheck size={18} /> Amigos
                            </button>
                         )}
@@ -454,6 +458,18 @@ export function PublicProfile() {
             title="Sair da conta"
             message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar seus filmes."
             confirmText="Sim, sair"
+         />
+
+         <ConfirmModal
+            show={showRemoveFriend}
+            onHide={() => setShowRemoveFriend(false)}
+            onConfirm={() => {
+               setShowRemoveFriend(false);
+               removeOrCancel();
+            }}
+            title="Desfazer Amizade"
+            message={`Tem certeza que deseja desfazer a amizade com @${profileName}?`}
+            confirmText="Sim, desfazer"
          />
       </div>
    );
