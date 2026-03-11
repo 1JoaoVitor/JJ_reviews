@@ -39,7 +39,7 @@ export function useShare() {
 
                      await Share.share({
                         title: `Review de ${movie.title}`,
-                        text: `Confere a minha avaliação de ${movie.title} no JJ Reviews!`,
+                        text: `Confira a minha avaliação de ${movie.title} no JJ Reviews!`,
                         url: savedFile.uri,
                         dialogTitle: 'Partilhar Review',
                      });
@@ -92,10 +92,12 @@ export function useShare() {
       const baseUrl = "https://jj-reviews.vercel.app";
       const currentPath = window.location.pathname; // Ex: /perfil/usuario ou /
       
-      const shareUrl = `${baseUrl}${currentPath}?movie=${movie.id}`;
+      const targetId = movie.tmdb_id || movie.id; 
+      
+      const shareUrl = `${baseUrl}${currentPath}?movie=${targetId}`;
       
       const title = `Review de ${movie.title}`;
-      const text = `Confere a minha avaliação de ${movie.title} no JJ Reviews!`;
+      const text = `Confira a minha avaliação de ${movie.title} no JJ Reviews!`;
 
       if (Capacitor.isNativePlatform()) {
          // Abre a gaveta nativa do Android/iOS
