@@ -166,7 +166,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                            <User className={styles.inputIcon} size={18} />
                            <Form.Control
                               type="text"
-                              placeholder="Ex: joao_reviews99"
+                              placeholder="Ex: usuario_reviews99"
                               value={username}
                               onChange={handleUsernameChange}
                               className={styles.input}
@@ -217,7 +217,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                         <User className={styles.inputIcon} size={18} />
                         <Form.Control
                            type="text"
-                           placeholder="Ex: joao_reviews99 ou email@exemplo.com"
+                           placeholder="Ex: usuario_reviews99 ou email@exemplo.com"
                            value={loginId}
                            onChange={(e) => setLoginId(e.target.value.trim())}
                            className={styles.input}
@@ -288,7 +288,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
 
                <div className={styles.footerText}>
                   {mode === "login" ? (
-                     <>Não tem uma conta? <button type="button" onClick={() => setMode("register")}>Registe-se</button></>
+                     <>Não tem uma conta? <button type="button" onClick={() => setMode("register")}>Registre-se</button></>
                   ) : (
                      <>
                         {mode === "forgot" ? "Lembrou da senha?" : "Já tem uma conta?"}{" "}
