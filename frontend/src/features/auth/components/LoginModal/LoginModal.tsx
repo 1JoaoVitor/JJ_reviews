@@ -95,7 +95,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
             });
 
             if (error) throw error;
-            toast.success("Conta criada com sucesso! Bem-vindo ao JJ Reviews!");
+            toast.success("Cheque o seu email para confirmar a criação da conta! Bem-vindo ao JJ Reviews!");
             handleHide();
 
          } else if (mode === "login") {

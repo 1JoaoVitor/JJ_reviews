@@ -114,7 +114,38 @@ function MainApp() {
       };
    }, []);
 
-   // ─── LÓGICA MÁGICA PARA ABRIR LISTAS DIRETAMENTE PELA URL ───
+   useEffect(() => {
+      // Este ouvinte acorda quando o aplicativo é aberto através de um link profundo (deep link)
+      const setupDeepLinks = async () => {
+         if (!Capacitor.isNativePlatform()) return;
+
+         CapacitorApp.addListener('appUrlOpen', (event) => {
+            // event.url vai ser algo como: https://jj-reviews.vercel.app/?movie=123
+            const url = new URL(event.url);
+            
+            // Pega no ID do filme que vem no link
+            const movieIdFromDeepLink = url.searchParams.get("movie");
+            
+            if (movieIdFromDeepLink) {
+               // Atualiza a URL interna do React para disparar o seu modal
+               setSearchParams(prev => {
+                  prev.set("movie", movieIdFromDeepLink);
+                  return prev;
+               });
+            }
+         });
+      };
+
+      setupDeepLinks();
+
+      return () => {
+         if (Capacitor.isNativePlatform()) {
+            CapacitorApp.removeAllListeners();
+         }
+      };
+   }, [setSearchParams]);
+
+   // ─── LÓGICA PARA ABRIR LISTAS DIRETAMENTE PELA URL ───
    const listIdInUrl = searchParams.get("listId");
    
    useEffect(() => {
