@@ -6,6 +6,7 @@ import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} f
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
 import { App as CapacitorApp } from '@capacitor/app';
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ─── Features ───
 import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
@@ -50,6 +51,9 @@ function MainApp() {
    
    const { session, username, avatarUrl, logout, updateUsername, loading: authLoading} = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
+
+   //ATIVA AS NOTIFICAÇÕES NATIVAS
+   usePushNotifications(session?.user.id);
 
    const isPageLoading = authLoading || moviesLoading;
 
