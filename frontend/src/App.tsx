@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
 import { Routes, Route, useNavigate, useLocation, useSearchParams} from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
@@ -139,15 +139,37 @@ function MainApp() {
 
    const handleDeleteMovie = async (movie: MovieData) => {
       try {
+         //Apaga do perfil principal (tabela reviews)
          const { error } = await supabase
             .from("reviews")
             .delete()
             .eq("id", movie.id);
+            
          if (error) throw error;
+
+         // Identifica quais são as suas listas particulares
+         const privateListIds = lists
+            .filter(l => l.type === "private" || !l.type)
+            .map(l => l.id);
+
+         // Se tiver listas particulares, varre e apaga o filme delas também
+         if (privateListIds.length > 0 && movie.tmdb_id) {
+            const { error: listError } = await supabase
+               .from("list_movies")
+               .delete()
+               .eq("tmdb_id", movie.tmdb_id)
+               .in("list_id", privateListIds); // Apaga apenas se o list_id for privado
+            
+            if (listError) console.error("Erro ao limpar das listas particulares:", listError);
+         }
+
          handleCloseModal();
-         fetchMovies();
+         fetchMovies(); 
+         fetchLists(); 
+         
+         toast.success("Filme removido do perfil e das listas particulares!");
       } catch (error) {
-         alert("Erro ao excluir!");
+         toast.error("Erro ao excluir!");
          console.error(error);
       }
    };
