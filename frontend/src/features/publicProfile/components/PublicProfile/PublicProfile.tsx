@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate} from "react-router-dom";
+import { useParams, useNavigate, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
@@ -34,7 +34,8 @@ export function PublicProfile() {
 
    const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
-   const [selectedMovie, setSelectedMovie] = useState<MovieData | null>(null);
+   const [searchParams, setSearchParams] = useSearchParams();
+
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [isBattleMode, setIsBattleMode] = useState(false);
@@ -49,6 +50,24 @@ export function PublicProfile() {
    const [showFriendsModal, setShowFriendsModal] = useState(false);
 
 
+   const movieIdInUrl = searchParams.get("movie");
+   const selectedMovie = movieIdInUrl && movies.length > 0
+      ? movies.find(m => m.id.toString() === movieIdInUrl) || null
+      : null;
+
+   const handleOpenPublicModal = (movie: MovieData) => {
+      setSearchParams(prev => {
+         prev.set("movie", movie.id.toString());
+         return prev;
+      });
+   };
+
+   const handleClosePublicModal = () => {
+      setSearchParams(prev => {
+         prev.delete("movie");
+         return prev;
+      });
+   };
 
    if (loading) {
       return (
@@ -277,7 +296,7 @@ export function PublicProfile() {
                      onUpdateList={async () => false}
                      onRemoveMovie={async () => false}
                      onAddMovieClick={() => {}}
-                     onMovieClick={(m) => setSelectedMovie(m)}
+                     onMovieClick={handleOpenPublicModal}
                   />
                ) : (
                   <div className={styles.listsContainer}>
@@ -353,7 +372,7 @@ export function PublicProfile() {
                         <MovieCard 
                            key={movie.id} 
                            movie={movie} 
-                           onClick={(m) => setSelectedMovie(m)} 
+                           onClick={handleOpenPublicModal} 
                         />
                      ))}
                   </div>
@@ -366,7 +385,7 @@ export function PublicProfile() {
          <MovieModal
             show={!!selectedMovie}
             movie={selectedMovie}
-            onHide={() => setSelectedMovie(null)}
+            onHide={handleClosePublicModal}
             isAdmin={false}
             onEdit={() => {}} 
             onDelete={() => {}}
@@ -375,7 +394,7 @@ export function PublicProfile() {
 
          <AddMovieModal
             show={showAddModal}
-            onHide={() => setShowAddModal(false)}
+            onHide={handleClosePublicModal}
             onSuccess={() => {}} 
             movieToEdit={movieToEdit}
             lists={myLists}

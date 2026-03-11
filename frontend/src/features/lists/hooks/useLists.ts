@@ -77,7 +77,7 @@ export function useLists(userId?: string) {
          // Ouve se o usuário foi removido de alguma lista (ex: recusou convite ou foi expulso)
          .on(
             'postgres_changes',
-            { event: 'DELETE', schema: 'public', table: 'list_members', filter: `user_id=eq.${userId}` },
+            { event: 'DELETE', schema: 'public', table: 'list_collaborators' , filter: `user_id=eq.${userId}` },
             () => {
                fetchLists(); // Recarrega as listas do usuário
             }

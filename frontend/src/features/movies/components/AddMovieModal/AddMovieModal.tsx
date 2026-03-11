@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Modal, Form, Spinner} from "react-bootstrap";
 import toast from "react-hot-toast";
-import { Search, ArrowLeft, ListPlus } from "lucide-react";
+import { Search, ArrowLeft, ListPlus, ImagePlus, X } from "lucide-react"; 
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies, getMovieDetails} from "../../services/tmdbService";
@@ -48,6 +48,9 @@ export function AddMovieModal({
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
+   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+
    const [selectedListId, setSelectedListId] = useState<string>("");
    const [showCreateList, setShowCreateList] = useState(false);
    
@@ -69,6 +72,11 @@ export function AddMovieModal({
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
          setLocation(movieToEdit.location || "");
          setFormStatus(movieToEdit.status || "watched");
+         
+         // Se estiver editando e já tiver uma imagem, mostra o preview
+         setAttachmentPreview(movieToEdit.attachment_url || null);
+         setAttachmentFile(null);
+
          setSelectedMovie({
             id: movieToEdit.tmdb_id,
             title: movieToEdit.title || "",
@@ -86,6 +94,10 @@ export function AddMovieModal({
          setLocation("");
          setFormStatus("watched");
          setExclusiveToList(false);
+         
+         // Limpa os anexos
+         setAttachmentPreview(null);
+         setAttachmentFile(null);
       }
    }, [show, movieToEdit, preselectedListId]); 
 
@@ -107,19 +119,16 @@ export function AddMovieModal({
          }
       };
 
-      // Só faz essa checagem se estiver editando em uma lista compartilhada
       if (show && isSharedList && selectedMovie) {
          checkProfileExistence();
       }
    }, [step, selectedMovie, show, isSharedList]);
 
-   // Reseta o toggle se trocar para uma lista não-compartilhada
    useEffect(() => {
       if (!isSharedList) {
          setExclusiveToList(false);
       }
    }, [isSharedList]);
-
 
    const handleSearch = async (e?: React.SyntheticEvent) => {
       if (e) e.preventDefault();
@@ -140,13 +149,32 @@ export function AddMovieModal({
       setStep("form");
    };
 
+   // Funções de manipulação de arquivo
+   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+         // Validação extra de segurança para garantir que é imagem
+         if (!file.type.startsWith("image/")) {
+            toast.error("Por favor, selecione apenas imagens.");
+            return;
+         }
+         setAttachmentFile(file);
+         setAttachmentPreview(URL.createObjectURL(file)); // Gera URL temporária para miniatura
+      }
+   };
+
+   const handleRemoveAttachment = () => {
+      setAttachmentFile(null);
+      setAttachmentPreview(null);
+   };
+
    const handleSave = async (keepOpen = false) => {
       if (!selectedMovie) return;
       setSaving(true);
 
       try {
          let movieRuntime = 0;
-         if (!movieToEdit) { // Só precisamos buscar se for um filme novo
+         if (!movieToEdit) {
             const details = await getMovieDetails(selectedMovie.id);
             if (details && details.runtime) {
                movieRuntime = details.runtime;
@@ -161,7 +189,6 @@ export function AddMovieModal({
             return;
          }
 
-         // Verifica duplicatas apenas se estiver criando um filme NOVO no perfil pessoal
          if (!exclusiveToList && !movieToEdit) {
             const { data: existingMovie } = await supabase
                .from("reviews")
@@ -178,7 +205,32 @@ export function AddMovieModal({
             }
          }
 
-         // SALVAR NO PERFIL PESSOAL (Se o toggle estiver desligado)
+         // UPLOAD DA IMAGEM
+         let finalAttachmentUrl = movieToEdit?.attachment_url || null; // Começa com o antigo
+
+         if (attachmentFile) {
+            // Gera um nome único: ID_do_usuario/timestamp_aleatorio.extensao
+            const fileExt = attachmentFile.name.split('.').pop();
+            const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage
+               .from('review_attachments')
+               .upload(fileName, attachmentFile);
+
+            if (uploadError) throw uploadError;
+
+            // Pega o Link Público do Supabase
+            const { data: { publicUrl } } = supabase.storage
+               .from('review_attachments')
+               .getPublicUrl(fileName);
+
+            finalAttachmentUrl = publicUrl;
+         } else if (!attachmentPreview) {
+            // Se não tem arquivo novo e apagaram o preview, limpa do banco
+            finalAttachmentUrl = null; 
+         }
+
+         // SALVAR NO PERFIL PESSOAL
          if (!exclusiveToList) {
             const payload = {
                tmdb_id: selectedMovie.id,
@@ -189,6 +241,7 @@ export function AddMovieModal({
                location: formStatus === "watched" ? location : null,
                status: formStatus,
                user_id: user.id,
+               attachment_url: formStatus === "watched" ? finalAttachmentUrl : null, // 👈 Anexo aqui!
             };
 
             const { data: existingPersonalReview } = await supabase
@@ -205,7 +258,7 @@ export function AddMovieModal({
             }
          }
 
-         // SALVAR NA LISTA (Se houver alguma selecionada)
+         // SALVAR NA LISTA
          if (selectedListId && selectedListDetails) {
             const added = await addMovieToList(selectedListId, selectedMovie.id);
             if (!added) {
@@ -243,9 +296,6 @@ export function AddMovieModal({
                   }
                }
 
-               // ─── LÓGICA DE AUTO-SINCRONIZAÇÃO ───
-               // Se a lista tiver o auto-sync ligado e o utilizador NÃO marcou como exclusivo da lista,
-               // o banco de dados para clona a review para todos os amigos.
                if (selectedListDetails.auto_sync && !exclusiveToList) {
                   const { error: syncError } = await supabase.rpc('sync_review_to_list_members', {
                      p_list_id: selectedListId,
@@ -266,7 +316,6 @@ export function AddMovieModal({
             }
          }
 
-         // Feedbacks visuais
          if (exclusiveToList) {
             toast.success(`Filme guardado exclusivamente na lista "${selectedListDetails?.name}"!`);
          } else if (selectedListId) {
@@ -278,9 +327,8 @@ export function AddMovieModal({
          onSuccess();
          
          if (movieToEdit) {
-            onHide(); // Edição sempre fecha o modal
+            onHide(); 
          } else if (keepOpen) {
-            // Volta para a barra de pesquisa limpinha
             setStep("search");
             setSearchQuery("");
             setSearchResults([]);
@@ -288,8 +336,10 @@ export function AddMovieModal({
             setRating(5);
             setReview("");
             setRecommended("Vale a pena assistir");
+            setAttachmentFile(null);
+            setAttachmentPreview(null);
          } else {
-            onHide(); // Adição normal também fecha o modal
+            onHide();
          }
 
       } catch (err) {
@@ -413,7 +463,6 @@ export function AddMovieModal({
                               maxLength={50}
                               list="locations-list"
                            />
-                           {/* Datalist cria um auto-completar nativo */}
                            <datalist id="locations-list">
                               <option value="Em casa" />
                               <option value="Netflix" />
@@ -433,6 +482,44 @@ export function AddMovieModal({
                               value={review}
                               onChange={(e) => setReview(e.target.value)}
                            />
+                        </Form.Group>
+
+                        <Form.Group className="mb-4">
+                           <Form.Label className={styles.formLabel}>Anexar Imagem (Opcional)</Form.Label>
+                           {attachmentPreview ? (
+                              <div style={{ position: 'relative', width: 'fit-content' }}>
+                                 <img 
+                                    src={attachmentPreview} 
+                                    alt="Anexo" 
+                                    style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--border-subtle)' }} 
+                                 />
+                                 <button 
+                                    type="button" 
+                                    onClick={handleRemoveAttachment} 
+                                    style={{ position: 'absolute', top: -10, right: -10, background: '#dc3545', color: 'white', borderRadius: '50%', border: 'none', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+                                 >
+                                    <X size={16} />
+                                 </button>
+                              </div>
+                           ) : (
+                              <div>
+                                 <input 
+                                    type="file" 
+                                    id="attachment-upload" 
+                                    accept="image/*" 
+                                    style={{ display: 'none' }} 
+                                    onChange={handleFileChange} 
+                                 />
+                                 <label 
+                                    htmlFor="attachment-upload" 
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 16px', background: 'var(--bg-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '8px', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}
+                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
+                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                                 >
+                                    <ImagePlus size={18} /> Selecionar Foto (Bilhete, Coleção...)
+                                 </label>
+                              </div>
+                           )}
                         </Form.Group>
                      </>
                   ) : (
@@ -524,7 +611,6 @@ export function AddMovieModal({
                   Cancelar
                </button>
                
-               {/* Só mostra o botão duplo se for um NOVO filme */}
                {step === "form" && !movieToEdit && (
                   <button 
                      className={styles.saveAndAddBtn} 
