@@ -15,7 +15,6 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
       }
 
       try {
-         // Busca se existe alguma relação entre os dois IDs
          const { data, error } = await supabase
             .from("friendships")
             .select("*")
@@ -47,11 +46,23 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
    const sendRequest = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
+         // Grava o pedido de amizade
          const { error } = await supabase.from("friendships").insert({
             requester_id: loggedUserId,
             receiver_id: profileUserId,
          });
          if (error) throw error;
+
+         // Cria a Notificação para o destinatário
+         const { error: notifError } = await supabase.from("notifications").insert({
+            user_id: profileUserId, 
+            sender_id: loggedUserId, 
+            type: "friend_request",
+            message: "enviou-te um pedido de amizade!",
+         });
+
+         if (notifError) console.error("Erro ao criar notificação de amizade:", notifError);
+
          setStatus("pending_sent");
          toast.success("Pedido enviado!");
       } catch (err) {
@@ -66,14 +77,26 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
    const acceptRequest = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
+         // Atualiza o status para aceite
          const { error } = await supabase
             .from("friendships")
             .update({ status: "accepted" })
             .match({ requester_id: profileUserId, receiver_id: loggedUserId });
          
          if (error) throw error;
+
+         // Envia uma notificação de volta a avisar que aceitou
+         const { error: notifError } = await supabase.from("notifications").insert({
+            user_id: profileUserId, 
+            sender_id: loggedUserId, 
+            type: "friend_request", 
+            message: "aceitou o teu pedido de amizade!",
+         });
+
+         if (notifError) console.error("Erro ao criar notificação de aceitação:", notifError);
+
          setStatus("accepted");
-         toast.success("Pedido aceito! Agora vocês são amigos.");
+         toast.success("Pedido aceite! Agora vocês são amigos.");
       } catch (err) {
         if (err instanceof Error){
          toast.error("Erro ao aceitar pedido." + err.message);
