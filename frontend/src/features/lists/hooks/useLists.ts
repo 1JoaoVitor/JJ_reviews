@@ -159,7 +159,7 @@ export function useLists(userId?: string) {
          // O filme já existe no banco? 
          const { data: existingMovie, error: fetchError } = await supabase
             .from("list_movies")
-            .select("id")
+            .select("tmdb_id")
             .match({ list_id: listId, tmdb_id: tmdbId })
             .maybeSingle(); // Retorna o filme se achar, ou null se não existir
 

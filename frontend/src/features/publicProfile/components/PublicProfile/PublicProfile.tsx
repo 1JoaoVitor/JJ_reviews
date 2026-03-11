@@ -180,8 +180,30 @@ export function PublicProfile() {
                </div>
             </div>
 
-            {!filters.searchTerm && filters.viewMode === "watched" && (
-               <Dashboard movies={movies.filter(m => m.status === "watched")} />
+            {!filters.searchTerm && !filters.selectedDirector && filters.viewMode === "watched" && (
+               <Dashboard 
+                  movies={movies.filter(m => m.status === "watched")} 
+                  onFilterDirector={(director) => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setOnlyInternational(false);
+                     filters.setSelectedGenre("");
+                     
+                     filters.setSelectedDirector(director);
+                     window.scrollTo({ top: 300, behavior: 'smooth' }); 
+                  }}
+                  onFilterNonUS={() => {
+                     filters.setSearchTerm("");
+                     filters.setOnlyNational(false);
+                     filters.setOnlyOscar(false);
+                     filters.setSelectedGenre("");
+                     filters.setSelectedDirector("");
+                     
+                     filters.setOnlyInternational(true);
+                     window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+               />
             )}
 
             <div className={styles.subheader}>
@@ -289,20 +311,53 @@ export function PublicProfile() {
                      )}
                   </div>
                )
-            ) : filters.filteredMovies.length === 0 ? (
+             ) : filters.filteredMovies.length === 0 ? (
                <div className={styles.emptyState}>
                   <h5>Nenhum filme encontrado.</h5>
                </div>
             ) : (
-               <div className="movie-grid">
-                  {filters.filteredMovies.map((movie) => (
-                     <MovieCard 
-                        key={movie.id} 
-                        movie={movie} 
-                        onClick={(m) => setSelectedMovie(m)} 
-                     />
-                  ))}
-               </div>
+               <>
+                  {/* 👇 ETIQUETAS DE FILTROS ATIVOS 👇 */}
+                  {(filters.selectedDirector || filters.onlyInternational || filters.onlyNational || filters.onlyOscar || filters.selectedGenre) && (
+                     <div className={styles.activeFilters}>
+                        {filters.selectedDirector && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedDirector("")}>
+                              Diretor: {filters.selectedDirector} ✕
+                           </button>
+                        )}
+                        {filters.onlyInternational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyInternational(false)}>
+                              Fora dos EUA ✕
+                           </button>
+                        )}
+                        {filters.onlyNational && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyNational(false)}>
+                              Cinema Nacional ✕
+                           </button>
+                        )}
+                        {filters.onlyOscar && (
+                           <button className={styles.filterBadge} onClick={() => filters.setOnlyOscar(false)}>
+                              Vencedores do Oscar ✕
+                           </button>
+                        )}
+                        {filters.selectedGenre && (
+                           <button className={styles.filterBadge} onClick={() => filters.setSelectedGenre("")}>
+                              Gênero: {filters.selectedGenre} ✕
+                           </button>
+                        )}
+                     </div>
+                  )}
+
+                  <div className="movie-grid">
+                     {filters.filteredMovies.map((movie) => (
+                        <MovieCard 
+                           key={movie.id} 
+                           movie={movie} 
+                           onClick={(m) => setSelectedMovie(m)} 
+                        />
+                     ))}
+                  </div>
+               </>
             )}
          </Container>
 
