@@ -6,6 +6,7 @@ import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
 import { useState } from "react";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface MovieModalProps {
    show: boolean;
@@ -27,6 +28,8 @@ export function MovieModal({
    onShare,
 }: MovieModalProps) {
 
+
+   useModalBack(show, onHide);
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
 

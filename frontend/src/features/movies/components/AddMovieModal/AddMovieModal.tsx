@@ -10,6 +10,7 @@ import { CreateListModal } from "@/features/lists";
 import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
 import styles from "./AddMovieModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface AddMovieModalProps {
    show: boolean;
@@ -32,6 +33,8 @@ export function AddMovieModal({
    createList,
    preselectedListId
 }: AddMovieModalProps) {
+
+   useModalBack(show, onHide);
    const [step, setStep] = useState<"search" | "form">("search");
    const [searchQuery, setSearchQuery] = useState("");
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
