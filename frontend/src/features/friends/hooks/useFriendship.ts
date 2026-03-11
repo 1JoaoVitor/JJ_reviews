@@ -123,9 +123,6 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
       }
    };
 
-   // Lembre-se de a exportar no final do ficheiro
-   return { status, loading, sendRequest, acceptRequest, rejectRequest, removeOrCancel };
-
    const removeOrCancel = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
@@ -146,5 +143,5 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
       }
    };
 
-   return { status, loading, sendRequest, acceptRequest, removeOrCancel };
+   return { status, loading, sendRequest, acceptRequest, rejectRequest, removeOrCancel };
 }
