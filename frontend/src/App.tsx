@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Container} from "react-bootstrap";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, useSearchParams} from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
+import { App as CapacitorApp } from '@capacitor/app';
 
 // ─── Features ───
 import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
@@ -64,7 +65,10 @@ function MainApp() {
    const [showLoginModal, setShowLoginModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showRoulette, setShowRoulette] = useState(false);
-   const [isBattleMode, setIsBattleMode] = useState(false);
+
+   const [searchParams, setSearchParams] = useSearchParams();
+   const isBattleMode = searchParams.get("modo") === "batalha";
+
    const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
@@ -80,6 +84,28 @@ function MainApp() {
       window.scrollTo(0, 0);
    }, []);
 
+
+   // ───  BOTÃO NATIVO DO ANDROID ───
+   useEffect(() => {
+      const setupCapacitorBackButton = async () => {
+         // Fica escutando o botão físico/gesto de voltar do celular
+         CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+            // canGoBack é true se o histórico (modais ou abas) tiver algo
+            if (canGoBack) {
+               window.history.back(); // Obedece à lógica da Web (fecha modal/muda aba)
+            } else {
+               CapacitorApp.exitApp(); // Se for a tela inicial limpa, fecha o aplicativo de verdade
+            }
+         });
+      };
+
+      setupCapacitorBackButton();
+
+      // Limpeza de segurança
+      return () => {
+         CapacitorApp.removeAllListeners();
+      };
+   }, []);
 
    // Ouve redirecionamentos do Sininho de Notificação
    useEffect(() => {
@@ -177,6 +203,17 @@ function MainApp() {
             </div>
          </div>
       );
+   };
+
+   const setIsBattleMode = (active: boolean) => {
+      setSearchParams(prev => {
+         if (active) {
+            prev.set("modo", "batalha");
+         } else {
+            prev.delete("modo");
+         }
+         return prev;
+      });
    };
 
    return (

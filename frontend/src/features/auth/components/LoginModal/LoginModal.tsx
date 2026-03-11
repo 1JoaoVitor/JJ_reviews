@@ -4,6 +4,7 @@ import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import styles from "./LoginModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface LoginModalProps {
    show: boolean;
@@ -13,6 +14,7 @@ interface LoginModalProps {
 type AuthMode = "login" | "register" | "forgot";
 
 export function LoginModal({ show, onHide }: LoginModalProps) {
+   useModalBack(show, onHide);
    const [mode, setMode] = useState<AuthMode>("login");
    
    // Separamos o campo de login dos campos de registo para ficar mais organizado

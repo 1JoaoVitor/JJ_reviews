@@ -3,6 +3,7 @@ import { Modal, Form, Spinner } from "react-bootstrap";
 import type { CustomList } from "@/types";
 import styles from "../CreateListModal/CreateListModal.module.css"; 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface EditListModalProps {
    show: boolean;
@@ -20,6 +21,9 @@ interface EditListModalProps {
 }
 
 export function EditListModal({ show, onHide, onUpdate, list }: EditListModalProps) {
+
+   useModalBack(show, onHide);
+
    const [name, setName] = useState(list.name);
    const [description, setDescription] = useState(list.description || "");
    
@@ -129,11 +133,12 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
                   )}
                </div>
 
+               {/* ─── AUTO-SINCRONIZAÇÃO ─── */}
                {list.type === "full_shared" && (
                   <div className="mb-4 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
                      <Form.Check 
                         type="switch"
-                        id="auto-sync-switch"
+                        id="edit-auto-sync-switch"
                         label={
                            <div>
                               <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>

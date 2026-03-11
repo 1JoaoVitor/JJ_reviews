@@ -10,6 +10,7 @@ import getCroppedImg from "@/utils/cropImage";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./ProfileModal.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface ProfileModalProps {
    show: boolean;
@@ -24,7 +25,9 @@ interface ProfileModalProps {
 type TabType = "profile" | "security";
 
 export function ProfileModal({ show, onHide, session, currentUsername, onUpdate, onLogout, forceLogout}: ProfileModalProps) {
+
    // Navegação
+   useModalBack(show, onHide);
    const [activeTab, setActiveTab] = useState<TabType>("profile");
 
    // Estados de Perfil

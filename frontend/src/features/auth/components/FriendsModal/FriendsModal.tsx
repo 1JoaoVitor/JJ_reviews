@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./FriendsModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface UserProfile {
    id: string;
@@ -24,6 +25,7 @@ interface FriendsModalProps {
 }
 
 export function FriendsModal({ show, onHide, session }: FriendsModalProps) {
+   useModalBack(show, onHide);
    const navigate = useNavigate();
    const [activeTab, setActiveTab] = useState<"friends" | "search">("friends");
    

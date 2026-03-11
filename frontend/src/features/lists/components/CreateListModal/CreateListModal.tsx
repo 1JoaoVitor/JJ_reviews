@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth";
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import type { CustomList } from "@/types";
 import styles from "./CreateListModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 type ListType = "private" | "partial_shared" | "full_shared";
 
@@ -25,9 +26,9 @@ interface CreateListModalProps {
    ) => Promise<CustomList | null>;
 }
 
-
-
 export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps) {
+    useModalBack(show, onHide);
+
    const { session } = useAuth();
    const [name, setName] = useState("");
    const [description, setDescription] = useState("");
@@ -103,6 +104,7 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
          setDescription("");
          setType("private");
          setSelectedFriends([]);
+         setAutoSync(false);
       }
    }, [show]);
 
@@ -202,31 +204,12 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                   )}
                </div>
 
-               {type !== "private" && (
-                  <div className="mb-4 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
-                     <Form.Check 
-                        type="switch"
-                        id="auto-sync-switch"
-                        label={
-                           <div>
-                              <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>
-                              <p className="text-muted small mb-0" style={{ fontSize: '0.8rem' }}>
-                                 Avaliações feitas nesta lista serão copiadas automaticamente para o perfil de todos os membros.
-                              </p>
-                           </div>
-                        }
-                        checked={autoSync}
-                        onChange={(e) => setAutoSync(e.target.checked)}
-                     />
-                  </div>
-               )}
-
                <Form.Label className={styles.label}>Tipo de Lista</Form.Label>
                <div className={styles.typeGrid}>
                   {/* Opção 1: Particular */}
                   <div 
                      className={`${styles.typeCard} ${type === "private" ? styles.typeCardActive : ""}`}
-                     onClick={() => { setType("private"); setSelectedFriends([]); }}
+                     onClick={() => { setType("private"); setSelectedFriends([]); setAutoSync(false); }}
                   >
                      <Lock size={20} className={styles.typeIcon} />
                      <span className={styles.typeTitle}>Particular</span>
@@ -236,7 +219,7 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                   {/* Opção 2: Colaborativa*/}
                   <div 
                      className={`${styles.typeCard} ${type === "partial_shared" ? styles.typeCardActive : ""}`}
-                     onClick={() => setType("partial_shared")}
+                     onClick={() => { setType("partial_shared"); setAutoSync(false); }}
                   >
                      <Users size={20} className={styles.typeIcon} />
                      <span className={styles.typeTitle}>Colaborativa</span>
@@ -289,6 +272,26 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                            })}
                         </div>
                      )}
+                  </div>
+               )}
+
+               {/* ─── AUTO-SINCRONIZAÇÃO (SOMENTE UNIFICADA) ─── */}
+               {type === "full_shared" && (
+                  <div className="mb-4 mt-2 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                     <Form.Check 
+                        type="switch"
+                        id="create-auto-sync-switch"
+                        label={
+                           <div>
+                              <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>
+                              <p className="text-muted small mb-0" style={{ fontSize: '0.8rem' }}>
+                                 Avaliações feitas nesta lista serão copiadas automaticamente para o perfil de todos os membros.
+                              </p>
+                           </div>
+                        }
+                        checked={autoSync}
+                        onChange={(e) => setAutoSync(e.target.checked)}
+                     />
                   </div>
                )}
 
