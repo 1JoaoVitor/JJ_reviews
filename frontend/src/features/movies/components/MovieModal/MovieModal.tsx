@@ -1,11 +1,12 @@
 import { Modal, Row, Col } from "react-bootstrap";
-import { Pencil, Trash2, Share2 } from "lucide-react";
+import { Pencil, Trash2, Share2, MapPin } from "lucide-react";
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import type { MovieData } from "@/types";
 import { getBadgeStyle } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
 import { useState } from "react";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface MovieModalProps {
    show: boolean;
@@ -27,6 +28,8 @@ export function MovieModal({
    onShare,
 }: MovieModalProps) {
 
+
+   useModalBack(show, onHide);
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
 
@@ -41,8 +44,8 @@ export function MovieModal({
 
    return (
       <>
-      <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down">
-         <Modal.Header closeButton className="border-0 pb-0">
+      <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down" contentClassName={styles.modalContent}>
+         <Modal.Header closeButton className={styles.header}>
             <Modal.Title className="fw-bold" style={{ fontSize: "1.75rem" }}>
                {movie.title}
             </Modal.Title>
@@ -78,7 +81,7 @@ export function MovieModal({
                ))}
             </div>
 
-            <Row>
+            <Row className="m-0">
                <Col md={4} className="mb-3">
                   {movie.poster_path ? (
                      <img
@@ -208,7 +211,10 @@ export function MovieModal({
                               ) : (
                                  <span className="text-muted fw-bold">Na Fila (Não avaliado)</span>
                               )}
+                              
                            </div>
+
+                           
 
                            {movie.recommended && (
                               <div className="ms-auto">
@@ -229,7 +235,18 @@ export function MovieModal({
                         </div>
 
                         <div className="mb-4">
-                           <h5 className={styles.sectionTitle}>Review</h5>
+                           <div className="d-flex align-items-center gap-3 mb-2">
+                              <h5 className={styles.sectionTitle} style={{ margin: 0 }}>Review</h5>
+                              {movie.location && (
+                                 <span 
+                                    className="text-muted d-flex align-items-center gap-1" 
+                                    style={{ fontSize: "0.85rem", fontWeight: 500 }}
+                                 >
+                                    <MapPin size={14} /> {movie.location}
+                                 </span>
+                              )}
+                           </div>
+                           
                            <p className={styles.reviewText}>
                               &ldquo;{movie.review || "Sem análise detalhada."}&rdquo;
                            </p>

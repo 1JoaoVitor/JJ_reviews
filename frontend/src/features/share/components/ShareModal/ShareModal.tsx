@@ -5,6 +5,7 @@ import type { MovieData } from "@/types";
 import { ShareCard} from "../ShareCard/ShareCard";
 import type { ShareOptions } from "../ShareCard/ShareCard";
 import { useShare } from "../../hooks/useShare";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface ShareModalProps {
    show: boolean;
@@ -13,6 +14,8 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ show, movie, onHide }: ShareModalProps) {
+    useModalBack(show, onHide);
+
    const { shareRef, isSharing, handleShare } = useShare();
    const [options, setOptions] = useState<ShareOptions>({
       showTitle: true,

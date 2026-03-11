@@ -7,6 +7,7 @@
    top: 0;
    z-index: 1030;
    margin-bottom: 2.5rem;
+   padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* ─── Row 1: Brand + Search + User actions ─── */

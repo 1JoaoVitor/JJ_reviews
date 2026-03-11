@@ -80,3 +80,19 @@ export async function searchMovies(query: string) {
       return [];
    }
 }
+
+// Busca detalhes extras de um filme específico (como a duração em minutos)
+export const getMovieDetails = async (tmdbId: number) => {
+   try {
+      const response = await fetch(
+         `${BASE_URL}/movie/${tmdbId}?api_key=${API_KEY}&language=pt-BR`
+      );
+      if (!response.ok) throw new Error("Erro ao buscar detalhes do filme");
+      
+      const data = await response.json();
+      return data; // Isso vai conter o campo 'runtime'
+   } catch (error) {
+      console.error(error);
+      return null;
+   }
+};

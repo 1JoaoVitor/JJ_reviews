@@ -3,6 +3,7 @@ import { Modal, Form, Spinner } from "react-bootstrap";
 import type { CustomList } from "@/types";
 import styles from "../CreateListModal/CreateListModal.module.css"; 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface EditListModalProps {
    show: boolean;
@@ -13,18 +14,23 @@ interface EditListModalProps {
       description: string, 
       has_rating: boolean, 
       rating_type: "manual" | "average" | null, 
-      manual_rating: number | null
+      manual_rating: number | null,
+      auto_sync: boolean,
    ) => Promise<boolean>;
    list: CustomList;
 }
 
 export function EditListModal({ show, onHide, onUpdate, list }: EditListModalProps) {
+
+   useModalBack(show, onHide);
+
    const [name, setName] = useState(list.name);
    const [description, setDescription] = useState(list.description || "");
    
    const [hasRating, setHasRating] = useState(list.has_rating || false);
    const [ratingType, setRatingType] = useState<"manual" | "average">(list.rating_type || "average");
    const [manualRating, setManualRating] = useState<number>(list.manual_rating || 5);
+   const [autoSync, setAutoSync] = useState(false);
    
    const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +45,8 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
          description,
          hasRating,
          hasRating ? ratingType : null,
-         hasRating && ratingType === "manual" ? manualRating : null
+         hasRating && ratingType === "manual" ? manualRating : null,
+         autoSync,
       );
       setIsSubmitting(false);
 
@@ -57,6 +64,7 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
             setHasRating(list.has_rating || false);
             setRatingType(list.rating_type || "average");
             setManualRating(list.manual_rating || 5);
+            setAutoSync(list.auto_sync || false);
          }} 
         onHide={onHide} 
         centered 
@@ -124,6 +132,26 @@ export function EditListModal({ show, onHide, onUpdate, list }: EditListModalPro
                      </div>
                   )}
                </div>
+
+               {/* ─── AUTO-SINCRONIZAÇÃO ─── */}
+               {list.type === "full_shared" && (
+                  <div className="mb-4 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                     <Form.Check 
+                        type="switch"
+                        id="edit-auto-sync-switch"
+                        label={
+                           <div>
+                              <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>
+                              <p className="text-muted small mb-0" style={{ fontSize: '0.8rem' }}>
+                                 Avaliações feitas nesta lista serão copiadas automaticamente para o perfil de todos os membros.
+                              </p>
+                           </div>
+                        }
+                        checked={autoSync}
+                        onChange={(e) => setAutoSync(e.target.checked)}
+                     />
+                  </div>
+               )}
 
                <div className="d-flex justify-content-end gap-2">
                   <button type="button" onClick={onHide} className={styles.cancelBtn} disabled={isSubmitting}>

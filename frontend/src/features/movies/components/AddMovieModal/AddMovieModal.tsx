@@ -4,12 +4,13 @@ import toast from "react-hot-toast";
 import { Search, ArrowLeft, ListPlus } from "lucide-react";
 
 import { StarRating } from "@/components/ui/StarRating/StarRating";
-import { searchMovies } from "../../services/tmdbService";
+import { searchMovies, getMovieDetails} from "../../services/tmdbService";
 import { CreateListModal } from "@/features/lists";
 
 import { supabase } from "@/lib/supabase";
 import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
 import styles from "./AddMovieModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface AddMovieModalProps {
    show: boolean;
@@ -32,6 +33,8 @@ export function AddMovieModal({
    createList,
    preselectedListId
 }: AddMovieModalProps) {
+
+   useModalBack(show, onHide);
    const [step, setStep] = useState<"search" | "form">("search");
    const [searchQuery, setSearchQuery] = useState("");
    const [searchResults, setSearchResults] = useState<TmdbSearchResult[]>([]);
@@ -41,6 +44,7 @@ export function AddMovieModal({
    const [rating, setRating] = useState(5);
    const [review, setReview] = useState("");
    const [recommended, setRecommended] = useState("Vale a pena assistir");
+   const [location, setLocation] = useState("");
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
@@ -63,6 +67,7 @@ export function AddMovieModal({
          setRating(movieToEdit.rating ?? 5);
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
+         setLocation(movieToEdit.location || "");
          setFormStatus(movieToEdit.status || "watched");
          setSelectedMovie({
             id: movieToEdit.tmdb_id,
@@ -78,6 +83,7 @@ export function AddMovieModal({
          setRating(5);
          setReview("");
          setRecommended("Vale a pena assistir");
+         setLocation("");
          setFormStatus("watched");
          setExclusiveToList(false);
       }
@@ -134,12 +140,19 @@ export function AddMovieModal({
       setStep("form");
    };
 
-   // ─── Lógica Atualizada com o parâmetro keepOpen ───
    const handleSave = async (keepOpen = false) => {
       if (!selectedMovie) return;
       setSaving(true);
 
       try {
+         let movieRuntime = 0;
+         if (!movieToEdit) { // Só precisamos buscar se for um filme novo
+            const details = await getMovieDetails(selectedMovie.id);
+            if (details && details.runtime) {
+               movieRuntime = details.runtime;
+            }
+         }
+
          const { data: { user }, error: userError } = await supabase.auth.getUser();
 
          if (userError || !user) {
@@ -172,6 +185,8 @@ export function AddMovieModal({
                rating: formStatus === "watched" ? rating : null,
                review: formStatus === "watched" ? review : null,
                recommended: formStatus === "watched" ? recommended : null,
+               runtime: movieRuntime,
+               location: formStatus === "watched" ? location : null,
                status: formStatus,
                user_id: user.id,
             };
@@ -222,9 +237,30 @@ export function AddMovieModal({
                      .maybeSingle();
 
                   if (existingUserReview) {
-                     await supabase.from('list_reviews').update({ rating, review, recommended }).eq('id', existingUserReview.id);
+                     await supabase.from('list_reviews').update({ rating, review, recommended, location, runtime: movieRuntime}).eq('id', existingUserReview.id);
                   } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended });
+                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended, location, runtime: movieRuntime });
+                  }
+               }
+
+               // ─── LÓGICA DE AUTO-SINCRONIZAÇÃO ───
+               // Se a lista tiver o auto-sync ligado e o utilizador NÃO marcou como exclusivo da lista,
+               // o banco de dados para clona a review para todos os amigos.
+               if (selectedListDetails.auto_sync && !exclusiveToList) {
+                  const { error: syncError } = await supabase.rpc('sync_review_to_list_members', {
+                     p_list_id: selectedListId,
+                     p_tmdb_id: selectedMovie.id,
+                     p_rating: rating,
+                     p_review: review,
+                     p_recommended: recommended,
+                     p_status: formStatus,
+                     p_added_by: user.id,
+                     p_location: location,
+                     p_runtime: movieRuntime,
+                  });
+
+                  if (syncError) {
+                     console.error("Erro ao sincronizar filme com membros da lista:", syncError);
                   }
                }
             }
@@ -365,6 +401,28 @@ export function AddMovieModal({
                               <option value="Não tão bom">Não tão bom</option>
                               <option value="Não perca seu tempo">Não perca seu tempo</option>
                            </Form.Select>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                           <Form.Label className={styles.formLabel}>Onde Assistiu? (Opcional)</Form.Label>
+                           <Form.Control
+                              type="text"
+                              placeholder="Ex: Cinemark, Netflix, Em casa..."
+                              value={location}
+                              onChange={(e) => setLocation(e.target.value)}
+                              maxLength={50}
+                              list="locations-list"
+                           />
+                           {/* Datalist cria um auto-completar nativo */}
+                           <datalist id="locations-list">
+                              <option value="Em casa" />
+                              <option value="Netflix" />
+                              <option value="Amazon Prime" />
+                              <option value="Max" />
+                              <option value="Disney+" />
+                              <option value="Cinemark" />
+                              <option value="Cinépolis" />
+                           </datalist>
                         </Form.Group>
 
                         <Form.Group className="mb-3">
