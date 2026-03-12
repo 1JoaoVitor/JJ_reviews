@@ -5,6 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
+import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
@@ -115,19 +116,14 @@ function MainApp() {
    }, []);
 
    useEffect(() => {
-      // Este ouvinte acorda quando o aplicativo é aberto através de um link profundo (deep link)
       const setupDeepLinks = async () => {
          if (!Capacitor.isNativePlatform()) return;
 
          CapacitorApp.addListener('appUrlOpen', (event) => {
-            // event.url vai ser algo como: https://jj-reviews.vercel.app/?movie=123
             const url = new URL(event.url);
-            
-            // Pega no ID do filme que vem no link
             const movieIdFromDeepLink = url.searchParams.get("movie");
             
             if (movieIdFromDeepLink) {
-               // Atualiza a URL interna do React para disparar o seu modal
                setSearchParams(prev => {
                   prev.set("movie", movieIdFromDeepLink);
                   return prev;
