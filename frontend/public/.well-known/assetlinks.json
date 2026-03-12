@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.jv.jjreviews",
+      "sha256_cert_fingerprints": [
+        "3A:E4:62:B7:37:62:EA:5D:AF:42:8B:EE:60:5D:93:7C:1A:34:BE:C4:01:13:19:06:B4:BC:CD:0C:7A:CF:81:6A"
+      ]
+    }
+  }
+]
