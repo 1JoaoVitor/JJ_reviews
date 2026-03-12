@@ -5,6 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { Dices, Plus, Star, Bookmark, Swords, ListPlus, Users, Share2, Layers} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
+import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
@@ -114,7 +115,33 @@ function MainApp() {
       };
    }, []);
 
-   // ─── LÓGICA MÁGICA PARA ABRIR LISTAS DIRETAMENTE PELA URL ───
+   useEffect(() => {
+      const setupDeepLinks = async () => {
+         if (!Capacitor.isNativePlatform()) return;
+
+         CapacitorApp.addListener('appUrlOpen', (event) => {
+            const url = new URL(event.url);
+            const movieIdFromDeepLink = url.searchParams.get("movie");
+            
+            if (movieIdFromDeepLink) {
+               setSearchParams(prev => {
+                  prev.set("movie", movieIdFromDeepLink);
+                  return prev;
+               });
+            }
+         });
+      };
+
+      setupDeepLinks();
+
+      return () => {
+         if (Capacitor.isNativePlatform()) {
+            CapacitorApp.removeAllListeners();
+         }
+      };
+   }, [setSearchParams]);
+
+   // ─── LÓGICA PARA ABRIR LISTAS DIRETAMENTE PELA URL ───
    const listIdInUrl = searchParams.get("listId");
    
    useEffect(() => {
