@@ -1,6 +1,6 @@
 # Arquitetura do Frontend — JJ Reviews
 
-Este documento explica como o projeto frontend está organizado, o porquê de cada decisão, e como manter a arquitetura ao adicionar funcionalidades novas.
+Documento completo da arquitetura do projeto frontend. Explica como tudo está organizado, o que cada peça faz, e como manter a qualidade ao adicionar features.
 
 ---
 
@@ -11,16 +11,19 @@ Este documento explica como o projeto frontend está organizado, o porquê de ca
 | React | 19.2 | Framework de UI |
 | TypeScript | 5.9 | Tipagem estática |
 | Vite | 7.2 | Build tool + dev server |
-| Supabase | 2.93 | Auth, banco de dados (PostgreSQL), storage |
+| Vitest | 4.0 | Framework de testes (unit + integration) |
+| Testing Library | 16.3 | Testes de componentes React |
+| Supabase | 2.93 | Auth, banco de dados (PostgreSQL), storage, realtime, edge functions |
+| Capacitor | 8.2 | Build nativo Android (APK/AAB), deep links, push, share nativo |
 | React Bootstrap | 2.10 | Componentes UI + utilidades CSS |
-| React Router Dom | 7.13 | Roteamento SPA |
+| React Router Dom | 7.13 | Roteamento SPA com search params como fonte de verdade |
 | Axios | 1.13 | Requisições HTTP (TMDB API) |
 | Lucide React | 0.576 | Ícones SVG |
-| Vite PWA Plugin | 1.2 | Progressive Web App |
+| Vite PWA Plugin | 1.2 | Progressive Web App (auto-update, offline) |
 | React Hot Toast | 2.6 | Notificações toast |
 | html2canvas | 1.4 | Geração de imagem para compartilhamento |
 | canvas-confetti | 1.9 | Animação de confetti (batalha e roleta) |
-| react-easy-crop | 5.5 | Recorte de imagem (avatar) |
+| react-easy-crop | 5.5 | Recorte circular de imagem (avatar) |
 
 ---
 
@@ -30,18 +33,21 @@ Este documento explica como o projeto frontend está organizado, o porquê de ca
 src/
 ├── assets/               # Arquivos estáticos (imagens, fontes, SVGs)
 ├── components/           # Componentes GLOBAIS compartilhados
-│   ├── layout/           #   Estrutura da página (Navbar, BottomNav, Footer)
-│   └── ui/               #   Componentes genéricos (ConfirmModal, EmptyState, LoadingOverlay, StarRating)
-├── constants/            # Constantes globais do app
+│   ├── layout/           #   Navbar, BottomNav, Footer
+│   └── ui/               #   ConfirmModal, EmptyState, LoadingOverlay, StarRating
+├── constants/            # Constantes globais (ex: IDs do Oscar)
 ├── features/             # Módulos por funcionalidade (CORAÇÃO da arquitetura)
-│   ├── auth/             #   Autenticação (login, perfil, amigos, hook useAuth)
-│   ├── battle/           #   Modo Batalha — torneio mata-mata de filmes
-│   ├── dashboard/        #   Cards estatísticos do usuário
+│   ├── auth/             #   Login, cadastro, perfil, amigos, reset senha
+│   ├── battle/           #   Torneio mata-mata de filmes
+│   ├── dashboard/        #   5 cards estatísticos interativos
 │   ├── friends/          #   Hook de amizade (useFriendship)
+│   ├── lists/            #   Listas personalizadas (privadas, colaborativas, unificadas)
 │   ├── movies/           #   CRUD de filmes (cards, modais, filtros, serviço TMDB)
+│   ├── notifications/    #   Notificações in-app (realtime) + push nativo (FCM)
 │   ├── publicProfile/    #   Perfil público visitável por URL
-│   ├── roulette/         #   Roleta — sorteio de filme da watchlist
-│   └── share/            #   Gerar imagem e compartilhar review
+│   ├── roulette/         #   Roleta — sorteio aleatório da watchlist
+│   └── share/            #   Gerar imagem customizável e compartilhar review
+├── hooks/                # Hooks globais (useModalBack, usePushNotifications)
 ├── lib/                  # Clientes de serviços externos (Supabase)
 ├── styles/               # Design tokens (variáveis CSS) e estilos globais
 ├── types/                # Tipos TypeScript compartilhados
@@ -55,104 +61,116 @@ src/
 
 ## Roteamento
 
-O app usa **React Router Dom** com duas rotas:
+O app usa **React Router Dom** com três rotas:
 
 | Rota | Componente | Descrição |
 |---|---|---|
-| `/` | `MainApp` | Tela principal (dashboard, filmes, modais) |
-| `/perfil/:username` | `PublicProfile` | Perfil público de outro usuário |
+| `/` | `MainApp` | Tela principal (landing, dashboard, filmes, listas, modais) |
+| `/perfil/:username` | `PublicProfile` | Perfil público de outro usuário (read-only com amizade) |
+| `/reset-password` | `ResetPassword` | Tela de redefinição de senha (valida sessão via token) |
 
 ```tsx
 // App.tsx
 <Routes>
    <Route path="/" element={<MainApp />} />
    <Route path="/perfil/:username" element={<PublicProfile />} />
+   <Route path="/reset-password" element={<ResetPassword />} />
 </Routes>
 ```
 
-Usuários não logados veem uma **landing page** com cards explicativos das features. Usuários logados veem o dashboard + grid de filmes.
+**Usuários não logados:** veem uma **landing page** com hero section + 5 cards explicativos (Avalie, Watchlist, Listas Compartilhadas, Compartilhe, Modo Batalha).
+
+**Usuários logados:** veem o dashboard + grid de filmes com 3 abas (Assistidos, Watchlist, Minhas Listas).
+
+### URL como Fonte de Verdade
+
+A URL controla o estado de navegação via **search params**:
+
+| Param | Exemplo | Controla |
+|---|---|---|
+| `aba` | `?aba=watchlist`, `?aba=lists` | Aba ativa (watched é default, sem param) |
+| `movie` | `?movie=550` | Filme selecionado no modal (permite deep links e F5) |
+| `listId` | `?listId=abc-123` | Lista aberta diretamente |
+| `modo` | `?modo=batalha` | Ativa o modo batalha fullscreen |
+
+Isso permite que deep links do WhatsApp, F5 e o botão voltar nativo do Android funcionem corretamente.
 
 ---
 
 ## Princípios da Arquitetura
 
-### 1. Feature-Based Structure (Estrutura por Funcionalidade)
+### 1. Feature-Based Structure
 
-Cada funcionalidade do app vive em sua pasta dentro de `features/`.
-Uma feature é **auto-contida**: tem seus próprios componentes, hooks, serviços e estilos.
+Cada feature vive em `features/` e é **auto-contida**: componentes, hooks, serviços e estilos próprios.
 
 ```
 features/movies/
 ├── components/
 │   ├── MovieCard/
-│   │   ├── MovieCard.tsx
+│   │   ├── MovieCard.tsx          (114 linhas)
 │   │   └── MovieCard.module.css
 │   ├── MovieCardSkeleton/
 │   │   ├── MovieCardSkeleton.tsx
 │   │   └── MovieCardSkeleton.module.css
 │   ├── MovieModal/
-│   │   ├── MovieModal.tsx
+│   │   ├── MovieModal.tsx          (222 linhas)
 │   │   └── MovieModal.module.css
 │   └── AddMovieModal/
-│       ├── AddMovieModal.tsx
+│       ├── AddMovieModal.tsx       (465 linhas)
 │       └── AddMovieModal.module.css
 ├── hooks/
-│   ├── useMovies.ts
-│   └── useMovieFilters.ts
+│   ├── useMovies.ts                (54 linhas)
+│   └── useMovieFilters.ts          (99 linhas)
 ├── services/
-│   └── tmdbService.ts
+│   └── tmdbService.ts              (78 linhas)
 └── index.ts
 ```
 
-**Por quê?**
-- Facilita encontrar qualquer arquivo: quer mudar algo de autenticação? Vá até `features/auth/`.
-- Ao adicionar uma feature nova, cria-se uma pasta nova sem mexer no resto.
-- Reduz acoplamento: cada feature importa apenas do `@/types`, `@/utils`, `@/lib`, nunca de outras features.
+**Regras:**
+- Cada feature importa apenas de `@/types`, `@/utils`, `@/lib` — nunca de outra feature.
+- Exceção: `useShare` importa `useAuth` para obter o username.
 
 ### 2. Barrel Exports (`index.ts`)
 
-Toda feature expõe um `index.ts` como "API pública":
+Toda feature tem um `index.ts` como API pública:
 
 ```typescript
 // features/auth/index.ts
 export { LoginModal } from "./components/LoginModal/LoginModal";
 export { ProfileModal } from "./components/ProfileModal/ProfileModal";
+export { FriendsModal } from "./components/FriendsModal/FriendsModal";
+export { ResetPassword } from "./components/ResetPassword/ResetPassword";
 export { useAuth } from "./hooks/useAuth";
 ```
 
-```typescript
-// App.tsx — importações limpas
-import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
-```
+**Regra:** Importar sempre do `index.ts`, nunca do caminho interno.
 
-**Regra:** Nunca importe diretamente de dentro de uma feature (ex: `@/features/auth/hooks/useAuth`).
-Sempre importe do `index.ts` da feature.
+### 3. CSS Modules
 
-### 3. CSS Modules para Estilos de Componente
-
-Cada componente tem um arquivo `*.module.css` na mesma pasta.
+Cada componente tem um `*.module.css` co-localizado:
 
 ```tsx
 import styles from "./MovieCard.module.css";
-
 <div className={styles.card}>
 ```
 
-**Por quê?**
-- **Escopo local**: Os nomes de classe são únicos por componente. Não há conflito global.
-- **Colocalização**: O CSS mora junto do componente, fácil de encontrar e manter.
-- **Sem overhead**: CSS Modules é nativo do Vite, zero dependências extras.
+- Escopo local automático (sem conflito de classes)
+- Nativo do Vite, zero dependências
+- **Exceção:** `ShareCard` usa inline styles (exigência do html2canvas)
 
-### 4. Design Tokens (CSS Custom Properties)
+### 4. Design Tokens
 
-Todo o design system está centralizado em `styles/variables.css`:
+O design system vive em `styles/variables.css`:
 
 ```css
 :root {
    /* Cores principais */
    --gold: #E8B100;
    --gold-hover: #FFC620;
-   --accent-blue: #3B82F6;
+   --gold-dim: #A37D00;
+   --accent: #3B82F6;
+   --success: #22C55E;
+   --danger: #EF4444;
 
    /* Backgrounds (dark theme) */
    --bg-page: #0D0D0D;
@@ -162,6 +180,7 @@ Todo o design system está centralizado em `styles/variables.css`:
    /* Texto */
    --text-primary: #F5F5F5;
    --text-secondary: #A0A0A0;
+   --text-muted: #666666;
 
    /* Badges de recomendação */
    --badge-great: #22C55E;
@@ -170,53 +189,54 @@ Todo o design system está centralizado em `styles/variables.css`:
    --badge-bad: #FB923C;
    --badge-terrible: #EF4444;
 
-   /* Métricas do dashboard */
-   --metric-total: var(--gold);
-   --metric-average: var(--accent-blue);
-   --metric-international: #22C55E;
-   --metric-director: #A855F7;
-
    /* Tipografia */
    --font-family: "Inter", sans-serif;
-   --font-xs: 0.75rem;
-   --font-3xl: 1.875rem;
 
    /* Efeitos */
    --radius-sm: 6px;
+   --radius-md: 10px;
+   --radius-lg: 16px;
+   --radius-xl: 20px;
    --radius-pill: 50rem;
-   --transition-fast: 0.15s ease;
-   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+   --transition-fast: 0.15s ease-out;
+   --transition-normal: 0.25s ease;
 }
 ```
 
-**Regra:** Nunca escreva cores hardcoded nos CSS Modules. Use `var(--nome)`.
+**Regra:** Zero cores hardcoded nos CSS Modules. Sempre `var(--nome)`.
 
-### 5. Custom Hooks para Lógica de Estado
+### 5. Custom Hooks
 
-Toda lógica "pesada" foi extraída para hooks dedicados:
+Toda lógica de estado e side effects vive em hooks dedicados:
 
-| Hook | Feature | Responsabilidade |
-|---|---|---|
-| `useAuth` | auth | Sessão, perfil, login/logout, avatar |
-| `useMovies` | movies | Carregar filmes do Supabase + enriquecer com TMDB |
-| `useMovieFilters` | movies | Filtros, busca full-text, ordenação, view mode |
-| `useShare` | share | Gerar imagem PNG e compartilhar via Web Share API |
-| `usePublicProfile` | publicProfile | Carregar perfil público de outro usuário |
-| `useFriendship` | friends | Enviar/aceitar/remover pedidos de amizade |
+| Hook | Feature | Linhas | Responsabilidade |
+|---|---|---|---|
+| `useAuth` | auth | 59 | Sessão Supabase, perfil, login/logout, avatar |
+| `useMovies` | movies | 54 | Carregar filmes do Supabase + enriquecer com TMDB |
+| `useMovieFilters` | movies | 99 | Filtros, busca full-text, ordenação, view mode via URL |
+| `useLists` | lists | 220 | CRUD de listas, filmes, colaboradores, realtime |
+| `useNotifications` | notifications | 115 | Fetch com join, realtime, marcar lidas (individual e batch) |
+| `useFriendship` | friends | 142 | State machine de amizade + notificações cross-table |
+| `useShare` | share | 143 | Gerar imagem PNG, compartilhar via Web Share / Capacitor / download |
+| `usePublicProfile` | publicProfile | 59 | Carregar perfil + filmes de outro usuário via username |
+| `useModalBack` | global | 33 | Controle do botão Voltar para fechar modais (hash `#modal`) |
+| `usePushNotifications` | global | 62 | Registro FCM + salvar token no Supabase |
 
-O `App.tsx` faz apenas **composição** — monta hooks e passa para componentes. Zero lógica de negócio.
+### 6. Service Layer
 
-### 6. Service Layer (Camada de Serviços)
-
-Chamadas a APIs externas ficam isoladas em `services/`:
+Chamadas a APIs externas ficam isoladas:
 
 ```typescript
 // features/movies/services/tmdbService.ts
-export async function enrichMovieWithTmdb(movie) { ... }
-export async function searchMovies(query) { ... }
+export async function enrichMovieWithTmdb(movie) { ... }  // fetch + merge
+export async function searchMovies(query) { ... }         // busca por título
+export async function getMovieDetails(tmdbId) { ... }     // detalhes extras (runtime)
 ```
 
-**Regra:** Componentes nunca chamam `axios.get()` diretamente. Sempre passam por um service.
+**Regra:** Componentes nunca chamam `axios.get()` ou `fetch()` diretamente.
 
 ---
 
@@ -224,95 +244,204 @@ export async function searchMovies(query) { ... }
 
 ### Auth (`features/auth/`)
 
-Gerencia sessão, cadastro, login, perfil e modal de amigos.
+```
+auth/
+├── components/
+│   ├── LoginModal/     (182 linhas) — Login, cadastro, esqueci senha
+│   ├── ProfileModal/   (385 linhas) — Avatar crop, username, senha, deletar conta
+│   ├── FriendsModal/   (235 linhas) — Lista de amigos + busca por username
+│   └── ResetPassword/  (65 linhas)  — Redefinir senha via token
+└── hooks/
+    └── useAuth.ts      (59 linhas)  — Sessão, perfil, avatar, logout
+```
 
 | Export | Tipo | Descrição |
 |---|---|---|
-| `useAuth` | Hook | Sessão Supabase, `username`, `avatarUrl`, `loading`, `logout()`, `updateUsername()` |
-| `LoginModal` | Componente | Alterna entre login e cadastro. Usa `signInWithPassword()` e `signUp()` |
-| `ProfileModal` | Componente | Edição de avatar (com crop circular + zoom), edição de username, copiar link, logout |
-| `FriendsModal` | Componente | Aba "Amigos" (lista com badges de status) e aba "Buscar" (pesquisa por username via `ilike`) |
-
-O `ProfileModal` faz upload do avatar recortado para o **Supabase Storage** (bucket `avatars`) e atualiza a URL pública no perfil.
+| `useAuth` | Hook | `session`, `username`, `avatarUrl`, `loading`, `logout()`, `updateUsername()`, `fetchProfile()` |
+| `LoginModal` | Componente | 3 modos: login, cadastro, esqueci senha. Validação de username (lowercase, alfanumérico + underscore). Usa `useModalBack()` |
+| `ProfileModal` | Componente | 2 abas: "Perfil" (avatar crop com zoom + username) e "Segurança" (alterar senha, deletar conta). Upload para Supabase Storage bucket `avatars`. Copiar link do perfil. Compartilhar perfil |
+| `FriendsModal` | Componente | 2 abas: "Amigos" (lista com badges: Amigos/Enviado/Analisar Pedido) e "Buscar" (pesquisa case-insensitive via `ilike`). Navegação para `/perfil/:username` |
+| `ResetPassword` | Componente | Página standalone. Valida sessão, exige min. 6 caracteres, redireciona para home após reset |
 
 ### Movies (`features/movies/`)
 
-CRUD completo de filmes com enriquecimento de dados via TMDB.
+```
+movies/
+├── components/
+│   ├── MovieCard/          (114 linhas) — Card com poster, nota, badges, tags
+│   ├── MovieCardSkeleton/  — Skeleton loading que replica o layout do MovieCard
+│   ├── MovieModal/         (222 linhas) — Detalhes completos do filme
+│   └── AddMovieModal/      (465 linhas) — Busca TMDB + formulário de review
+├── hooks/
+│   ├── useMovies.ts        (54 linhas)  — Fetch + enriquecimento TMDB
+│   └── useMovieFilters.ts  (99 linhas)  — Filtros, sort, busca, view mode
+└── services/
+    └── tmdbService.ts      (78 linhas)  — axios para API TMDB
+```
 
 | Export | Tipo | Descrição |
 |---|---|---|
-| `useMovies` | Hook | Carrega reviews do Supabase, enriquece com TMDB, gerencia loading |
-| `useMovieFilters` | Hook | Busca full-text, filtros (nacional, Oscar, gênero), ordenação, view mode (watched/watchlist) |
-| `MovieCard` | Componente | Card com poster, nota, diretor, ano, tags (Nacional, Oscar), badge de recomendação |
-| `MovieCardSkeleton` | Componente | Skeleton loading que replica o layout do MovieCard |
-| `MovieModal` | Componente | Detalhes completos: metadata, streaming providers (BR), elenco, sinopse, ações admin |
-| `AddMovieModal` | Componente | Fluxo em duas etapas: busca TMDB → formulário (nota, veredito, review ou watchlist) |
+| `useMovies` | Hook | Carrega reviews do Supabase, enriquece com TMDB via `enrichMovieWithTmdb()`. Skeleton só no primeiro load (refresh silencioso depois) |
+| `useMovieFilters` | Hook | Filtros: nacional, Oscar, internacional (fora dos EUA), gênero, diretor. Busca full-text (título, review, diretor, elenco, gênero). Ordenação: recentes, rating, lançamento, A-Z. View mode via URL param `aba` |
+| `MovieCard` | Componente | Poster lazy-loaded, badge de nota (ou "Na Fila" para watchlist), diretor + ano, tags Nacional/Oscar, badge de recomendação colorido. Para listas `partial_shared`: mostra ícone Users e avatares dos membros |
+| `MovieCardSkeleton` | Componente | Placeholder animado durante loading |
+| `MovieModal` | Componente | Layout responsivo: poster + streaming providers (coluna esquerda) + metadata + review (coluna direita). Layouts adaptam para `partial_shared` (mostra reviews de todos os membros em grupo). Sinopse TMDB, elenco como badges, imagem anexa (bilhete/coleção). Barra admin: Editar, Excluir, Compartilhar |
+| `AddMovieModal` | Componente | Fluxo em 2 etapas: **Busca** (pesquisa TMDB, seleciona filme) → **Formulário** (2 modos: "Já Assisti" com nota/veredito/review/localização/imagem ou "Quero Ver" para watchlist). Pode salvar no perfil ou exclusivamente numa lista compartilhada. Upload de imagem para Supabase Storage. Modo edição: pré-popula campos. Opção "salvar e adicionar outro" |
 
 **Serviço TMDB** (`tmdbService.ts`):
-- `enrichMovieWithTmdb(movie)` — busca diretores, elenco (top 5), gêneros, países, sinopse, poster, providers de streaming (região BR), verifica indicação ao Oscar e se é filme nacional
-- `searchMovies(query)` — busca por título, retorna top 5 resultados
-
-### Battle (`features/battle/`)
-
-Torneio mata-mata de filmes com bracket eliminatório.
-
-**Estágios:**
-1. **Setup** — Critério (Random, Top-rated, Worst-rated, Recent, Oscar 2026, Nacional) + tamanho do bracket (4, 8, 16, 32, 64, Todos)
-2. **Battle** — Matchups 1v1 com cards clicáveis, barra de progresso, suporte a byes
-3. **Winner** — Exibição do campeão com troféu + confetti
-
-Pré-carrega imagens antes de iniciar. Calcula bracket em potência de 2.
+- `enrichMovieWithTmdb()` — busca diretores, elenco (top 5), gêneros, países traduzidos para PT-BR, sinopse, poster, streaming providers (região BR), verifica Oscar e se é nacional
+- `searchMovies()` — busca por título, top 5 resultados
+- `getMovieDetails()` — detalhes extras como `runtime` (duração em minutos)
 
 ### Dashboard (`features/dashboard/`)
 
-4 cards estatísticos exibidos acima do grid de filmes:
+5 cards estatísticos exibidos acima do grid de filmes. Heading: **"Sua Jornada Cinematográfica"**.
 
-| Card | Cor | Métrica |
-|---|---|---|
-| Total de Filmes | Dourado | Contagem de filmes avaliados |
-| Nota Média | Azul | Média das notas (0-10) |
-| Internacionais | Verde | Filmes não-americanos + percentual |
-| Top Diretor | Roxo | Diretor mais frequente + contagem |
+| # | Card | Ícone | Cor | Métrica | Interativo? |
+|---|---|---|---|---|---|
+| 1 | Filmes Assistidos | Film | Dourado `#E8B100` | Total de filmes com status `watched` | Não |
+| 2 | Média Geral | Star | Amarelo `#EAB308` | Média aritmética de todas as notas (1 casa decimal) | Não |
+| 3 | Tempo de Vida | Clock | Azul `#3B82F6` | Soma dos `runtime` de todos os filmes em formato `Xd Yh` | Não |
+| 4 | Fora dos EUA | Globe | Verde `#10B981` | Percentual + contagem de filmes sem "Estados Unidos" nos países | **Sim** — clique filtra por filmes internacionais |
+| 5 | Diretor Favorito | Clapperboard | Roxo `#A855F7` | Nome do diretor mais frequente + contagem. Se nenhum tem 2+, exibe "Vários" | **Sim (condicional)** — clique filtra por diretor (se tem 2+ filmes) |
+
+**Props:** `movies`, `onFilterDirector(directorName)`, `onFilterNonUS()`
+
+**Layout:** Grid 5 colunas → 3 colunas em tablet → 2 colunas em mobile. Cards com hover (elevação + borda dourada). Barra colorida no topo de cada card.
+
+### Battle (`features/battle/`)
+
+Torneio mata-mata de filmes com bracket eliminatório (270 linhas).
+
+| Estágio | Descrição |
+|---|---|
+| **Setup** | Escolhe critério de seleção + tamanho do bracket |
+| **Battle** | Matchups 1v1 em cards clicáveis, barra de progresso por rodada |
+| **Winner** | Campeão exibido com troféu dourado + confetti |
+
+**Critérios de seleção:** Random, Top-rated, Worst-rated, Recent, Oscar, Nacional
+**Tamanhos:** 4, 8, 16, 32, 64
+
+**Detalhes técnicos:**
+- Fisher-Yates shuffle para randomização sem viés
+- Bracket calculado em potência de 2 com byes (walkovers automáticos)
+- Pré-carregamento de imagens dos posters antes do início
+- Títulos de rodada dinâmicos: "Grande Final", "Semifinais", "Quartas de Final", etc.
+- Sub-componente privado `BattleCard` para cada confronto
 
 ### Friends (`features/friends/`)
 
-Hook `useFriendship(loggedUserId, profileUserId)` que gerencia o ciclo de amizade:
+Hook `useFriendship(loggedUserId, profileUserId)` — state machine de amizade (142 linhas):
 
-| Estado | Significado |
-|---|---|
-| `none` | Sem relação — pode enviar pedido |
-| `pending_sent` | Pedido enviado — aguardando resposta |
-| `pending_received` | Pedido recebido — pode aceitar |
-| `accepted` | Amigos confirmados |
+| Estado | Significado | Ação possível |
+|---|---|---|
+| `none` | Sem relação | `sendRequest()` — envia pedido + cria notificação |
+| `pending_sent` | Pedido enviado | `removeOrCancel()` — cancela pedido |
+| `pending_received` | Pedido recebido | `acceptRequest()` + notificação de aceite / `rejectRequest()` |
+| `accepted` | Amigos | `removeOrCancel()` — desfaz amizade |
 
-Funções: `sendRequest()`, `acceptRequest()`, `removeOrCancel()`.
+Query bidirecional: verifica `(A→B)` ou `(B→A)` com um único `or()`.
 
 ### Public Profile (`features/publicProfile/`)
 
-Página acessível por `/perfil/:username`. Exibe o perfil de outro usuário com:
-- Avatar, username, contagem de filmes
-- Botões de amizade (Adicionar, Pendente, Aceitar, Amigos)
-- Dashboard e grid de filmes (read-only)
-- Mesmo sistema de filtros do MainApp
-- Link "Crie sua própria lista" para visitantes não logados
+Página acessível por `/perfil/:username` (512 linhas). Funciona como um "mini-app" completo:
+
+- Header: avatar, username, total de filmes, botão de amizade (estado dinâmico)
+- Dashboard de estatísticas do perfil visitado
+- 3 abas: Assistidos, Watchlist, Listas (mesmas do MainApp)
+- Sistema completo de filtros: nacional, Oscar, busca, gênero, ordenação
+- Modo Batalha dentro do perfil
+- Deep link para filme: `?movie={id}` abre o modal direto
+- Bottom navigation mobile
+- Para não logados: CTA "Crie sua própria lista"
 
 ### Roulette (`features/roulette/`)
 
-Modal de sorteio aleatório de filme da watchlist:
-- Animação de spinning (20 iterações, carrossel de posters)
-- Exibição do filme sorteado com confetti
-- Botão "Ver Detalhes" para abrir o MovieModal
+Modal de sorteio aleatório (80 linhas):
 
-### Share (`features/share/`)
+- Gatilho: abre automaticamente quando o modal é exibido
+- Animação: 20 iterações (100ms cada), mostra posters em sequência rápida
+- Resultado: filme sorteado + confetti
+- "Ver Detalhes": abre MovieModal do filme sorteado
+- Tratamento de watchlist vazia
 
-Gera imagem compartilhável (1080×1920, formato story) de uma review:
+### Lists (`features/lists/`)
+
+```
+lists/
+├── components/
+│   ├── CreateListModal/  (260 linhas) — Criar lista com convite de amigos
+│   ├── EditListModal/    (95 linhas)  — Editar nome, descrição, configurações
+│   └── ListDetails/      (520 linhas) — Visualização completa da lista
+└── hooks/
+    └── useLists.ts       (220 linhas) — CRUD + realtime
+```
+
+**3 tipos de lista:**
+
+| Tipo | Nome na UI | Descrição |
+|---|---|---|
+| `private` | Lista Particular | Apenas do dono, não compartilhada |
+| `partial_shared` | Lista Colaborativa | Cada membro avalia independentemente; sistema calcula média |
+| `full_shared` | Lista Unificada | Uma review/rating compartilhada do grupo inteiro |
 
 | Export | Tipo | Descrição |
 |---|---|---|
-| `useShare` | Hook | Gera PNG via html2canvas. Web Share API no mobile, download no desktop |
-| `ShareCard` | Componente | Card invisível (forwardRef) com layout: poster + nota + veredito + branding |
+| `useLists` | Hook | `fetchLists()`, `createList()`, `addMovieToList()`, `updateList()`, `removeMovieFromList()`. Realtime: escuta DELETE/INSERT em `lists`, `list_collaborators`, `list_movies` |
+| `CreateListModal` | Componente | Formulário: nome (max 50), descrição (max 200), tipo, seletor de amigos (com avatares + checkmarks), toggle de rating (manual/average), toggle auto_sync (só full_shared). Envia notificação de convite |
+| `EditListModal` | Componente | Mesmo formulário, pré-populado para edição com contadores de caracteres |
+| `ListDetails` | Componente | Header com nome + descrição + rating da lista. Banner de aceite/rejeição de convite. Grid de filmes com overlay de nota. Avatares de colaboradores (clicável para remover se é dono). Reviews em grupo (partial_shared). Permissões: Owner > Accepted > Pending > None. Ações: editar, sair, excluir |
 
-O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `html2canvas` exige.
+**Funcionalidades avançadas:**
+- Ao apagar um filme do perfil → remove automaticamente das listas particulares
+- Auto_sync: filmes adicionados ao perfil vão automaticamente para listas com sync ativo
+- Deduplicação de listas (listas próprias + listas como colaborador aceito/pendente)
+- Verificação de filme duplicado antes de adicionar à lista
+
+### Share (`features/share/`)
+
+```
+share/
+├── components/
+│   ├── ShareCard/  — Card invisível para gerar imagem (forwardRef)
+│   └── ShareModal/ (108 linhas) — Modal com opções de compartilhamento
+└── hooks/
+    └── useShare.ts (143 linhas) — Lógica de gerar imagem + compartilhar
+```
+
+| Export | Tipo | Descrição |
+|---|---|---|
+| `useShare` | Hook | `handleShareImage(movie)` — gera PNG via html2canvas (1080×1920). Suporta 3 plataformas: Capacitor nativo (Filesystem + Share), Web Share API (mobile browser), download direto (desktop). `handleShareLink(movie)` — monta URL pública e compartilha ou copia para clipboard |
+| `ShareCard` | Componente | forwardRef renderizado off-screen. Inline styles obrigatórios (html2canvas). Exibe: poster, nota, veredito, branding. Configurável via `ShareOptions` |
+| `ShareModal` | Componente | 2 métodos: "Enviar Link" e "Criar Imagem". Toggles customizáveis: mostrar/ocultar título, detalhes (ano + diretor), estrelas, veredito. Preview reativo do ShareCard. Usa `useModalBack()` |
+
+**ShareOptions (toggles):** `showTitle`, `showDetails`, `showRating`, `showVerdict`
+
+### Notifications (`features/notifications/`)
+
+```
+notifications/
+├── components/
+│   └── NotificationBell/ (107 linhas) — Sino com dropdown
+└── hooks/
+    └── useNotifications.ts (115 linhas) — Fetch + realtime
+```
+
+| Export | Tipo | Descrição |
+|---|---|---|
+| `useNotifications` | Hook | `fetchNotifications()` (últimas 50 com join de sender profile), `markAsRead(id)`, `markAllAsRead()`, `unreadCount`. Realtime: canal `realtime:notifications` escuta INSERT |
+| `NotificationBell` | Componente | Ícone de sino com badge (mostra "9+" se >9). Dropdown com lista. Ícones por tipo (friend_request, list_invite, movie_added). Tempo relativo ("5 min atrás", "2h atrás"). Navegação inteligente: friend → perfil, list_invite → `/?aba=lists&listId=X`, movie_added → `/?aba=lists` |
+
+**Tipos de notificação e gatilhos:**
+
+| Tipo | Gatilho | Mensagem exemplo |
+|---|---|---|
+| `friend_request` | Envio ou aceitação de pedido | "enviou-te um pedido de amizade!" |
+| `list_invite` | Convite para lista | "convidou você para uma Lista Colaborativa!" |
+| `movie_added` | Filme adicionado a lista compartilhada | (customizável) |
+| `general` | Sistema | (customizável) |
+
+**Push nativo (FCM):** `usePushNotifications` registra no Firebase, salva token em `fcm_tokens`. Edge Function `send-push` dispara os pushes.
 
 ---
 
@@ -322,34 +451,39 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 
 | Componente | Descrição |
 |---|---|
-| `AppNavbar` | Barra superior: logo, busca, filtros (chips + dropdowns de gênero/ordenação), ações (batalha, amigos, perfil) |
-| `BottomNav` | Navegação mobile fixa no rodapé: Home, Batalha, Adicionar, Amigos, Perfil/Login |
+| `AppNavbar` | Barra superior responsiva. Logo + search input + botão de filtros. Dropdown de sort (Recentes, Melhores Notas, Lançamento, A-Z). Filtro de gênero. Botão Batalha. `NotificationBell`. Avatar/username ou botão Login. Filter chips: Nacional, Oscar |
+| `BottomNav` | Barra fixa mobile (5 itens): Home, Batalha, Adicionar (botão central destaque), Amigos, Perfil/Login. Avatar do usuário no botão de perfil. Rendering condicional por estado de auth |
 | `Footer` | Créditos do desenvolvedor + links sociais (GitHub, LinkedIn) |
 
 ### UI (`components/ui/`)
 
-| Componente | Props Principais | Descrição |
+| Componente | Props | Descrição |
 |---|---|---|
-| `ConfirmModal` | `title`, `message`, `confirmText`, `onConfirm`, `isProcessing` | Modal de confirmação com ícone de alerta e botão de perigo |
-| `EmptyState` | `title`, `message`, `actionText`, `onAction` | Estado vazio com ícone de filme e CTA |
-| `LoadingOverlay` | `message` | Overlay com spinner centralizado |
-| `StarRating` | `value`, `onChange`, `max`, `readOnly` | Avaliação com meia-estrela (0.5), suporte a mouse e touch |
+| `ConfirmModal` | `show`, `title`, `message`, `confirmText`, `onConfirm`, `onHide`, `isProcessing` | Modal genérico de confirmação com ícone de alerta e botão de perigo |
+| `EmptyState` | `title`, `message`, `actionText`, `onAction` | Estado vazio com ícone de filme + CTA para adicionar |
+| `LoadingOverlay` | `message` | Overlay fullscreen com spinner centralizado |
+| `StarRating` | `value`, `onChange`, `max`, `readOnly` | Sistema de 10 estrelas com precisão de 0.5. Pointer events unificados (mouse + touch). Pointer capture para drag. Double-tap reseta -0.5. Exibe valor numérico ao lado |
 
 ---
 
 ## Tipos TypeScript (`types/index.ts`)
 
-| Tipo | Descrição |
-|---|---|
-| `MovieData` | Objeto completo de filme com dados do Supabase + TMDB (id, tmdb_id, rating, review, recommended, status, título, poster, diretor, elenco, gêneros, países, providers, isOscar, isNational) |
-| `TmdbSearchResult` | Resultado de busca TMDB (id, title, release_date, poster_path) |
-| `TmdbProvider` | Provider de streaming (provider_id, name, logo_path) |
-| `TmdbGenre` | Gênero (id, name) |
-| `TmdbCrew` | Membro da equipe (job, name) |
-| `TmdbCast` | Membro do elenco (name) |
-| `TmdbCountry` | País de produção (iso_3166_1, name) |
-| `Friendship` | Registro de amizade (id, requester_id, receiver_id, status, created_at) |
-| `FriendProfile` | Perfil de amigo com status da amizade |
+| Tipo | Campos chave | Descrição |
+|---|---|---|
+| `MovieData` | `id`, `tmdb_id`, `rating`, `review`, `recommended`, `status`, `title`, `poster_path`, `director`, `cast[]`, `genres[]`, `countries[]`, `providers[]`, `isOscar`, `isNational`, `runtime`, `attachment_url`, `list_type`, `list_average_rating`, `list_group_reviews[]` | Objeto completo de filme (Supabase + TMDB + metadados de lista) |
+| `TmdbSearchResult` | `id`, `title`, `release_date`, `poster_path` | Resultado de busca TMDB |
+| `TmdbProvider` | `provider_id`, `provider_name`, `logo_path` | Streaming provider |
+| `TmdbGenre` | `id`, `name` | Gênero de filme |
+| `TmdbCrew` | `job`, `name` | Membro da equipe |
+| `TmdbCast` | `name` | Membro do elenco |
+| `TmdbCountry` | `iso_3166_1`, `name` | País de produção |
+| `Friendship` | `id`, `requester_id`, `receiver_id`, `status`, `created_at` | Registro de amizade |
+| `FriendProfile` | `friendship_id`, `user_id`, `username`, `avatar_url`, `status`, `is_requester` | Perfil de amigo com contexto da amizade |
+| `CustomList` | `id`, `owner_id`, `name`, `description`, `type`, `has_rating`, `rating_type`, `manual_rating`, `auto_sync`, `movie_count` | Lista personalizada |
+| `ListMovie` | `list_id`, `tmdb_id`, `added_by`, `created_at` | Relação filme-lista |
+| `ListCollaborator` | `id`, `list_id`, `user_id`, `role`, `status`, `user?` | Colaborador (com perfil aninhado) |
+| `ListReview` | `id`, `list_id`, `tmdb_id`, `user_id`, `rating`, `review`, `user?` | Review em lista unificada |
+| `AppNotification` | `id`, `user_id`, `sender_id`, `type`, `message`, `is_read`, `created_at`, `sender?` | Notificação (com perfil do remetente) |
 
 ---
 
@@ -357,8 +491,21 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 
 | Função | Arquivo | Descrição |
 |---|---|---|
-| `getBadgeStyle(text)` | `badges.ts` | Mapeia texto de recomendação → esquema de cores (verde, amarelo, laranja, vermelho) |
-| `getCroppedImg(src, pixelCrop)` | `cropImage.ts` | Recorta imagem do avatar usando coordenadas de pixel. Retorna Blob JPEG (90% qualidade) |
+| `getBadgeStyle(text)` | `badges.ts` | Mapeia texto de recomendação → `{bg, color}` |
+| `getBadgeValue(text)` | `badges.ts` | Converte texto de recomendação → valor numérico (-2 a +2) |
+| `getBadgeTextFromValue(value)` | `badges.ts` | Converte valor numérico → texto de recomendação |
+| `calculateAverageBadge(badges[])` | `badges.ts` | Calcula média de recomendações (arredonda para baixo) |
+| `getCroppedImg(src, pixelCrop)` | `cropImage.ts` | Recorta imagem via Canvas. Retorna Blob JPEG (90% qualidade) |
+
+**Escala de recomendação:**
+
+| Valor | Texto | Cor |
+|---|---|---|
+| +2 | "Assista com certeza" | Verde `#22C55E` |
+| +1 | "Vale a pena" | Verde claro `#34D399` |
+| 0 | "Tem filmes melhores, legal" | Amarelo `#FACC15` |
+| -1 | "Não tão bom" | Laranja `#FB923C` |
+| -2 | "Não perca seu tempo" | Vermelho `#EF4444` |
 
 ---
 
@@ -376,9 +523,11 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 
 | Recurso | Uso |
 |---|---|
-| **Auth** | `signInWithPassword()`, `signUp()`, `signOut()`, `onAuthStateChange()` |
-| **Database** | Tabelas `profiles`, `reviews`, `friendships` |
-| **Storage** | Bucket `avatars` para upload de fotos de perfil |
+| **Auth** | `signInWithPassword()`, `signUp()`, `signOut()`, `onAuthStateChange()`, password recovery |
+| **Database** | 9 tabelas: `profiles`, `reviews`, `friendships`, `lists`, `list_movies`, `list_collaborators`, `list_reviews`, `notifications`, `fcm_tokens` |
+| **Storage** | Bucket público `avatars` + bucket de attachment images |
+| **Realtime** | Channels para escutar INSERT/DELETE em `notifications`, `lists`, `list_collaborators`, `list_movies`, `list_reviews` |
+| **Edge Functions** | `send-push` — dispara push notifications via Firebase Cloud Messaging |
 
 **Variáveis de ambiente:** `VITE_SUPABASE_URL`, `VITE_SUPABASE_KEY`
 
@@ -386,11 +535,20 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 
 | Endpoint | Uso |
 |---|---|
-| `/movie/{id}` | Detalhes completos + créditos + providers |
+| `/movie/{id}?append_to_response=credits,watch/providers` | Detalhes completos + créditos + streaming |
 | `/search/movie` | Busca por título |
 
-**Parâmetros:** `api_key` (env), `language=pt-BR`, `append_to_response=credits,watch/providers`
+**Parâmetros padrão:** `api_key`, `language=pt-BR`
 **Variável de ambiente:** `VITE_TMDB_API_KEY`
+
+**Dados extraídos:**
+- Diretores (filtro `job === "Director"`)
+- Elenco (top 5)
+- Gêneros traduzidos
+- Países (traduzidos via `Intl.DisplayNames`)
+- Poster e sinopse em PT-BR
+- Streaming providers (região BR, flatrate)
+- Runtime (duração em minutos)
 
 ---
 
@@ -400,7 +558,7 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 | Coluna | Tipo | Descrição |
 |---|---|---|
 | `id` | UUID (FK auth.users) | ID do usuário |
-| `username` | TEXT (unique) | Nome de usuário |
+| `username` | TEXT (unique) | Nome de usuário (lowercase, alfanumérico + underscore) |
 | `avatar_url` | TEXT (nullable) | URL pública do avatar |
 
 ### `reviews`
@@ -409,10 +567,12 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 | `id` | BIGINT (PK) | ID da review |
 | `user_id` | UUID (FK profiles) | Autor |
 | `tmdb_id` | INTEGER | ID do filme no TMDB |
-| `rating` | FLOAT (nullable) | Nota (null = watchlist) |
+| `rating` | FLOAT (nullable) | Nota 0-10 (null = watchlist) |
 | `review` | TEXT | Texto da review |
-| `recommended` | TEXT | Veredito (5 opções) |
+| `recommended` | TEXT | Veredito (5 opções: de "Assista com certeza" a "Não perca seu tempo") |
+| `location` | TEXT (nullable) | Onde assistiu (cinema, casa, etc.) |
 | `status` | TEXT | `'watched'` ou `'watchlist'` |
+| `attachment_url` | TEXT (nullable) | URL de imagem anexa (bilhete, foto) |
 | `created_at` | TIMESTAMP | Data de criação |
 
 ### `friendships`
@@ -424,19 +584,144 @@ O `ShareCard` usa **inline styles** (exceção à regra CSS Modules) porque o `h
 | `status` | TEXT | `'pending'`, `'accepted'`, `'declined'` |
 | `created_at` | TIMESTAMP | Data do pedido |
 
-### Storage: Bucket `avatars`
-Bucket público. Arquivos nomeados `{user_id}-{random}.jpg`.
+### `lists`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `id` | UUID (PK) | ID da lista |
+| `owner_id` | UUID (FK profiles) | Dono da lista |
+| `name` | TEXT | Nome (max 50 caracteres) |
+| `description` | TEXT (nullable) | Descrição (max 200 caracteres) |
+| `type` | TEXT | `'private'`, `'partial_shared'`, `'full_shared'` |
+| `has_rating` | BOOLEAN | Se a lista tem sistema de rating |
+| `rating_type` | TEXT (nullable) | `'manual'` ou `'average'` |
+| `manual_rating` | FLOAT (nullable) | Rating manual definido pelo dono |
+| `auto_sync` | BOOLEAN | Sincronizar filmes do perfil automaticamente |
+| `created_at` | TIMESTAMP | Data de criação |
+
+### `list_movies`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `list_id` | UUID (FK lists) | Lista |
+| `tmdb_id` | INTEGER | Filme |
+| `added_by` | UUID (FK profiles) | Quem adicionou |
+| `created_at` | TIMESTAMP | Data de adição |
+
+### `list_collaborators`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `id` | UUID (PK) | ID |
+| `list_id` | UUID (FK lists) | Lista |
+| `user_id` | UUID (FK profiles) | Colaborador |
+| `role` | TEXT | `'owner'` ou `'member'` |
+| `status` | TEXT | `'pending'` ou `'accepted'` |
+| `created_at` | TIMESTAMP | Data do convite |
+
+### `list_reviews`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `id` | UUID (PK) | ID |
+| `list_id` | UUID (FK lists) | Lista |
+| `tmdb_id` | INTEGER | Filme |
+| `user_id` | UUID (FK profiles, nullable) | Autor (null = review da lista) |
+| `rating` | FLOAT (nullable) | Nota |
+| `review` | TEXT (nullable) | Texto |
+| `recommended` | TEXT (nullable) | Veredito |
+| `created_at` | TIMESTAMP | Data |
+
+### `notifications`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `id` | UUID (PK) | ID |
+| `user_id` | UUID (FK profiles) | Destinatário |
+| `sender_id` | UUID (FK profiles, nullable) | Remetente |
+| `type` | TEXT | `'friend_request'`, `'list_invite'`, `'movie_added'`, `'general'` |
+| `message` | TEXT | Texto |
+| `reference_id` | UUID (nullable) | Referência (ex: `list_id` para convites) |
+| `is_read` | BOOLEAN | Lida |
+| `created_at` | TIMESTAMP | Data |
+
+### `fcm_tokens`
+| Coluna | Tipo | Descrição |
+|---|---|---|
+| `user_id` | UUID (FK profiles) | Dono do dispositivo |
+| `token` | TEXT | Token FCM |
+| `created_at` | TIMESTAMP | Data de registro |
+
+### Storage
+
+| Bucket | Tipo | Uso |
+|---|---|---|
+| `avatars` | Público | Fotos de perfil. Nomeados `{user_id}-{random}.jpg` |
+| (attachments) | Público | Imagens anexas a reviews (bilhetes, fotos) |
 
 ---
 
 ## PWA (Progressive Web App)
 
-O app é instalável como PWA via **Vite PWA Plugin**:
+- **Plugin:** Vite PWA (`vite-plugin-pwa`)
+- **Estratégia:** Auto-update (atualiza automaticamente sem intervenção)
+- **Service Worker:** Workbox (`dev-dist/sw.js`)
+- **Manifest:** Nome "JJ Review", ícones 192×192 e 512×512, display standalone
+- **Instalação:** Funciona como app nativo quando instalado no celular
 
-- Estratégia: **auto-update** (atualiza automaticamente)
-- Service Worker: gerado pelo Workbox (`dev-dist/sw.js`)
-- Manifest: ícones 192×192 e 512×512, display standalone
-- Cor do tema: `#212529`
+---
+
+## Capacitor (App Nativo Android)
+
+| Config | Valor |
+|---|---|
+| **App ID** | `com.jv.jjreviews` |
+| **App Name** | `JJ Reviews` |
+| **Web Dir** | `dist` |
+
+| Plugin | Uso |
+|---|---|
+| `@capacitor/app` | Botão voltar nativo (`backButton` listener). Deep links (`appUrlOpen` listener) |
+| `@capacitor/push-notifications` | Registro FCM, listener de push em foreground e tap |
+| `@capacitor/filesystem` | Salvar PNG no cache do dispositivo antes de compartilhar |
+| `@capacitor/share` | Share sheet nativo para imagem e link |
+
+**Botão Voltar Android:** `backButton` → `window.history.back()` (fecha modal/muda aba) ou `exitApp()` (tela inicial limpa).
+
+**Deep Links:** Escuta `appUrlOpen` e extrai `?movie={id}` da URL para abrir o filme dentro do app nativo.
+
+---
+
+## Testes
+
+| Script | Comando |
+|---|---|
+| `test` | `vitest run` — roda uma vez e sai |
+| `test:watch` | `vitest` — modo watch interativo |
+| `test:coverage` | `vitest run --coverage` — com relatório de cobertura |
+
+**Ambiente:** jsdom (simula browser para componentes React)
+
+| Biblioteca | Uso |
+|---|---|
+| `vitest` | Test runner nativo do Vite |
+| `@testing-library/react` | `render()`, `screen`, queries para testar componentes |
+| `@testing-library/jest-dom` | Matchers: `.toBeInTheDocument()`, `.toHaveTextContent()`, etc. |
+| `@testing-library/user-event` | `userEvent.click()`, `userEvent.type()` para simular interação |
+| `jsdom` | Ambiente de browser virtual |
+
+---
+
+## Relação com Bootstrap
+
+`react-bootstrap` é usado para:
+- **Componentes:** `Modal`, `Button`, `Form`, `Badge`, `Dropdown`, `ProgressBar`
+- **Utilitários:** `d-flex`, `text-center`, `mb-4`, `fw-bold`, `d-md-none`, `gap-3`
+
+**Quando usar Bootstrap:** Layout rápido + componentes de UI padrão.
+**Quando usar CSS Module:** Visual único do componente (hover, cores, animações).
+
+**Regra:**
+- Layout → Bootstrap (`d-flex`, `gap-3`, `mb-4`)
+- Visual → CSS Module (`.ratingBadge`, `.championImage`)
+- Inline styles → **EVITAR**. Exceção: `ShareCard` (html2canvas)
+
+`global.css` inclui **overrides de dark theme** para Bootstrap: modais, forms, focus states com glow dourado.
 
 ---
 
@@ -444,85 +729,18 @@ O app é instalável como PWA via **Vite PWA Plugin**:
 
 | Pasta | O que vai aqui | Exemplo |
 |---|---|---|
-| `components/layout/` | Peças estruturais da página (navbar, footer, bottom nav) | `AppNavbar`, `BottomNav`, `Footer` |
-| `components/ui/` | Componentes genéricos reutilizáveis, sem lógica de negócio | `ConfirmModal`, `EmptyState`, `StarRating` |
-| `features/XYZ/` | Tudo relacionado a uma funcionalidade completa | `movies`, `auth`, `battle`, `friends` |
-| `lib/` | Inicialização de clientes externos | `supabase.ts` |
-| `services/` (dentro de feature) | Chamadas de API dessa feature | `tmdbService.ts` |
-| `types/` | Interfaces/types compartilhados entre features | `MovieData`, `Friendship` |
+| `features/XYZ/` | Tudo de uma funcionalidade completa | `movies`, `auth`, `lists`, `notifications` |
+| `features/XYZ/components/` | Componentes visuais da feature | `MovieCard`, `CreateListModal` |
+| `features/XYZ/hooks/` | Hooks de estado/efeitos da feature | `useMovies`, `useLists` |
+| `features/XYZ/services/` | Chamadas de API da feature | `tmdbService.ts` |
+| `components/layout/` | Estrutura da página | `AppNavbar`, `BottomNav`, `Footer` |
+| `components/ui/` | Componentes genéricos sem lógica de negócio | `ConfirmModal`, `StarRating` |
+| `hooks/` | Hooks globais cross-feature | `useModalBack`, `usePushNotifications` |
+| `lib/` | Clientes de serviços externos | `supabase.ts` |
+| `types/` | Types compartilhados entre features | `MovieData`, `CustomList` |
 | `utils/` | Funções puras sem side effects | `getBadgeStyle()`, `getCroppedImg()` |
-| `constants/` | Valores fixos | `OSCAR_NOMINEES_IDS` |
-| `styles/` | Design tokens e CSS global (reset, dark theme, overrides Bootstrap) | `variables.css`, `global.css` |
-
----
-
-## Como Adicionar uma Nova Feature
-
-Exemplo: Adicionar uma feature **"Listas"** (listas personalizadas de filmes).
-
-### Passo 1: Criar a pasta da feature
-
-```
-src/features/lists/
-├── components/
-│   └── ListCard/
-│       ├── ListCard.tsx
-│       └── ListCard.module.css
-├── hooks/
-│   └── useLists.ts
-├── services/
-│   └── listService.ts       # (se tiver API própria)
-└── index.ts
-```
-
-### Passo 2: Criar o barrel export
-
-```typescript
-// features/lists/index.ts
-export { ListCard } from "./components/ListCard/ListCard";
-export { useLists } from "./hooks/useLists";
-```
-
-### Passo 3: Tipos novos? Adicionar em `types/index.ts`
-
-```typescript
-export interface MovieList {
-   id: number;
-   name: string;
-   movie_ids: number[];
-   created_at: string;
-}
-```
-
-### Passo 4: Usar no App.tsx
-
-```typescript
-import { ListCard, useLists } from "@/features/lists";
-```
-
-### Passo 5: Estilos
-
-- Crie `ListCard.module.css` na pasta do componente
-- Use variáveis de `variables.css`
-- Se precisar de uma cor nova, adicione em `variables.css` primeiro
-
----
-
-## Relação com Bootstrap
-
-O projeto usa `react-bootstrap` para:
-- **Componentes prontos**: `Modal`, `Button`, `Form`, `Badge`, `Dropdown`, etc.
-- **Classes utilitárias**: `d-flex`, `text-center`, `mb-4`, `fw-bold`, `d-md-none`, etc.
-
-**Quando usar Bootstrap:** Para layouts rápidos e componentes de UI padrão.
-**Quando usar CSS Module:** Para estilos visuais específicos do componente (hover, cores customizadas, animações).
-
-**Regra prática:**
-- Layout e espaçamento → classes Bootstrap (`d-flex`, `gap-3`, `mb-4`)
-- Visual único do componente → CSS Module (`.ratingBadge`, `.championImage`)
-- Inline styles → **EVITAR**. Exceção: `ShareCard` (necessário para `html2canvas`)
-
-Os estilos globais em `global.css` incluem **overrides de dark theme** para componentes Bootstrap (modais, forms, cards, badges, focus states com glow dourado).
+| `constants/` | Valores fixos imutáveis | `OSCAR_NOMINEES_IDS` |
+| `styles/` | Design tokens + CSS global + overrides Bootstrap | `variables.css`, `global.css` |
 
 ---
 
@@ -537,21 +755,21 @@ Os estilos globais em `global.css` incluem **overrides de dark theme** para comp
 | Service | camelCase + `Service` | `tmdbService.ts` |
 | Barrel export | `index.ts` | `features/movies/index.ts` |
 | Constantes | UPPER_SNAKE_CASE | `OSCAR_NOMINEES_IDS` |
-| Tipos/Interfaces | PascalCase | `MovieData`, `TmdbProvider`, `Friendship` |
-| Variáveis CSS | kebab-case com `--` prefix | `--gold`, `--bg-surface` |
+| Tipos/Interfaces | PascalCase | `MovieData`, `TmdbProvider`, `CustomList` |
+| Variáveis CSS | kebab-case com `--` | `--gold`, `--bg-surface` |
 
 ---
 
 ## Path Alias
 
-O projeto usa `@/` como alias para `src/`:
+`@/` é alias para `src/`:
 
 ```typescript
 // ✅ Correto
 import { MovieData } from "@/types";
 import { supabase } from "@/lib/supabase";
 
-// ❌ Errado (imports relativos longos)
+// ❌ Errado
 import { MovieData } from "../../../types";
 ```
 
@@ -561,15 +779,16 @@ Configurado em `tsconfig.app.json` e `vite.config.ts`.
 
 ## Checklist para Code Review
 
-Antes de aprovar um PR, verifique:
-
 - [ ] Componentes novos ficam dentro de `features/` (não soltos em `src/`)
-- [ ] Estilos de componente usam CSS Module (não inline styles)
+- [ ] Estilos usam CSS Module (não inline styles, exceto ShareCard)
 - [ ] Cores novas são variáveis CSS em `variables.css`
 - [ ] Chamadas de API passam por um service
 - [ ] Imports usam `@/` (não caminhos relativos longos)
 - [ ] Feature tem `index.ts` com exports públicos
-- [ ] Hooks novos seguem prefixo `use`
+- [ ] Hooks seguem prefixo `use` e estão na pasta `hooks/` da feature
 - [ ] Types compartilhados estão em `types/index.ts`
-- [ ] Componentes de layout/ui genéricos ficam em `components/`, não em `features/`
+- [ ] Componentes genéricos (layout/ui) ficam em `components/`, não em `features/`
 - [ ] Dark theme respeitado — sem cores claras hardcoded
+- [ ] Realtime subscriptions têm cleanup no `return` do useEffect
+- [ ] Notificações criadas quando ações afetam outros usuários
+- [ ] `useModalBack()` usado em todos os modais para suporte ao botão voltar Android

@@ -53,12 +53,19 @@ export function PublicProfile() {
 
    const movieIdInUrl = searchParams.get("movie");
    const selectedMovie = movieIdInUrl && movies.length > 0
-      ? movies.find(m => m.id.toString() === movieIdInUrl) || null
+      ? movies.find(m => 
+           (m.tmdb_id && m.tmdb_id.toString() === movieIdInUrl) || 
+           (m.id && m.id.toString() === movieIdInUrl)
+        ) || null
       : null;
 
+
    const handleOpenPublicModal = (movie: MovieData) => {
+
+      const targetId = movie.tmdb_id || movie.id;
+
       setSearchParams(prev => {
-         prev.set("movie", movie.id.toString());
+         prev.set("movie", targetId.toString());
          return prev;
       });
    };
@@ -340,7 +347,6 @@ export function PublicProfile() {
                </div>
             ) : (
                <>
-                  {/* 👇 ETIQUETAS DE FILTROS ATIVOS 👇 */}
                   {(filters.selectedDirector || filters.onlyInternational || filters.onlyNational || filters.onlyOscar || filters.selectedGenre) && (
                      <div className={styles.activeFilters}>
                         {filters.selectedDirector && (
