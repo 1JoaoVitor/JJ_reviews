@@ -184,7 +184,7 @@ function MainApp() {
       const targetId = movie.tmdb_id || movie.id;
       if (!targetId) return;
 
-      // 1Abre a interface com zero atraso
+      // Abre a interface com zero atraso
       setSelectedMovie(movie);
       setShowModal(true);
 
