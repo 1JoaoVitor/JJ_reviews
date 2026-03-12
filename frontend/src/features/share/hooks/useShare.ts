@@ -5,13 +5,15 @@ import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { toast } from "react-hot-toast";
 import type { MovieData } from "@/types";
+import { useAuth } from "@/features/auth/hooks/useAuth"; 
 
 export function useShare() {
+   const { username } = useAuth(); 
    const shareRef = useRef<HTMLDivElement>(null);
    const [sharingMovie, setSharingMovie] = useState<MovieData | null>(null);
    const [isSharing, setIsSharing] = useState(false);
 
-   // ─── COMPARTILHAR COMO IMAGEM (Antigo handleShare) ───
+   // ─── COMPARTILHAR COMO IMAGEM ───
    const handleShareImage = useCallback((movie: MovieData) => {
       return new Promise<void>((resolve) => {
          setSharingMovie(movie);
@@ -86,21 +88,23 @@ export function useShare() {
       });
    }, []);
 
-   // ───  COMPARTILHAR COMO LINK (NOVO) ───
+   // ─── COMPARTILHAR COMO LINK  ───
    const handleShareLink = useCallback(async (movie: MovieData) => {
-      // Força a URL base da Vercel, mas mantém o caminho atual
       const baseUrl = "https://jj-reviews.vercel.app";
-      const currentPath = window.location.pathname; // Ex: /perfil/usuario ou /
-      
+      let currentPath = window.location.pathname;
+
+      // Se estiver na Home ("/") e estiver logado, força para o seu perfil
+      if ((currentPath === "/" || currentPath === "") && username) {
+         currentPath = `/perfil/${username}`;
+      }
+
       const targetId = movie.tmdb_id || movie.id; 
-      
+
       const shareUrl = `${baseUrl}${currentPath}?movie=${targetId}`;
-      
       const title = `Review de ${movie.title}`;
       const text = `Confira a minha avaliação de ${movie.title} no JJ Reviews!`;
 
       if (Capacitor.isNativePlatform()) {
-         // Abre a gaveta nativa do Android/iOS
          await Share.share({
             title,
             text,
@@ -109,19 +113,17 @@ export function useShare() {
          });
       } else {
          if (navigator.share) {
-            // Abre a gaveta nativa de compartilhamento em navegadores compatíveis
             try {
                await navigator.share({ title, text, url: shareUrl });
             } catch (err) {
                console.log("Partilha de link cancelada", err);
             }
          } else {
-            // Fallback para PC: Copia para a área de transferência
             navigator.clipboard.writeText(shareUrl);
             toast.success("Link copiado para a área de transferência!");
          }
       }
-   }, []);
+   }, [username]);
 
    return { shareRef, sharingMovie, isSharing, handleShareImage, handleShareLink };
 }
