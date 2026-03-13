@@ -76,12 +76,39 @@
    margin-bottom: 0.5rem;
 }
 
+/* ─── Modificadores de Cor dos Ícones ─── */
+.iconGold {
+   color: var(--gold);
+}
+
+.iconYellow {
+   color: #EAB308;
+}
+
+.iconBlue {
+   color: #3B82F6;
+}
+
+.iconGreen {
+   color: #10B981;
+}
+
+.iconPurple {
+   color: #A855F7;
+}
+
 .statValue {
    font-weight: 800;
    font-size: var(--font-2xl);
    color: var(--text-primary);
    line-height: 1.1;
    margin-bottom: 0.25rem;
+}
+
+/* ─── Modificador de Tamanho do Runtime ─── */
+.statValueRuntime {
+   font-size: 1.5rem;
+   margin-top: 0.4rem;
 }
 
 .statLabel {
@@ -116,4 +143,3 @@
 .clickable:active {
    transform: translateY(0);
 }
-

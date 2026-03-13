@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { Film, Clock, Globe, Clapperboard, Star } from "lucide-react";
 import type { MovieData } from "@/types";
+import { calculateDashboardStats } from "../../logic/calculateStats";
 import styles from "./Dashboard.module.css";
 
 interface DashboardProps {
@@ -9,54 +11,23 @@ interface DashboardProps {
 }
 
 export function Dashboard({ movies, onFilterDirector, onFilterNonUS }: DashboardProps) {
-   const watchedMovies = movies.filter(m => m.status === "watched");
+   // Apenas passa os dados para o Núcleo
+   const stats = useMemo(() => calculateDashboardStats(movies), [movies]);
 
-   if (watchedMovies.length === 0) return null;
+   if (stats.totalMovies === 0) return null;
 
-   const totalMovies = watchedMovies.length;
-
-   const totalRating = watchedMovies.reduce(
-      (acc, movie) => acc + (movie.rating || 0),
-      0,
-   );
-   const averageRating =
-      watchedMovies.length > 0
-         ? (totalRating / watchedMovies.length).toFixed(1)
-         : "0.0";
-
-
-   // ─── LÓGICA DO TEMPO ASSISTIDO ───
-   const totalMinutes = watchedMovies.reduce(
-      (acc, movie) => acc + (movie.runtime || 0),
-      0
-   );
-   const days = Math.floor(totalMinutes / (24 * 60));
-   const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-
-   // ─── LÓGICA DE FILMES INTERNACIONAIS ───
-   const nonUSCount = watchedMovies.filter(
-      (m) => !m.countries?.includes("Estados Unidos"),
-   ).length;
-   const nonUSPercentage = totalMovies > 0 ? ((nonUSCount / totalMovies) * 100).toFixed(0) : "0";
-
-   // ─── LÓGICA DO DIRETOR FAVORITO ───
-   const directorCounts: Record<string, number> = {};
-   watchedMovies.forEach((movie) => {
-      const mainDirector =
-         movie.director?.split(",")[0].trim() || "Desconhecido";
-      if (mainDirector !== "Desconhecido") {
-         directorCounts[mainDirector] = (directorCounts[mainDirector] || 0) + 1;
-      }
-   });
-
-   let topDirector = "-";
-   let maxCount = 0;
-   Object.entries(directorCounts).forEach(([director, count]) => {
-      if (count > maxCount) {
-         topDirector = director;
-         maxCount = count;
-      }
-   });
+   // Helper de formatação de tempo (apenas formatação visual)
+   const formatRuntime = (totalMinutes: number) => {
+      const days = Math.floor(totalMinutes / (24 * 60));
+      const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+      
+      return (
+         <>
+            {days > 0 && <span>{days}d </span>}
+            {hours}h
+         </>
+      );
+   };
 
    return (
       <div>
@@ -65,55 +36,66 @@ export function Dashboard({ movies, onFilterDirector, onFilterNonUS }: Dashboard
             
             {/* Total de Filmes */}
             <div className={`${styles.statCard} ${styles.statCardTotal}`}>
-               <div className={styles.icon}><Film size={20} color="var(--gold)" /></div>
-               <div className={styles.statValue}>{totalMovies}</div>
+               <div className={`${styles.icon} ${styles.iconGold}`}>
+                  <Film size={20} />
+               </div>
+               <div className={styles.statValue}>{stats.totalMovies}</div>
                <div className={styles.statLabel}>Filmes Assistidos</div>
             </div>
 
             {/* Média Geral */}
             <div className={`${styles.statCard} ${styles.statCardAverage}`}>
-               <div className={styles.icon}><Star size={20} color="#EAB308" /></div>
-               <div className={styles.statValue}>{averageRating}</div>
+               <div className={`${styles.icon} ${styles.iconYellow}`}>
+                  <Star size={20} />
+               </div>
+               <div className={styles.statValue}>
+                  {stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "0.0"}
+               </div>
                <div className={styles.statLabel}>Média Geral</div>
             </div>
 
             {/* Tempo Assistido */}
             <div className={`${styles.statCard} ${styles.statCardAverage}`}>
-               <div className={styles.icon}><Clock size={20} color="#3B82F6" /></div>
-               <div className={styles.statValue} style={{ fontSize: '1.5rem', marginTop: '0.4rem' }}>
-                  {days > 0 && <span>{days}d </span>}
-                  {hours}h
+               <div className={`${styles.icon} ${styles.iconBlue}`}>
+                  <Clock size={20} />
+               </div>
+               <div className={`${styles.statValue} ${styles.statValueRuntime}`}>
+                  {formatRuntime(stats.totalRuntimeMinutes)}
                </div>
                <div className={styles.statLabel}>Tempo de Vida</div>
             </div>
 
-            {/* Internacionais */}
+            {/* Internacionais (Fora dos EUA) */}
             <div 
                className={`${styles.statCard} ${styles.statCardInternational} ${onFilterNonUS ? styles.clickable : ''}`}
                onClick={() => onFilterNonUS && onFilterNonUS()}
                title="Clique para ver os seus filmes internacionais"
             >
-               <div className={styles.icon}><Globe size={20} color="#10B981" /></div>
-               <div className={styles.statValue}>{nonUSPercentage}%</div>
-               <div className={styles.statLabel}>Fora dos EUA ({nonUSCount})</div>
+               <div className={`${styles.icon} ${styles.iconGreen}`}>
+                  <Globe size={20} />
+               </div>
+               <div className={styles.statValue}>{stats.internationalPercent}%</div>
+               <div className={styles.statLabel}>Fora dos EUA ({stats.internationalCount})</div>
             </div>
 
             {/* Diretor Favorito */}
             <div 
-               className={`${styles.statCard} ${styles.statCardDirector} ${maxCount > 1 && onFilterDirector ? styles.clickable : ''}`}
+               className={`${styles.statCard} ${styles.statCardDirector} ${stats.topDirector && onFilterDirector ? styles.clickable : ''}`}
                onClick={() => {
-                  if (maxCount > 1 && onFilterDirector) {
-                     onFilterDirector(topDirector);
+                  if (stats.topDirector && onFilterDirector) {
+                     onFilterDirector(stats.topDirector.name);
                   }
                }}
-               title={maxCount > 1 ? `Clique para ver os filmes de ${topDirector}` : ''}
+               title={stats.topDirector ? `Clique para ver os filmes de ${stats.topDirector.name}` : ''}
             >
-               <div className={styles.icon}><Clapperboard size={20} color="#A855F7" /></div>
+               <div className={`${styles.icon} ${styles.iconPurple}`}>
+                  <Clapperboard size={20} />
+               </div>
                <div className={styles.directorName}>
-                  {maxCount > 1 ? topDirector : "Vários"}
+                  {stats.topDirector ? stats.topDirector.name : "Vários"}
                </div>
                <div className={styles.statLabel}>
-                  {maxCount > 1 ? `${maxCount} filmes` : "Diretor Favorito"}
+                  {stats.topDirector ? `${stats.topDirector.count} filmes` : "Diretor Favorito"}
                </div>
             </div>
 
