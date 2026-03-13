@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
 import { calculateAverageBadge } from "@/utils/badges";
+import type { BaseMovieRow } from "@/features/movies";
 
 const listCache: Record<string, number[]> = {};
 
@@ -141,12 +142,13 @@ export function ListDetails({
          }
 
          // Junta as notas com os "esqueletos" (Resolvendo também a tipagem do TypeScript de forma segura)
-         const rawMovies = tmdbIds.map(id => {
+         const rawMovies: BaseMovieRow[] = tmdbIds.map(id => {
             const reviewData = reviewsMap[id] || {};
+            
             return {
-               ...reviewData, // Injeta as estrelas, review, status, etc.
+               ...reviewData,
                tmdb_id: id
-            } as unknown as Record<string, unknown> & { tmdb_id: number };
+            };
          });
 
          // Vai ao TMDB buscar as capas

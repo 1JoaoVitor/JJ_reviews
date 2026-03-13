@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react"; // 👈 Filter adicionado
+import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
 import { NotificationBell } from "@/features/notifications";
+import type { SortOrder } from "@/features/movies";
 
 interface AppNavbarProps {
    onlyNational: boolean;
    setOnlyNational: (val: boolean) => void;
    onlyOscar: boolean;
    setOnlyOscar: (val: boolean) => void;
-   sortOrder: string;
-   setSortOrder: (val: string) => void;
+   sortOrder: SortOrder;
+   setSortOrder: (val: SortOrder) => void;
    searchTerm: string;
    setSearchTerm: (val: string) => void;
    availableGenres: string[];

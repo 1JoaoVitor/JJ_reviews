@@ -5,3 +5,7 @@ export { AddMovieModal } from "./components/AddMovieModal/AddMovieModal";
 export { searchMovies } from "./services/tmdbService";
 export { useMovies } from "./hooks/useMovies";
 export { useMovieFilters } from "./hooks/useMovieFilters";
+export { mapTmdbToMovieData } from "./logic/enrichMovie";
+export type { SortOrder } from "./logic/sortMovies";
+export type { BaseMovieRow } from "./logic/enrichMovie";
+export type { TmdbRawResponse } from "./logic/enrichMovie";
