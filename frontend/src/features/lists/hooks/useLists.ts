@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import type { CustomList } from "@/types";
+import { 
+   mergeLists, 
+   deduplicateLists, 
+   mapListCounts, 
+   sortListsByDate,
+   type RawSupabaseList 
+} from "../logic/listOperations";
+
 
 export function useLists(userId?: string) {
    const [lists, setLists] = useState<CustomList[]>([]);
@@ -15,8 +23,7 @@ export function useLists(userId?: string) {
          const { data: myLists, error: err1 } = await supabase
             .from("lists")
             .select("*, list_movies(count)")
-            .eq("owner_id", userId)
-            .order("created_at", { ascending: false });
+            .eq("owner_id", userId);
 
          if (err1) throw err1;
 
@@ -29,33 +36,23 @@ export function useLists(userId?: string) {
 
          if (err2) throw err2;
 
-         const sharedLists = collabData?.map(item => item.lists) || [];
+         const sharedLists = collabData?.flatMap(item => item.lists) || [];
 
-         // Junta tudo, remove possíveis duplicatas e atualiza o estado
-         const allLists = [...(myLists || []), ...sharedLists];
+         // 🌟 A MÁGICA: A Linha de Montagem Funcional!
+         const merged = mergeLists(myLists as unknown as RawSupabaseList[], sharedLists as unknown as RawSupabaseList[]);
+         const unique = deduplicateLists(merged);
+         const withCounts = mapListCounts(unique);
+         const finalSortedLists = sortListsByDate(withCounts);
+
+         setLists(finalSortedLists);
          
-         // Remove duplicadas baseadas no ID (caso haja algum bug no banco)
-         const uniqueLists = Array.from(new Map(allLists.map(item => [item.id, item])).values());
-
-         // Ordena pelas mais recentes
-         uniqueLists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-         // Mapeia o count agregado para movie_count
-         const listsWithCount = uniqueLists.map(list => ({
-            ...list,
-            movie_count: (list as Record<string, unknown>).list_movies
-               ? ((list as Record<string, unknown>).list_movies as { count: number }[])[0]?.count ?? 0
-               : 0,
-         }));
-
-         setLists(listsWithCount as CustomList[]);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
       } finally {
          setLoading(false);
       }
    }, [userId]);
-
+   
    useEffect(() => {
       if (userId) {
          fetchLists();

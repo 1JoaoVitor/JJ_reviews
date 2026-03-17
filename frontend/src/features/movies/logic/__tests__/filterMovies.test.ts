@@ -96,3 +96,35 @@ describe("filterMovies (Functional Core)", () => {
    });
 
 });
+
+describe("Tratamento de Falhas", () => {
+   it("não deve quebrar se os filmes não tiverem gêneros ou diretores cadastrados", () => {
+      const moviesWithoutData: MovieData[] = [
+         // @ts-expect-error: Testando resiliência com arrays ausentes
+         { id: 1, title: "Filme Estranho", status: "watched", genres: undefined, director: undefined },
+      ];
+
+      const filters = {
+         viewMode: "watched" as const,
+         searchTerm: "",
+         selectedGenre: "Ação", 
+         selectedDirector: "Nolan", 
+         onlyNational: false,
+         onlyOscar: false,
+         onlyInternational: false,
+      };
+
+      // A função deve simplesmente ocultar o filme, mas NUNCA lançar um erro (ex: undefined is not iterable)
+      const result = filterMovies(moviesWithoutData, filters);
+      expect(result).toHaveLength(0); 
+   });
+
+   it("deve ser case-insensitive e ignorar espaços extras na busca", () => {
+      const movies: MovieData[] = [
+         { id: 1, title: "Batman", status: "watched" } as MovieData,
+      ];
+
+      const result = filterMovies(movies, { ...defaultFilters, searchTerm: "   bAtMaN   " });
+      expect(result).toHaveLength(1);
+   });
+});

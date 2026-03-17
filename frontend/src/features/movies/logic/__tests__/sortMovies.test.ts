@@ -54,3 +54,41 @@ describe("sortMovies (Functional Core)", () => {
    });
 
 });
+
+describe("Tratamento de Falhas", () => {
+   it("deve jogar os filmes sem data de lançamento para o final da lista (Ordenação por Data)", () => {
+      const movies: MovieData[] = [
+         { id: 1, title: "Sem Data", release_date: undefined } as MovieData,
+         { id: 2, title: "Com Data", release_date: "2023-01-01" } as MovieData,
+      ];
+
+      const result = sortMovies(movies, "date");
+      
+      // O filme COM data tem de vir primeiro, o lixo/vazio vai para o final
+      expect(result[0].title).toBe("Com Data");
+      expect(result[1].title).toBe("Sem Data");
+   });
+
+   it("deve jogar os filmes sem nota para o final da lista (Ordenação por Rating)", () => {
+      const movies: MovieData[] = [
+         { id: 1, title: "Sem Nota", rating: null } as MovieData,
+         { id: 2, title: "Com Nota Baixa", rating: 2 } as MovieData,
+         { id: 3, title: "Com Nota Alta", rating: 9 } as MovieData,
+      ];
+
+      const result = sortMovies(movies, "rating");
+      
+      // A ordem esperada é: Maior nota -> Menor nota -> Sem nota
+      expect(result[0].title).toBe("Com Nota Alta");
+      expect(result[2].title).toBe("Sem Nota");
+   });
+
+   it("deve retornar o array intacto se receber uma ordem de ordenação inválida", () => {
+      const movies: MovieData[] = [{ id: 1, title: "A" } as MovieData];
+      
+      // @ts-expect-error: Injetando um sortOrder que não existe na tipagem
+      const result = sortMovies(movies, "ordem_maluca");
+      
+      expect(result).toEqual(movies);
+   });
+});

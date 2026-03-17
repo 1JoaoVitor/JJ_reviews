@@ -179,12 +179,12 @@ export function PublicProfile() {
                               <UserPlus size={18} /> Adicionar
                            </button>
                         )}
-                        {friendStatus === "pending_sent" && (
+                        {friendStatus === "request_sent" && (
                            <button className={styles.pendingBtn} onClick={removeOrCancel}>
                               <Clock size={18} /> Pendente
                            </button>
                         )}
-                        {friendStatus === "pending_received" && (
+                        {friendStatus === "request_received" && (
                            <div className="d-flex gap-2">
                               <button className={styles.acceptBtn} onClick={acceptRequest}>
                                  <UserCheck size={18} /> Aceitar
@@ -194,7 +194,7 @@ export function PublicProfile() {
                               </button>
                            </div>
                         )}
-                        {friendStatus === "accepted" && (
+                        {friendStatus === "friends" && (
                            <button className={styles.friendsBtn} onClick={() => setShowRemoveFriend(true)}>
                               <UserCheck size={18} /> Amigos
                            </button>

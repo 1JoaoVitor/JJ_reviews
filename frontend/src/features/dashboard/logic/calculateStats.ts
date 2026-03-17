@@ -31,8 +31,11 @@ export function calculateDashboardStats(movies: MovieData[]): DashboardStats {
       ? ratedMovies.reduce((sum, m) => sum + (m.rating || 0), 0) / ratedMovies.length
       : 0;
 
-   // Tempo de Vida (Soma dos minutos)
-   const totalRuntimeMinutes = watched.reduce((sum, m) => sum + (m.runtime || 0), 0);
+   // Tempo de Vida
+   const totalRuntimeMinutes = watched.reduce((sum, m) => {
+      const validRuntime = m.runtime && m.runtime > 0 ? m.runtime : 0;
+      return sum + validRuntime;
+   }, 0);
 
    // Filmes Internacionais (NÃO têm 'Estados Unidos' na lista de países)
    const internationalMovies = watched.filter(
