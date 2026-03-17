@@ -26,7 +26,7 @@ export function filterMovies(movies: MovieData[], filters: MovieFilters): MovieD
       // Busca Full-text
       if (!filters.searchTerm) return true;
       
-      const searchLower = filters.searchTerm.toLowerCase();
+      const searchLower = filters.searchTerm.toLowerCase().trim();
       return (
          movie.title?.toLowerCase().includes(searchLower) ||
          movie.review?.toLowerCase().includes(searchLower) ||

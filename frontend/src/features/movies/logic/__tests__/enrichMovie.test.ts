@@ -83,3 +83,42 @@ describe("mapTmdbToMovieData (Functional Core)", () => {
       expect(result.isOscar).toBe(true); // Verdadeiro porque o tmdb_id está no array de indicados
    });
 });
+
+describe("Tratamento de Falhas e Dados Ausentes)", () => {
+      it("deve lidar com uma resposta do TMDB completamente vazia sem quebrar a aplicação (Fallback Seguro)", () => {
+         const mockSupabaseRow = makeSupabaseRow({ id: 99, tmdb_id: 101 });
+         const emptyTmdbRaw = {} as TmdbRawResponse; // Simulando falha silenciosa da API
+
+         const result = mapTmdbToMovieData(mockSupabaseRow, emptyTmdbRaw);
+
+         expect(result.title).toBe("Título Desconhecido");
+         expect(result.director).toBe("Desconhecido"); 
+         expect(result.cast).toEqual([]);
+         expect(result.genres).toEqual([]);
+         expect(result.runtime).toBe(0);
+         expect(result.countries).toEqual([]);
+      });
+
+      it("deve ignorar códigos de país inválidos no Intl.DisplayNames sem lançar exceção (Try/Catch)", () => {
+         const mockSupabaseRow = makeSupabaseRow();
+         const tmdbWithBadCountry = makeTmdbRaw({
+            production_countries: [{ iso_3166_1: "XX", name: "País Inventado" }]
+         });
+
+         const result = mapTmdbToMovieData(mockSupabaseRow, tmdbWithBadCountry);
+
+         // Como falhou a tradução, tem de devolver o nome original que veio da API
+         expect(result.countries).toContain("País Inventado");
+      });
+      
+      it("deve retornar providers vazio se a árvore de watch/providers do TMDB vier pela metade", () => {
+         const mockSupabaseRow = makeSupabaseRow();
+         const tmdbBrokenProviders = makeTmdbRaw({
+            "watch/providers": { results: {} } // Sem a região BR
+         });
+
+         const result = mapTmdbToMovieData(mockSupabaseRow, tmdbBrokenProviders);
+
+         expect(result.providers).toEqual([]);
+      });
+   });

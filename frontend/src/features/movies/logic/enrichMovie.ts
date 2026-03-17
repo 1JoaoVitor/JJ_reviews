@@ -66,7 +66,8 @@ export function mapTmdbToMovieData(
    // Tradução nativa e dinâmica com Intl.DisplayNames
    const translatedCountries = rawCountries.map((c) => {
       try {
-         return regionNames.of(c.iso_3166_1) ?? c.name;
+         const translated = regionNames.of(c.iso_3166_1);
+         return translated && translated !== c.iso_3166_1 ? translated : c.name;
       } catch {
          return c.name;
       }

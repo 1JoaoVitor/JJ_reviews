@@ -6,6 +6,7 @@ import { Share } from "@capacitor/share";
 import { toast } from "react-hot-toast";
 import type { MovieData } from "@/types";
 import { useAuth } from "@/features/auth/hooks/useAuth"; 
+import { buildShareUrl, buildShareContent, buildImageFileName } from "../logic/shareOperations";
 
 export function useShare() {
    const { username } = useAuth(); 
@@ -29,10 +30,12 @@ export function useShare() {
                   });
 
                   const base64Data = canvas.toDataURL("image/png");
+                  const { title, text } = buildShareContent(movie.title);
+                  const fileName = buildImageFileName(movie.tmdb_id || movie.id, Date.now());
 
                   if (Capacitor.isNativePlatform()) {
                      const base64String = base64Data.split(",")[1];
-                     const fileName = `review-${movie.tmdb_id}-${Date.now()}.png`;
+                     
                      const savedFile = await Filesystem.writeFile({
                         path: fileName,
                         data: base64String,
@@ -40,32 +43,32 @@ export function useShare() {
                      });
 
                      await Share.share({
-                        title: `Review de ${movie.title}`,
-                        text: `Confira a minha avaliação de ${movie.title} no JJ Reviews!`,
+                        title,
+                        text,
                         url: savedFile.uri,
-                        dialogTitle: 'Partilhar Review',
+                        dialogTitle: 'Compartilhar Review',
                      });
                   } else {
                      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                      if (isMobile && navigator.canShare && navigator.share) {
                         canvas.toBlob(async (blob) => {
                            if (!blob) return;
-                           const file = new File([blob], `review-${movie.tmdb_id}.png`, { type: "image/png" });
+                           const file = new File([blob], fileName, { type: "image/png" });
                            if (navigator.canShare({ files: [file] })) {
                               try {
                                  await navigator.share({
                                     files: [file],
-                                    title: `Review de ${movie.title}`,
+                                    title,
                                  });
                               } catch (err) {
-                                 console.log("Partilha cancelada", err);
+                                 console.log("Compartilhamento cancelado", err);
                               }
                            }
                         }, "image/png");
                      } else {
                         const link = document.createElement("a");
                         link.href = base64Data;
-                        link.download = `review-${movie.title}.png`;
+                        link.download = fileName;
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -90,33 +93,22 @@ export function useShare() {
 
    // ─── COMPARTILHAR COMO LINK  ───
    const handleShareLink = useCallback(async (movie: MovieData) => {
-      const baseUrl = "https://jj-reviews.vercel.app";
-      let currentPath = window.location.pathname;
-
-      // Se estiver na Home ("/") e estiver logado, força para o seu perfil
-      if ((currentPath === "/" || currentPath === "") && username) {
-         currentPath = `/perfil/${username}`;
-      }
-
-      const targetId = movie.tmdb_id || movie.id; 
-
-      const shareUrl = `${baseUrl}${currentPath}?movie=${targetId}`;
-      const title = `Review de ${movie.title}`;
-      const text = `Confira a minha avaliação de ${movie.title} no JJ Reviews!`;
+      const shareUrl = buildShareUrl(movie, window.location.pathname, username);
+      const { title, text } = buildShareContent(movie.title);
 
       if (Capacitor.isNativePlatform()) {
          await Share.share({
             title,
             text,
             url: shareUrl,
-            dialogTitle: 'Partilhar Review',
+            dialogTitle: 'Compartilhar Review',
          });
       } else {
          if (navigator.share) {
             try {
                await navigator.share({ title, text, url: shareUrl });
             } catch (err) {
-               console.log("Partilha de link cancelada", err);
+               console.log("Compartilhamento de link cancelado", err);
             }
          } else {
             navigator.clipboard.writeText(shareUrl);

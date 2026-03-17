@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
-
-export type FriendshipState = "none" | "pending_sent" | "pending_received" | "accepted";
+import { mapFriendshipStatus, type DerivedFriendshipStatus } from "../logic/mapFriendshipStatus";
 
 export function useFriendship(loggedUserId?: string, profileUserId?: string) {
-   const [status, setStatus] = useState<FriendshipState>("none");
+   const [status, setStatus] = useState<DerivedFriendshipStatus>("none");
    const [loading, setLoading] = useState(true);
 
    const checkFriendship = useCallback(async () => {
-      if (!loggedUserId || !profileUserId || loggedUserId === profileUserId) {
+      if (!loggedUserId || !profileUserId) {
          setLoading(false);
          return;
       }
@@ -23,15 +22,9 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
 
          if (error) throw error;
 
-         if (!data) {
-            setStatus("none");
-         } else if (data.status === "accepted") {
-            setStatus("accepted");
-         } else if (data.requester_id === loggedUserId) {
-            setStatus("pending_sent");
-         } else {
-            setStatus("pending_received");
-         }
+         const derivedStatus = mapFriendshipStatus(loggedUserId, profileUserId, data);
+         setStatus(derivedStatus);
+
       } catch (error) {
          console.error("Erro ao verificar amizade:", error);
       } finally {
@@ -46,24 +39,21 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
    const sendRequest = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
-         // Grava o pedido de amizade
          const { error } = await supabase.from("friendships").insert({
             requester_id: loggedUserId,
             receiver_id: profileUserId,
          });
          if (error) throw error;
 
-         // Cria a Notificação para o destinatário
          const { error: notifError } = await supabase.from("notifications").insert({
             user_id: profileUserId, 
             sender_id: loggedUserId, 
             type: "friend_request",
             message: "enviou-te um pedido de amizade!",
          });
-
          if (notifError) console.error("Erro ao criar notificação de amizade:", notifError);
 
-         setStatus("pending_sent");
+         setStatus("request_sent");
          toast.success("Pedido enviado!");
       } catch (err) {
          if (err instanceof Error) {
@@ -77,7 +67,6 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
    const acceptRequest = async () => {
       if (!loggedUserId || !profileUserId) return;
       try {
-         // Atualiza o status para aceite
          const { error } = await supabase
             .from("friendships")
             .update({ status: "accepted" })
@@ -85,21 +74,19 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          
          if (error) throw error;
 
-         // Envia uma notificação de volta a avisar que aceitou
          const { error: notifError } = await supabase.from("notifications").insert({
             user_id: profileUserId, 
             sender_id: loggedUserId, 
             type: "friend_request", 
             message: "aceitou o teu pedido de amizade!",
          });
-
          if (notifError) console.error("Erro ao criar notificação de aceitação:", notifError);
 
-         setStatus("accepted");
+         setStatus("friends");
          toast.success("Pedido aceite! Agora vocês são amigos.");
       } catch (err) {
         if (err instanceof Error){
-         toast.error("Erro ao aceitar pedido." + err.message);
+         toast.error("Erro ao aceitar pedido: " + err.message);
         } else {
             toast.error("Ocorreu um erro desconhecido.");
          }

@@ -81,3 +81,30 @@ describe("calculateDashboardStats (Functional Core)", () => {
    });
 
 });
+
+describe("Sad Paths (Tratamento de Falhas e Dados Ausentes)", () => {
+   it("não deve contar 'Desconhecido' ou 'Diretor Desconhecido' como Diretor Favorito", () => {
+      const movies = [
+         makeMovie({ director: "Desconhecido", status: "watched" }),
+         makeMovie({ director: "Desconhecido", status: "watched" }),
+         makeMovie({ director: "Diretor Desconhecido", status: "watched" }),
+      ];
+
+      const stats = calculateDashboardStats(movies);
+      
+      // O Dashboard não pode dizer que o diretor favorito é o senhor "Desconhecido"
+      expect(stats.topDirector).toBeNull(); 
+   });
+
+   it("deve lidar de forma segura com valores nulos ou inválidos no runtime e ratings", () => {
+      const movies = [
+         makeMovie({ runtime: undefined, rating: null, status: "watched" }),
+         makeMovie({ runtime: -50, rating: 999, status: "watched" }), 
+      ];
+
+      const stats = calculateDashboardStats(movies);
+      
+      expect(stats.totalMovies).toBe(2);
+      expect(stats.totalRuntimeMinutes).toBe(0); 
+   });
+});
