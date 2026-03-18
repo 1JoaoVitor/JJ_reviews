@@ -32,6 +32,7 @@ import { SupportPage } from "@/features/support";
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { Footer } from "@/components/layout/Footer/Footer";
+import { InstallButton } from "@/components/installButton/InstallButton"; 
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay/LoadingOverlay";
 import { LandingPage } from "@/components/landing/LandingPage";
 
@@ -109,6 +110,7 @@ function MainApp() {
                success: { iconTheme: { primary: 'var(--gold)', secondary: '#000' } }
             }} 
          />
+         <InstallButton />
 
          <AppNavbar
             onlyNational={filters.onlyNational}
