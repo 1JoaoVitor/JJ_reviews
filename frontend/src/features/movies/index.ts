@@ -1,7 +1,13 @@
 export { MovieCard } from "./components/MovieCard/MovieCard";
 export { MovieCardSkeleton } from "./components/MovieCardSkeleton/MovieCardSkeleton";
 export { MovieModal } from "./components/MovieModal/MovieModal";
+export { MoviesView } from "./components/MovieViews/MoviesView";
 export { AddMovieModal } from "./components/AddMovieModal/AddMovieModal";
 export { searchMovies } from "./services/tmdbService";
 export { useMovies } from "./hooks/useMovies";
 export { useMovieFilters } from "./hooks/useMovieFilters";
+export { useDeleteMovie } from "./hooks/useDeleteMovie";
+export { mapTmdbToMovieData } from "./logic/enrichMovie";
+export type { SortOrder } from "./logic/sortMovies";
+export type { BaseMovieRow } from "./logic/enrichMovie";
+export type { TmdbRawResponse } from "./logic/enrichMovie";

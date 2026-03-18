@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import toast from "react-hot-toast";
 import type { CustomList } from "@/types";
+import { 
+   mergeLists, 
+   deduplicateLists, 
+   mapListCounts, 
+   sortListsByDate,
+   type RawSupabaseList 
+} from "../logic/listOperations";
+
 
 export function useLists(userId?: string) {
    const [lists, setLists] = useState<CustomList[]>([]);
@@ -11,16 +18,13 @@ export function useLists(userId?: string) {
       if (!userId) return;
       setLoading(true);
       try {
-         // Busca as listas que EU criei (Dono)
          const { data: myLists, error: err1 } = await supabase
             .from("lists")
             .select("*, list_movies(count)")
-            .eq("owner_id", userId)
-            .order("created_at", { ascending: false });
+            .eq("owner_id", userId);
 
          if (err1) throw err1;
 
-         // Busca as listas onde EU sou colaborador aceito
          const { data: collabData, error: err2 } = await supabase
             .from("list_collaborators")
             .select("list_id, lists(*, list_movies(count))")
@@ -29,33 +33,22 @@ export function useLists(userId?: string) {
 
          if (err2) throw err2;
 
-         const sharedLists = collabData?.map(item => item.lists) || [];
+         const sharedLists = collabData?.flatMap(item => item.lists) || [];
 
-         // Junta tudo, remove possíveis duplicatas e atualiza o estado
-         const allLists = [...(myLists || []), ...sharedLists];
+         const merged = mergeLists(myLists as unknown as RawSupabaseList[], sharedLists as unknown as RawSupabaseList[]);
+         const unique = deduplicateLists(merged);
+         const withCounts = mapListCounts(unique);
+         const finalSortedLists = sortListsByDate(withCounts);
+
+         setLists(finalSortedLists);
          
-         // Remove duplicadas baseadas no ID (caso haja algum bug no banco)
-         const uniqueLists = Array.from(new Map(allLists.map(item => [item.id, item])).values());
-
-         // Ordena pelas mais recentes
-         uniqueLists.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-         // Mapeia o count agregado para movie_count
-         const listsWithCount = uniqueLists.map(list => ({
-            ...list,
-            movie_count: (list as Record<string, unknown>).list_movies
-               ? ((list as Record<string, unknown>).list_movies as { count: number }[])[0]?.count ?? 0
-               : 0,
-         }));
-
-         setLists(listsWithCount as CustomList[]);
       } catch (error) {
          console.error("Erro ao buscar listas:", error);
       } finally {
          setLoading(false);
       }
    }, [userId]);
-
+   
    useEffect(() => {
       if (userId) {
          fetchLists();
@@ -67,24 +60,10 @@ export function useLists(userId?: string) {
 
       const listsChannel = supabase
          .channel('custom-all-lists-changes')
-         .on(
-            'postgres_changes',
-            { event: 'DELETE', schema: 'public', table: 'custom_lists' },
-            () => {
-               fetchLists(); 
-            }
-         )
-         // Ouve se o usuário foi removido de alguma lista (ex: recusou convite ou foi expulso)
-         .on(
-            'postgres_changes',
-            { event: 'DELETE', schema: 'public', table: 'list_collaborators' , filter: `user_id=eq.${userId}` },
-            () => {
-               fetchLists(); // Recarrega as listas do usuário
-            }
-         )
+         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'lists' }, () => { fetchLists(); })
+         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'list_collaborators' , filter: `user_id=eq.${userId}` }, () => { fetchLists(); })
          .subscribe();
 
-      // Limpeza do canal quando o componente for desmontado
       return () => {
          supabase.removeChannel(listsChannel);
       };
@@ -100,7 +79,7 @@ export function useLists(userId?: string) {
       manual_rating: number | null = null,
       auto_sync: boolean = false,
    ) => {
-      if (!userId) return null;
+      if (!userId) return { success: false, data: null, error: "Usuário não autenticado." };
       setLoading(true);
 
       try {
@@ -112,31 +91,17 @@ export function useLists(userId?: string) {
 
          if (error) throw error;
 
-         // Se for uma lista compartilhada e tiver convidados, adiciona eles
          if (type !== "private" && collaboratorIds.length > 0) {
-            
-            // Prepara os dados para a tabela list_collaborators
             const collaboratorsData = collaboratorIds.map(friendId => ({
-               list_id: newList.id,
-               user_id: friendId,
-               role: 'member',
-               status: 'pending' // Ficam pendentes até aceitarem no sininho
+               list_id: newList.id, user_id: friendId, role: 'member', status: 'pending'
             }));
 
-            const { error: collabError } = await supabase
-               .from("list_collaborators")
-               .insert(collaboratorsData);
-
+            const { error: collabError } = await supabase.from("list_collaborators").insert(collaboratorsData);
             if (collabError) throw collabError;
 
-            // Dispara a notificação para cada amigo convidado
             const notificationsData = collaboratorIds.map(friendId => ({
-               user_id: friendId,
-               sender_id: userId,
-               type: 'list_invite',
-               message: type === 'full_shared' 
-                  ? 'convidou você para uma Lista Unificada!'
-                  : 'convidou você para uma Lista Colaborativa!',
+               user_id: friendId, sender_id: userId, type: 'list_invite',
+               message: type === 'full_shared' ? 'convidou você para uma Lista Unificada!' : 'convidou você para uma Lista Colaborativa!',
                reference_id: newList.id,
             }));
 
@@ -144,32 +109,30 @@ export function useLists(userId?: string) {
          }
 
          setLists((prev) => [newList as CustomList, ...prev]);
-         return newList as CustomList;
+         return { success: true, data: newList as CustomList, error: null };
       } catch (error) {
          console.error("Erro ao criar lista:", error);
-         return null;
+         return { success: false, data: null, error: "Erro ao criar a lista." };
       } finally {
          setLoading(false);
       }
    };
 
    const addMovieToList = async (listId: string, tmdbId: number) => {
-      if (!userId) return false;
+      if (!userId) return { success: false, error: "Usuário não autenticado." };
       try {
-         // O filme já existe no banco? 
          const { data: existingMovie, error: fetchError } = await supabase
             .from("list_movies")
             .select("tmdb_id")
             .match({ list_id: listId, tmdb_id: tmdbId })
-            .maybeSingle(); // Retorna o filme se achar, ou null se não existir
+            .maybeSingle(); 
 
          if (fetchError) throw fetchError;
 
          if (existingMovie) {
-            return true; 
+            return { success: true, error: null };
          }
 
-         // Se é um filme inédito na lista, faz a inserção real
          const { error: insertError } = await supabase
             .from("list_movies")
             .insert([{ list_id: listId, tmdb_id: tmdbId, added_by: userId }]);
@@ -180,14 +143,13 @@ export function useLists(userId?: string) {
             list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
          ));
 
-         return true;
+         return { success: true, error: null };
       } catch (error) {
          console.error("Erro ao adicionar filme à lista:", error);
-         return false;
+         return { success: false, error: "Erro ao adicionar filme à lista." };
       }
    };
 
-   // Função para editar nome e descrição da lista
    const updateList = async (
       listId: string, 
       name: string, 
@@ -196,8 +158,7 @@ export function useLists(userId?: string) {
       rating_type: "manual" | "average" | null,
       manual_rating: number | null,
       auto_sync: boolean,
-      ) => {
-
+   ) => {
       try {
          const { error } = await supabase
             .from("lists")
@@ -206,17 +167,14 @@ export function useLists(userId?: string) {
 
          if (error) throw error;
          
-         toast.success("Lista atualizada com sucesso!");
          fetchLists(); 
-         return true;
+         return { success: true, error: null };
       } catch (error) {
          console.error("Erro ao atualizar lista:", error);
-         toast.error("Erro ao atualizar a lista.");
-         return false;
+         return { success: false, error: "Erro ao atualizar a lista." };
       }
    };
 
-   // Função para remover um filme de uma lista
    const removeMovieFromList = async (listId: string, tmdbId: number) => {
       try {
          const { error } = await supabase
@@ -230,11 +188,10 @@ export function useLists(userId?: string) {
             list.id === listId ? { ...list, movie_count: Math.max(0, (list.movie_count || 0) - 1) } : list
          ));
 
-         toast.success("Filme removido da lista.");
-         return true;
+         return { success: true, error: null };
       } catch (error) {
          console.error("Erro ao remover filme da lista:", error);
-         return false;
+         return { success: false, error: "Erro ao remover filme da lista." };
       }
    }
 

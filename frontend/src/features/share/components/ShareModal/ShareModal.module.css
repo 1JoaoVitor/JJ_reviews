@@ -1,0 +1,19 @@
+.linkBtn {
+   border-radius: var(--radius-md);
+   font-weight: 700;
+}
+
+.separator {
+   border-color: var(--border-subtle);
+}
+
+.optionsCard {
+   background: var(--bg-elevated);
+   border-radius: var(--radius-md);
+}
+
+.hiddenCard {
+   position: absolute;
+   opacity: 0;
+   pointer-events: none;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect} from "react";
 import { useParams, useNavigate, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock, X} from "lucide-react";
@@ -17,6 +17,8 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { useFriendship } from "@/features/friends"; 
 import { FriendsModal } from "@/features/auth";
 import { useLists, ListDetails } from "@/features/lists";
+import { toast } from "react-hot-toast";
+
 
 
 
@@ -25,7 +27,7 @@ export function PublicProfile() {
 
    const { username: profileUsername } = useParams<{ username: string }>();
    
-   const { movies, loading, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
+   const { movies, loading, error, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
    const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
    const filters = useMovieFilters(movies);
 
@@ -53,12 +55,19 @@ export function PublicProfile() {
 
    const movieIdInUrl = searchParams.get("movie");
    const selectedMovie = movieIdInUrl && movies.length > 0
-      ? movies.find(m => m.id.toString() === movieIdInUrl) || null
+      ? movies.find(m => 
+           (m.tmdb_id && m.tmdb_id.toString() === movieIdInUrl) || 
+           (m.id && m.id.toString() === movieIdInUrl)
+        ) || null
       : null;
 
+
    const handleOpenPublicModal = (movie: MovieData) => {
+
+      const targetId = movie.tmdb_id || movie.id;
+
       setSearchParams(prev => {
-         prev.set("movie", movie.id.toString());
+         prev.set("movie", targetId.toString());
          return prev;
       });
    };
@@ -69,6 +78,36 @@ export function PublicProfile() {
          return prev;
       });
    };
+
+   const handleSendRequest = async () => {
+      const { success, error } = await sendRequest();
+      if (success) toast.success("Pedido enviado!");
+      else toast.error(error || "Erro ao enviar pedido.");
+   };
+
+   const handleAcceptRequest = async () => {
+      const { success, error } = await acceptRequest();
+      if (success) toast.success("Pedido aceite! Agora vocês são amigos.");
+      else toast.error(error || "Erro ao aceitar pedido.");
+   };
+
+   const handleRejectRequest = async () => {
+      const { success, error } = await rejectRequest();
+      if (success) toast.success("Pedido recusado.");
+      else toast.error(error || "Erro ao recusar pedido.");
+   };
+
+   const handleRemoveOrCancel = async () => {
+      const { success, error } = await removeOrCancel();
+      if (success) toast.success("Amizade/Pedido desfeito.");
+      else toast.error(error || "Erro ao processar ação.");
+   };
+
+   useEffect(() => {
+      if (error) {
+         toast.error(error);
+      }
+   }, [error]);
 
    if (loading) {
       return (
@@ -164,30 +203,29 @@ export function PublicProfile() {
                </div>
 
                <div className={styles.actionButtons}>
-
                   {session && session.user.id !== profileId && !friendLoading && (
                      <>
                         {friendStatus === "none" && (
-                           <button className={styles.addFriendBtn} onClick={sendRequest}>
+                           <button className={styles.addFriendBtn} onClick={handleSendRequest}>
                               <UserPlus size={18} /> Adicionar
                            </button>
                         )}
-                        {friendStatus === "pending_sent" && (
-                           <button className={styles.pendingBtn} onClick={removeOrCancel}>
+                        {friendStatus === "request_sent" && (
+                           <button className={styles.pendingBtn} onClick={handleRemoveOrCancel}>
                               <Clock size={18} /> Pendente
                            </button>
                         )}
-                        {friendStatus === "pending_received" && (
+                        {friendStatus === "request_received" && (
                            <div className="d-flex gap-2">
-                              <button className={styles.acceptBtn} onClick={acceptRequest}>
+                              <button className={styles.acceptBtn} onClick={handleAcceptRequest}>
                                  <UserCheck size={18} /> Aceitar
                               </button>
-                              <button className={styles.pendingBtn} onClick={rejectRequest} style={{ background: '#dc3545', color: 'white', borderColor: '#dc3545' }}>
+                              <button className={`${styles.pendingBtn} ${styles.rejectFriendBtn}`} onClick={handleRejectRequest}>
                                  <X size={18} /> Recusar
                               </button>
                            </div>
                         )}
-                        {friendStatus === "accepted" && (
+                        {friendStatus === "friends" && (
                            <button className={styles.friendsBtn} onClick={() => setShowRemoveFriend(true)}>
                               <UserCheck size={18} /> Amigos
                            </button>
@@ -297,8 +335,8 @@ export function PublicProfile() {
                      // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
                      onListDeleted={() => {}}
                      onListUpdated={() => {}}
-                     onUpdateList={async () => false}
-                     onRemoveMovie={async () => false}
+                     onUpdateList={async () => ({ success: false, error: null })}
+                     onRemoveMovie={async () => ({ success: false, error: null })}
                      onAddMovieClick={() => {}}
                      onMovieClick={handleOpenPublicModal}
                   />
@@ -319,13 +357,10 @@ export function PublicProfile() {
                            {lists.map((list) => (
                               <div key={list.id} className="col-12 col-md-6 col-lg-4">
                                  <div 
-                                    className="p-4 rounded h-100" 
-                                    style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', cursor: 'pointer', transition: 'border-color 0.2s' }}
+                                    className={`p-4 rounded h-100 ${styles.listCard}`}
                                     onClick={() => setSelectedList(list)}
-                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
-                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
                                  >
-                                    <h5 style={{ color: 'var(--gold)', fontWeight: 700, marginBottom: '0.5rem' }}>{list.name}</h5>
+                                    <h5 className={styles.listCardTitle}>{list.name}</h5>
                                     <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
                                  </div>
                               </div>
@@ -340,7 +375,6 @@ export function PublicProfile() {
                </div>
             ) : (
                <>
-                  {/* 👇 ETIQUETAS DE FILTROS ATIVOS 👇 */}
                   {(filters.selectedDirector || filters.onlyInternational || filters.onlyNational || filters.onlyOscar || filters.selectedGenre) && (
                      <div className={styles.activeFilters}>
                         {filters.selectedDirector && (
@@ -392,7 +426,7 @@ export function PublicProfile() {
             onHide={handleClosePublicModal}
             isAdmin={false}
             onEdit={() => {}} 
-            onDelete={() => {}}
+            onDelete={async () => ({ success: false, error: null })} 
             onShare={() => {}}
          />
 
@@ -463,9 +497,9 @@ export function PublicProfile() {
          <ConfirmModal
             show={showRemoveFriend}
             onHide={() => setShowRemoveFriend(false)}
-            onConfirm={() => {
+            onConfirm={async () => {
                setShowRemoveFriend(false);
-               removeOrCancel();
+               await handleRemoveOrCancel();
             }}
             title="Desfazer Amizade"
             message={`Tem certeza que deseja desfazer a amizade com @${profileName}?`}

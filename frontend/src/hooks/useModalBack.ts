@@ -26,7 +26,6 @@ export function useModalBack(isOpen: boolean, closeFunction: () => void) {
          openModalsCount--;
 
          setTimeout(() => {
-            // Se fecharmos no "X" da tela, nós limpamos a hash da URL manualmente
             if (openModalsCount === 0 && window.location.hash.includes("modal")) {
                window.history.back();
             }

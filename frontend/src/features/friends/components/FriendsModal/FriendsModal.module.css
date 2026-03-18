@@ -1,0 +1,201 @@
+
+.modalContent {
+   background-color: var(--bg-surface);
+   border: 1px solid var(--border-medium);
+   border-radius: var(--radius-lg);
+   overflow: hidden;
+}
+
+.header {
+   border-bottom: none;
+   padding-bottom: 0;
+}
+
+.title {
+   font-weight: 800;
+   color: var(--text-primary);
+}
+
+.body {
+   padding: 1.5rem;
+   min-height: 300px;
+}
+
+/* Abas */
+.tabsWrapper {
+   display: flex;
+   border-bottom: 1px solid var(--border-subtle);
+   padding: 0 1.5rem;
+   margin-top: 1rem;
+}
+
+.tabBtn {
+   flex: 1;
+   background: transparent;
+   border: none;
+   padding: 0.75rem;
+   color: var(--text-muted);
+   font-weight: 600;
+   cursor: pointer;
+   border-bottom: 2px solid transparent;
+   transition: all 0.2s;
+}
+
+.activeTab {
+   color: var(--gold);
+   border-bottom-color: var(--gold);
+}
+
+/* Busca */
+.searchForm {
+   display: flex;
+   gap: 0.5rem;
+   margin-bottom: 1.5rem;
+}
+
+.searchBox {
+   position: relative;
+   flex: 1;
+}
+
+.searchIcon {
+   position: absolute;
+   left: 1rem;
+   top: 50%;
+   transform: translateY(-50%);
+   color: var(--text-muted);
+}
+
+.searchInput {
+   background: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   color: var(--text-primary);
+   padding-left: 2.5rem;
+   border-radius: var(--radius-pill);
+   height: 44px;
+}
+
+.searchInput:focus {
+   background: var(--bg-elevated);
+   border-color: var(--gold);
+   box-shadow: none;
+   color: white;
+}
+
+.searchBtn {
+   background: var(--gold);
+   color: var(--bg-page);
+   border: none;
+   border-radius: var(--radius-pill);
+   padding: 0 1.25rem;
+   font-weight: 700;
+   transition: transform 0.2s;
+}
+
+.searchBtn:hover:not(:disabled) {
+   transform: translateY(-2px);
+}
+
+/* Lista de usuários */
+.resultsList {
+   display: flex;
+   flex-direction: column;
+   gap: 0.5rem;
+}
+
+.userCard {
+   display: flex;
+   align-items: center;
+   gap: 1rem;
+   padding: 0.75rem;
+   background: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   cursor: pointer;
+   transition: border-color 0.2s;
+}
+
+.userCard:hover {
+   border-color: var(--gold);
+}
+
+.avatar {
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   object-fit: cover;
+   flex-shrink: 0;
+}
+
+.avatarPlaceholder {
+   width: 40px;
+   height: 40px;
+   border-radius: 50%;
+   background: var(--border-medium);
+   color: var(--text-secondary);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-weight: 700;
+   flex-shrink: 0;
+}
+
+.username {
+   font-weight: 600;
+   color: var(--text-primary);
+   flex-grow: 1;
+}
+
+.arrowIcon {
+   color: var(--text-muted);
+}
+
+/* Info do Amigo */
+.friendInfo {
+   display: flex;
+   flex-direction: column;
+   flex-grow: 1;
+}
+
+.badgeFriends {
+   font-size: 0.7rem;
+   color: #10B981;
+   display: flex;
+   align-items: center;
+   gap: 0.2rem;
+}
+
+.badgePending {
+   font-size: 0.7rem;
+   color: var(--text-muted);
+   display: flex;
+   align-items: center;
+   gap: 0.2rem;
+}
+
+.badgeAction {
+   font-size: 0.7rem;
+   color: var(--gold);
+   font-weight: 700;
+}
+
+/* Vazio */
+.emptyState {
+   text-align: center;
+   color: var(--text-muted);
+   padding: 2rem 0;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   gap: 1rem;
+}
+
+.findBtn {
+   background: transparent;
+   border: 1px solid var(--gold);
+   color: var(--gold);
+   padding: 0.5rem 1rem;
+   border-radius: var(--radius-pill);
+   font-weight: 600;
+   margin-top: 0.5rem;
+}

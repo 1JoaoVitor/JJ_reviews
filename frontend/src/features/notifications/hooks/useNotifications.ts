@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { AppNotification } from "@/types";
+import { formatNotifications, countUnread, type RawNotification } from "../logic/notificationOperations";
 
 export function useNotifications(userId?: string) {
    const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -27,23 +28,10 @@ export function useNotifications(userId?: string) {
             throw error;
          }
 
-        if (data) {
-            // Cria um tipo temporário para o dado "bruto" que vem do banco
-            type RawNotification = Omit<AppNotification, "sender"> & {
-            sender?: { username: string; avatar_url: string } | { username: string; avatar_url: string }[];
-            };
+         const formattedData = formatNotifications(data as RawNotification[]);
+         setNotifications(formattedData);
+         setUnreadCount(countUnread(formattedData));
 
-            const rawData = data as RawNotification[];
-
-            // O map e o filter sabem exatamente quem é o "notif" e o "n"
-            const formattedData = rawData.map((notif) => ({
-            ...notif,
-            sender: Array.isArray(notif.sender) ? notif.sender[0] : notif.sender
-            }));
-            
-            setNotifications(formattedData as AppNotification[]);
-            setUnreadCount(formattedData.filter((n) => !n.is_read).length);
-         }
       } catch (error) {
          console.error("Erro ao processar notificações:", error);
       } finally {
@@ -61,10 +49,12 @@ export function useNotifications(userId?: string) {
 
          if (error) throw error;
 
-         setNotifications((prev) =>
-            prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
-         );
-         setUnreadCount((prev) => Math.max(0, prev - 1));
+         setNotifications((prev) => {
+            const updated = prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n));
+            setUnreadCount(countUnread(updated)); 
+            return updated;
+         });
+
       } catch (error) {
          console.error("Erro ao marcar como lida:", error);
       }
@@ -82,8 +72,11 @@ export function useNotifications(userId?: string) {
 
          if (error) throw error;
 
-         setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-         setUnreadCount(0);
+         setNotifications((prev) => {
+            const updated = prev.map((n) => ({ ...n, is_read: true }));
+            setUnreadCount(countUnread(updated)); 
+            return updated;
+         });
       } catch (error) {
          console.error("Erro ao marcar todas como lidas:", error);
       }
@@ -94,7 +87,6 @@ export function useNotifications(userId?: string) {
 
       if (!userId) return;
 
-      // Inscreve o site no canal de Tempo Real do Supabase
       const subscription = supabase
          .channel("realtime:notifications")
          .on(
@@ -111,7 +103,6 @@ export function useNotifications(userId?: string) {
          )
          .subscribe();
 
-      // Limpeza: quando o usuário sair do site ou deslogar, desliga a escuta
       return () => {
          supabase.removeChannel(subscription);
       };

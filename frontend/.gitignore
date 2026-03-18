@@ -31,3 +31,6 @@ dev-dist
 # Capacitor / Mobile
 android/
 ios/
+
+#test
+coverage/

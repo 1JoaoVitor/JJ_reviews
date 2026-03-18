@@ -82,12 +82,6 @@ export interface FriendProfile {
   is_requester: boolean; 
 }
 
-export interface ListMovie {
-   list_id: string;
-   tmdb_id: number;
-   added_by: string;
-   created_at: string;
-}
 
 export interface AppNotification {
    id: string;
@@ -103,6 +97,12 @@ export interface AppNotification {
    };
 }
 
+export interface ListMovie {
+   list_id: string;
+   tmdb_id: number;
+   added_by: string;
+   created_at: string;
+}
 
 export interface CustomList {
    id: string;

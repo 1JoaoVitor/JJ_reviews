@@ -58,15 +58,15 @@
 }
 
 .statCardAverage::before {
-   background: #3B82F6;
+   background: var(--dash-average);
 }
 
 .statCardInternational::before {
-   background: #10B981;
+   background: var(--dash-international);
 }
 
 .statCardDirector::before {
-   background: #A855F7;
+   background: var(--dash-director);
 }
 
 .icon {
@@ -76,12 +76,39 @@
    margin-bottom: 0.5rem;
 }
 
+/* ─── Modificadores de Cor dos Ícones ─── */
+.iconGold {
+   color: var(--gold);
+}
+
+.iconYellow {
+   color: var(--dash-average-icon);
+}
+
+.iconBlue {
+   color: var(--dash-average);
+}
+
+.iconGreen {
+   color: var(--dash-international);
+}
+
+.iconPurple {
+   color: var(--dash-director);
+}
+
 .statValue {
    font-weight: 800;
    font-size: var(--font-2xl);
    color: var(--text-primary);
    line-height: 1.1;
    margin-bottom: 0.25rem;
+}
+
+/* ─── Modificador de Tamanho do Runtime ─── */
+.statValueRuntime {
+   font-size: 1.5rem;
+   margin-top: 0.4rem;
 }
 
 .statLabel {
@@ -108,7 +135,7 @@
 
 .clickable:hover {
    transform: translateY(-4px);
-   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+   box-shadow: var(--shadow-md);
    border-color: var(--gold);
    background: var(--bg-surface-hover);
 }
@@ -116,4 +143,3 @@
 .clickable:active {
    transform: translateY(0);
 }
-

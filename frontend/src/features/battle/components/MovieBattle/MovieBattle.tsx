@@ -1,10 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Container, Form, Row, Col, ProgressBar } from "react-bootstrap";
 import { Swords, Trophy } from "lucide-react";
-import type { MovieData } from "@/types";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
+
+import type { MovieData } from "@/types";
 import styles from "./MovieBattle.module.css";
+
+import { 
+   type SelectionCriteria, 
+   filterMoviesByCriteria, 
+   setupTournament, 
+   nextPowerOfTwo,
+   shuffleArray
+} from "../../logic/battleOperations";
 
 interface MovieBattleProps {
    allMovies: MovieData[];
@@ -12,23 +21,6 @@ interface MovieBattleProps {
 }
 
 type BattleStage = "setup" | "battle" | "winner";
-type SelectionCriteria =
-   | "random"
-   | "top_rated"
-   | "worst_rated"
-   | "recent"
-   | "oscar"
-   | "national";
-
-// Fisher-Yates shuffle for unbiased randomization
-function shuffleArray<T>(array: T[]): T[] {
-   const shuffled = [...array];
-   for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-   }
-   return shuffled;
-}
 
 export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
@@ -41,34 +33,12 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    const [champion, setChampion] = useState<MovieData | null>(null);
    const [totalBracketSize, setTotalBracketSize] = useState(0);
 
-   const watchedMovies = allMovies.filter(
-      (m) => m.status === "watched" && m.rating !== null,
-   );
-
-   const nextPowerOfTwo = (n: number) => {
-      if (n === 0) return 0;
-      return Math.pow(2, Math.ceil(Math.log2(n)));
-   };
-
-   const getFilteredMovies = (targetCriteria: SelectionCriteria) => {
-      switch (targetCriteria) {
-         case "oscar":
-            return watchedMovies.filter((m) => m.isOscar);
-         case "national":
-            return watchedMovies.filter((m) => m.isNational);
-         case "top_rated":
-         case "worst_rated":
-         case "recent":
-         case "random":
-         default:
-            return watchedMovies;
-      }
-   };
-
-   const availableMovies = getFilteredMovies(criteria);
+   const availableMovies = useMemo(() => 
+      filterMoviesByCriteria(allMovies, criteria), 
+   [allMovies, criteria]);
 
    const handleCriteriaChange = (newCriteria: SelectionCriteria) => {
-      const newList = getFilteredMovies(newCriteria);
+      const newList = filterMoviesByCriteria(allMovies, newCriteria);
       const maxPossible = nextPowerOfTwo(newList.length);
       setCriteria(newCriteria);
       if (quantity !== -1 && quantity > maxPossible) {
@@ -86,54 +56,19 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    };
 
    const handleStart = () => {
-      const availableCount = availableMovies.length;
-      if (availableCount < 2) {
-         toast.error("Você precisa de pelo menos 2 filmes para uma batalha.");
-         return;
+      try {
+         const { fighters, byes, bracketSize } = setupTournament(availableMovies, criteria, quantity);
+
+         preloadImages([...fighters, ...byes]);
+
+         setCurrentRoundMovies(fighters);
+         setNextRoundMovies(byes);
+         setTotalBracketSize(bracketSize);
+         setPairIndex(0);
+         setStage("battle");
+      } catch (error) {
+         if (error instanceof Error) toast.error(error.message);
       }
-
-      let targetCount = quantity;
-      if (quantity === -1) {
-         targetCount = availableCount;
-      } else {
-         targetCount = Math.min(quantity, availableCount);
-      }
-
-      const selected = [...availableMovies];
-      switch (criteria) {
-         case "top_rated":
-            selected.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-            break;
-         case "worst_rated":
-            selected.sort((a, b) => (a.rating || 0) - (b.rating || 0));
-            break;
-         case "recent":
-            selected.sort((a, b) => b.id - a.id);
-            break;
-         default:
-            shuffleArray(selected).forEach((m, i) => selected[i] = m);
-            break;
-      }
-
-      const participants = selected.slice(0, targetCount);
-      const bracketSize = nextPowerOfTwo(participants.length);
-      const byesCount = bracketSize - participants.length;
-      const fightersCount = participants.length - byesCount;
-
-      if (criteria !== "random") {
-         shuffleArray(participants).forEach((m, i) => participants[i] = m);
-      }
-
-      const fighters = participants.slice(0, fightersCount);
-      const byes = participants.slice(fightersCount);
-
-      preloadImages(participants);
-
-      setCurrentRoundMovies(fighters);
-      setNextRoundMovies(byes);
-      setTotalBracketSize(bracketSize);
-      setPairIndex(0);
-      setStage("battle");
    };
 
    const handleVote = (winner: MovieData) => {
@@ -146,8 +81,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
             setStage("winner");
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
          } else {
-            const shuffledNext = shuffleArray(newNextRound);
-            setCurrentRoundMovies(shuffledNext);
+            setCurrentRoundMovies(shuffleArray(newNextRound));
             setNextRoundMovies([]);
             setPairIndex(0);
             setTotalBracketSize((prev) => prev / 2);
@@ -195,13 +129,13 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                      <Col md={6}>
                         <div className={styles.sectionLabel}>Critério</div>
                         <div className="d-flex flex-column gap-2">
-                           <Form.Check type="radio" label="Aleatório" name="c" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
-                           <Form.Check type="radio" label="Melhores Notas" name="c" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
-                           <Form.Check type="radio" label="Piores Notas" name="c" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
-                           <Form.Check type="radio" label="Mais Recentes" name="c" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
-                           <div style={{ borderTop: "1px solid var(--border-subtle)", margin: "0.5rem 0" }} />
-                           <Form.Check type="radio" label="Indicados Oscar 2026" name="c" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
-                           <Form.Check type="radio" label="Nacionais" name="c" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
+                           <Form.Check type="radio" label="Aleatório" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
+                           <Form.Check type="radio" label="Melhores Notas" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
+                           <Form.Check type="radio" label="Piores Notas" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
+                           <Form.Check type="radio" label="Mais Recentes" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
+                           <div className={styles.criteriaDivider} />
+                           <Form.Check type="radio" label="Indicados Oscar 2026" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
+                           <Form.Check type="radio" label="Nacionais" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
                         </div>
                         <div className={styles.availableCount}>
                            Disponíveis: <strong>{availableMovies.length}</strong>
@@ -236,7 +170,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                            })}
                         </div>
                         {quantity !== -1 && quantity > availableMovies.length && (
-                           <div style={{ marginTop: "0.5rem", fontSize: "var(--font-sm)", color: "var(--accent)" }}>
+                           <div className={styles.byesHint}>
                               *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
                            </div>
                         )}
@@ -263,7 +197,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                <div className="text-center mb-4">
                   <span className={styles.roundBadge}>{getRoundTitle()}</span>
                   {byesWaiting > 0 && currentRoundMovies.length > 0 && (
-                     <div style={{ color: "var(--text-muted)", fontSize: "var(--font-sm)", marginBottom: "0.35rem" }}>
+                     <div className={styles.waitingHint}>
                         (+{byesWaiting} filmes aguardando na próxima fase)
                      </div>
                   )}
@@ -300,7 +234,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                      className={styles.championImage}
                   />
                </div>
-               <h2 className="fw-bold" style={{ color: "var(--text-primary)" }}>{champion.title}</h2>
+               <h2 className={`fw-bold ${styles.championName}`}>{champion.title}</h2>
                <p className={styles.championInfo}>
                   {champion.release_date?.split("-")[0]} &middot; Dir. {champion.director}
                </p>
@@ -313,7 +247,6 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
    );
 }
 
-/* ─── Sub-componente BattleCard (privado deste módulo) ─── */
 function BattleCard({ movie, onClick }: { movie: MovieData; onClick: () => void }) {
    return (
       <div
@@ -331,7 +264,7 @@ function BattleCard({ movie, onClick }: { movie: MovieData; onClick: () => void 
                   className={styles.battlePosterImage}
                />
             ) : (
-               <div style={{ color: "var(--text-muted)", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+               <div className={styles.noImageText}>
                   Sem Imagem
                </div>
             )}

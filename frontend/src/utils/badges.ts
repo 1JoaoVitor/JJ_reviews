@@ -2,21 +2,30 @@
  * Retorna as cores do badge baseado no texto de recomendação do filme.
  * Usado pelos componentes MovieCard, MovieModal e ShareCard.
  */
-export function getBadgeStyle(text: string): { bg: string; color: string } {
-   if (!text) return { bg: "var(--badge-default)", color: "#F5F5F5" };
+export type BadgeTone = "great" | "good" | "ok" | "bad" | "terrible" | "default";
+
+export function getBadgeTone(text: string): BadgeTone {
+   if (!text) return "default";
 
    const t = text.toLowerCase().trim();
 
-   if (t.includes("assista com certeza"))
-      return { bg: "var(--badge-great)", color: "#0D0D0D" };
-   if (t.includes("vale a pena"))
-      return { bg: "var(--badge-good)", color: "#0D0D0D" };
-   if (t.includes("tem filmes melhores") || t.includes("legal"))
-      return { bg: "var(--badge-ok)", color: "#0D0D0D" };
-   if (t.includes("não tão bom"))
-      return { bg: "var(--badge-bad)", color: "#0D0D0D" };
-   if (t.includes("não perca seu tempo") || t.includes("nunca"))
-      return { bg: "var(--badge-terrible)", color: "#F5F5F5" };
+   if (t.includes("assista com certeza")) return "great";
+   if (t.includes("vale a pena")) return "good";
+   if (t.includes("tem filmes melhores") || t.includes("legal")) return "ok";
+   if (t.includes("não tão bom")) return "bad";
+   if (t.includes("não perca seu tempo") || t.includes("nunca")) return "terrible";
+
+   return "default";
+}
+
+export function getBadgeStyle(text: string): { bg: string; color: string } {
+   const tone = getBadgeTone(text);
+
+   if (tone === "great") return { bg: "var(--badge-great)", color: "#0D0D0D" };
+   if (tone === "good") return { bg: "var(--badge-good)", color: "#0D0D0D" };
+   if (tone === "ok") return { bg: "var(--badge-ok)", color: "#0D0D0D" };
+   if (tone === "bad") return { bg: "var(--badge-bad)", color: "#0D0D0D" };
+   if (tone === "terrible") return { bg: "var(--badge-terrible)", color: "#F5F5F5" };
 
    return { bg: "var(--badge-default)", color: "#F5F5F5" };
 }
