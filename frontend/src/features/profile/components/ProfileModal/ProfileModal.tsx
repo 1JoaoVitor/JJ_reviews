@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Modal, Form, Spinner } from "react-bootstrap";
 import toast from "react-hot-toast";
-import { User, Link2, Shield, Lock, LogOut, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, Link2, Shield, Lock, LogOut, AlertTriangle, MessageSquare } from "lucide-react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 
@@ -27,6 +28,7 @@ type TabType = "profile" | "security";
 export function ProfileModal({ show, onHide, session, currentUsername, onUpdate, onLogout, forceLogout}: ProfileModalProps) {
 
    // Navegação
+   const navigate = useNavigate();
    useModalBack(show, onHide);
    const [activeTab, setActiveTab] = useState<TabType>("profile");
 
@@ -344,6 +346,18 @@ export function ProfileModal({ show, onHide, session, currentUsername, onUpdate,
                               </button>
                               <button type="button" className={styles.shareLinkBtn} onClick={handleShareProfile}>
                                  <Link2 size={16} /> Copiar Link do Meu Perfil
+                              </button>
+                           </div>
+
+                           <div>
+                              <button 
+                                 className={styles.supportBtn} // Use a classe que você já usa para os botões do menu
+                                 onClick={() => {
+                                    onHide(); 
+                                    navigate("/support"); 
+                                 }}
+                              >
+                                 <MessageSquare size={18} /> Suporte e Feedback
                               </button>
                            </div>
                         </Form>

@@ -262,7 +262,7 @@ export function MovieModal({
             </Row>
          </Modal.Body>
 
-         <Modal.Footer className="border-0 d-flex">
+         <Modal.Footer className={styles.footer}>
             {isAdmin && onShare && movie && (
                <button className={styles.shareBtn} onClick={() => onShare(movie)}>
                   <Share2 size={16} /> Compartilhar

@@ -86,7 +86,7 @@
 
 
 
-.shareLinkBtn {
+.shareLinkBtn, .supportBtn {
    width: 100%;
    padding: 0.75rem;
    border: 1px solid var(--border-subtle);
@@ -103,7 +103,7 @@
    transition: border-color 0.2s, color 0.2s;
 }
 
-.shareLinkBtn:hover {
+.shareLinkBtn:hover, .supportBtn:hover {
    border-color: var(--gold);
    color: var(--gold);
 }

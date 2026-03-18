@@ -8,14 +8,14 @@ import { Dashboard } from "@/features/dashboard";
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
-import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
+import { useAuth, LoginModal } from "@/features/auth";
+import { ProfileModal} from "@/features/profile";
 import { MovieBattle } from "@/features/battle";
 import type { MovieData, CustomList } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
-import { useFriendship } from "@/features/friends"; 
-import { FriendsModal } from "@/features/auth";
+import { useFriendship, FriendsModal} from "@/features/friends"; 
 import { useLists, ListDetails } from "@/features/lists";
 import { toast } from "react-hot-toast";
 
