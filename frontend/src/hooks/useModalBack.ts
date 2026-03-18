@@ -27,7 +27,8 @@ export function useModalBack(isOpen: boolean, closeFunction: () => void) {
 
          setTimeout(() => {
             if (openModalsCount === 0 && window.location.hash.includes("modal")) {
-               window.history.back();
+               // Remove apenas o #modal, mantendo ?movie=123 ou outros params de URL
+               window.history.replaceState({}, "", window.location.pathname + window.location.search);
             }
          }, 50);
       };

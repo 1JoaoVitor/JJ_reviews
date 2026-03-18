@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
@@ -27,30 +27,19 @@ export function useAppNavigation({
    // ─── BOTÃO NATIVO DO ANDROID ───
    useEffect(() => {
       let backButtonHandle: PluginListenerHandle | null = null;
-
       const setupCapacitorBackButton = async () => {
          backButtonHandle = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-            if (canGoBack) {
-               window.history.back(); 
-            } else {
-               CapacitorApp.exitApp(); 
-            }
+            if (canGoBack) window.history.back(); 
+            else CapacitorApp.exitApp(); 
          });
       };
-
       setupCapacitorBackButton();
-
-      return () => {
-         if (backButtonHandle) {
-            backButtonHandle.remove();
-         }
-      };
+      return () => { if (backButtonHandle) backButtonHandle.remove(); };
    }, []);
 
    // ─── DEEP LINKS ───
    useEffect(() => {
       let appUrlOpenHandle: PluginListenerHandle | null = null;
-
       const setupDeepLinks = async () => {
          if (!Capacitor.isNativePlatform()) return;
          appUrlOpenHandle = await CapacitorApp.addListener('appUrlOpen', (event) => {
@@ -65,21 +54,14 @@ export function useAppNavigation({
          });
       };
       setupDeepLinks();
-
-      return () => {
-         if (appUrlOpenHandle) {
-            appUrlOpenHandle.remove();
-         }
-      };
+      return () => { if (appUrlOpenHandle) appUrlOpenHandle.remove(); };
    }, [setSearchParams]);
 
    // ─── ABRIR LISTAS PELA URL ───
    useEffect(() => {
       if (listIdInUrl && !listsLoading && lists.length > 0) {
          const listToOpen = lists.find(l => l.id === listIdInUrl);
-         if (listToOpen) {
-            setSelectedList(listToOpen);
-         }
+         if (listToOpen) setSelectedList(listToOpen);
       }
    }, [listIdInUrl, lists, listsLoading, setSelectedList]);
 
@@ -89,28 +71,43 @@ export function useAppNavigation({
 
       if (!movieIdInUrl) {
          closeMovie();
+         prevUrlMovieId.current = null;
       } else {
+         if (movies.length === 0) return;
+
          const movieToOpen = movies.find(m => 
             (m.id && m.id.toString() === movieIdInUrl) || 
             (m.tmdb_id && m.tmdb_id.toString() === movieIdInUrl)
          );
-         if (movieToOpen) openMovie(movieToOpen);
+         
+         if (movieToOpen) {
+            openMovie(movieToOpen);
+            prevUrlMovieId.current = movieIdInUrl;
+         } else {
+            closeMovie();
+            setSearchParams(prev => {
+               prev.delete("movie");
+               return prev;
+            }, { replace: true });
+            prevUrlMovieId.current = null;
+         }
       }
-      prevUrlMovieId.current = movieIdInUrl;
-   }, [movieIdInUrl, movies, openMovie, closeMovie]);
+   }, [movieIdInUrl, movies, openMovie, closeMovie, setSearchParams]);
 
-   // Helper para abrir o modal alterando a URL de forma silenciosa e sem loop infinito
-   const handleOpenModal = (movie: MovieData) => {
+   // ─── Helper para abrir o modal ───
+   const handleOpenModal = useCallback((movie: MovieData) => {
       const targetId = movie.tmdb_id || movie.id;
       if (!targetId) return;
 
       openMovie(movie);
+      
       prevUrlMovieId.current = targetId.toString();
       
-      const newParams = new URLSearchParams(searchParams);
-      newParams.set("movie", targetId.toString());
-      setSearchParams(newParams, { replace: true }); 
-   };
+      setSearchParams(prev => {
+         prev.set("movie", targetId.toString());
+         return prev;
+      }); 
+   }, [openMovie, setSearchParams]);
 
    return { handleOpenModal };
 }
