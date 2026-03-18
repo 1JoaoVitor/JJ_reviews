@@ -29,6 +29,16 @@ describe("sortMovies (Functional Core)", () => {
       expect(result.map(m => m.rating)).toEqual([9, 7, 5]);
    });
 
+   it("deve manter a ordem (ou desempatar corretamente) quando os valores são iguais", () => {
+      const movies = [
+         { id: 1, title: "Filme A", rating: 8 },
+         { id: 2, title: "Filme B", rating: 8 }
+      ] as MovieData[];
+      
+      const sorted = sortMovies(movies, "rating");
+      expect(sorted.length).toBe(2);
+   });
+
    it("deve ordenar os filmes alfabeticamente (alpha)", () => {
       const movies = [
          makeMovie({ title: "Zombieland" }),

@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { toast } from "react-hot-toast";
 import type { MovieData, CustomList } from "@/types";
 
 interface UseDeleteMovieProps {
@@ -13,20 +12,13 @@ export function useDeleteMovie({ lists, fetchMovies, fetchLists, closeModal }: U
    
    const handleDeleteMovie = async (movie: MovieData) => {
       try {
-        // Deleta a review do filme
-         const { error } = await supabase
-            .from("reviews")
-            .delete()
-            .eq("id", movie.id);
-            
+         const { error } = await supabase.from("reviews").delete().eq("id", movie.id);
          if (error) throw error;
 
-         // Identifica quais são as suas listas particulares
          const privateListIds = lists
             .filter(l => l.type === "private" || !l.type)
             .map(l => l.id);
 
-         // Se tiver listas particulares, varre e apaga o filme delas também
          if (privateListIds.length > 0 && movie.tmdb_id) {
             const { error: listError } = await supabase
                .from("list_movies")
@@ -40,11 +32,10 @@ export function useDeleteMovie({ lists, fetchMovies, fetchLists, closeModal }: U
          closeModal();
          fetchMovies(); 
          fetchLists(); 
-         
-         toast.success("Filme removido do perfil e das listas particulares!");
+         return { success: true, error: null };
       } catch (error) {
-         toast.error("Erro ao excluir!");
          console.error(error);
+         return { success: false, error: "Erro ao excluir filme do banco de dados." };
       }
    };
 

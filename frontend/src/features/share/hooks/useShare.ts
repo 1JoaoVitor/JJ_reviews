@@ -3,9 +3,8 @@ import html2canvas from "html2canvas";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
-import { toast } from "react-hot-toast";
 import type { MovieData } from "@/types";
-import { useAuth } from "@/features/auth/hooks/useAuth"; 
+import { useAuth } from "@/features/auth";
 import { buildShareUrl, buildShareContent, buildImageFileName } from "../logic/shareOperations";
 
 export function useShare() {
@@ -16,7 +15,7 @@ export function useShare() {
 
    // ─── COMPARTILHAR COMO IMAGEM ───
    const handleShareImage = useCallback((movie: MovieData) => {
-      return new Promise<void>((resolve) => {
+      return new Promise<{ success: boolean; error?: string }>((resolve) => {
          setSharingMovie(movie);
          setIsSharing(true);
 
@@ -56,10 +55,7 @@ export function useShare() {
                            const file = new File([blob], fileName, { type: "image/png" });
                            if (navigator.canShare({ files: [file] })) {
                               try {
-                                 await navigator.share({
-                                    files: [file],
-                                    title,
-                                 });
+                                 await navigator.share({ files: [file], title });
                               } catch (err) {
                                  console.log("Compartilhamento cancelado", err);
                               }
@@ -74,18 +70,19 @@ export function useShare() {
                         document.body.removeChild(link);
                      }
                   }
+                  
+                  resolve({ success: true });
                } catch (error) {
                   console.error("Erro ao gerar imagem", error);
-                  toast.error("Erro ao criar a imagem.");
+                  resolve({ success: false, error: "Erro ao criar a imagem." });
                } finally {
                   setIsSharing(false);
                   setSharingMovie(null);
-                  resolve();
                }
             } else {
                setIsSharing(false);
                setSharingMovie(null);
-               resolve();
+               resolve({ success: false, error: "Referência da imagem não encontrada." });
             }
          }, 300);
       });
@@ -97,22 +94,28 @@ export function useShare() {
       const { title, text } = buildShareContent(movie.title);
 
       if (Capacitor.isNativePlatform()) {
-         await Share.share({
-            title,
-            text,
-            url: shareUrl,
-            dialogTitle: 'Compartilhar Review',
-         });
+         try {
+            await Share.share({ title, text, url: shareUrl, dialogTitle: 'Compartilhar Review' });
+            return { success: true, method: 'native' };
+         } catch (err) {
+            return { success: false, error: "Erro ao abrir compartilhamento nativo." + err};
+         }
       } else {
          if (navigator.share) {
             try {
                await navigator.share({ title, text, url: shareUrl });
+               return { success: true, method: 'web-share' };
             } catch (err) {
                console.log("Compartilhamento de link cancelado", err);
+               return { success: false, cancelled: true };
             }
          } else {
-            navigator.clipboard.writeText(shareUrl);
-            toast.success("Link copiado para a área de transferência!");
+            try {
+               await navigator.clipboard.writeText(shareUrl);
+               return { success: true, method: 'clipboard' };
+            } catch (err) {
+               return { success: false, error: "Erro ao copiar o link." + err};
+            }
          }
       }
    }, [username]);

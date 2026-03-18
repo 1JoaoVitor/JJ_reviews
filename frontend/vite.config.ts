@@ -28,13 +28,13 @@ export default defineConfig({
             "mask-icon.svg",
          ],
          manifest: {
-            name: "JJ Review", // Nome completo
+            name: "JJ Review",
             short_name: "JJ Review", // Nome que aparece embaixo do ícone no celular
             description: "Minha lista de filmes e avaliações",
             theme_color: "#212529", // Cor da barra de status
             background_color: "#212529", // Cor de fundo enquanto carrega
             display: "standalone", // Faz sumir a barra do navegador
-            orientation: "portrait", // Bloqueia em pé (opcional)
+            orientation: "portrait", // Bloqueia em pé 
             icons: [
                {
                   src: "pwa-192x192.png",

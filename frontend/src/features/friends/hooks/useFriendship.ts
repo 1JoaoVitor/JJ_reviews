@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import toast from "react-hot-toast";
 import { mapFriendshipStatus, type DerivedFriendshipStatus } from "../logic/mapFriendshipStatus";
 
 export function useFriendship(loggedUserId?: string, profileUserId?: string) {
@@ -37,7 +36,7 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
    }, [checkFriendship]);
 
    const sendRequest = async () => {
-      if (!loggedUserId || !profileUserId) return;
+      if (!loggedUserId || !profileUserId) return { success: false, error: "Usuários inválidos." };
       try {
          const { error } = await supabase.from("friendships").insert({
             requester_id: loggedUserId,
@@ -54,18 +53,15 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          if (notifError) console.error("Erro ao criar notificação de amizade:", notifError);
 
          setStatus("request_sent");
-         toast.success("Pedido enviado!");
+         return { success: true };
       } catch (err) {
-         if (err instanceof Error) {
-            toast.error("Erro ao enviar pedido: " + err.message);
-         } else {
-            toast.error("Ocorreu um erro desconhecido.");
-         }
+         const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro desconhecido.";
+         return { success: false, error: `Erro ao enviar pedido: ${errorMessage}` };
       }
    };
    
    const acceptRequest = async () => {
-      if (!loggedUserId || !profileUserId) return;
+      if (!loggedUserId || !profileUserId) return { success: false, error: "Usuários inválidos." };
       try {
          const { error } = await supabase
             .from("friendships")
@@ -83,18 +79,15 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          if (notifError) console.error("Erro ao criar notificação de aceitação:", notifError);
 
          setStatus("friends");
-         toast.success("Pedido aceite! Agora vocês são amigos.");
+         return { success: true };
       } catch (err) {
-        if (err instanceof Error){
-         toast.error("Erro ao aceitar pedido: " + err.message);
-        } else {
-            toast.error("Ocorreu um erro desconhecido.");
-         }
+         const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro desconhecido.";
+         return { success: false, error: `Erro ao aceitar pedido: ${errorMessage}` };
       }
    };
 
    const rejectRequest = async () => {
-      if (!loggedUserId || !profileUserId) return;
+      if (!loggedUserId || !profileUserId) return { success: false, error: "Usuários inválidos." };
       try {
          const { error } = await supabase
             .from("friendships")
@@ -103,15 +96,15 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          
          if (error) throw error;
          setStatus("none");
-         toast.success("Pedido recusado.");
+         return { success: true };
       } catch (err) {
          console.error("Erro ao recusar pedido:", err);
-         toast.error("Erro ao recusar pedido.");
+         return { success: false, error: "Erro ao recusar pedido." };
       }
    };
 
    const removeOrCancel = async () => {
-      if (!loggedUserId || !profileUserId) return;
+      if (!loggedUserId || !profileUserId) return { success: false, error: "Usuários inválidos." };
       try {
          const { error } = await supabase
             .from("friendships")
@@ -120,13 +113,10 @@ export function useFriendship(loggedUserId?: string, profileUserId?: string) {
          
          if (error) throw error;
          setStatus("none");
-         toast.success("Amizade/Pedido desfeito.");
+         return { success: true };
       } catch (err) {
-         if (err instanceof Error) {
-            toast.error("Erro ao processar ação: " + err.message);
-         } else {
-            toast.error("Ocorreu um erro desconhecido.");
-         }
+         const errorMessage = err instanceof Error ? err.message : "Ocorreu um erro desconhecido.";
+         return { success: false, error: `Erro ao processar ação: ${errorMessage}` };
       }
    };
 

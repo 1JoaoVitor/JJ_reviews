@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { MovieCard } from "@/features/movies";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { EditListModal } from "../EditListModal/EditListModal";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
 import { calculateAverageBadge } from "@/utils/badges";
@@ -21,8 +21,8 @@ interface ListDetailsProps {
    onBack: () => void;
    onListDeleted: () => void;
    onListUpdated: (updatedList: CustomList) => void;
-   onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null, auto_sync: boolean) => Promise<boolean>;
-   onRemoveMovie: (listId: string, tmdbId: number) => Promise<boolean>;
+   onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null, auto_sync: boolean) => Promise<{ success: boolean; error: string | null }>;
+   onRemoveMovie: (listId: string, tmdbId: number) => Promise<{ success: boolean; error: string | null }>;
    onAddMovieClick: () => void;
    onMovieClick: (movie: MovieData) => void;
 }
@@ -332,12 +332,16 @@ export function ListDetails({
    const confirmRemoveMovie = async () => {
       if (!movieToRemove) return;
       setIsRemovingMovie(true);
-      const success = await onRemoveMovie(list.id, movieToRemove);
+      const { success, error } = await onRemoveMovie(list.id, movieToRemove);
+      
       setIsRemovingMovie(false);
       
       if (success) {
+         toast.success("Filme removido da lista.");
          setMovieToRemove(null);
          fetchListMovies();
+      } else {
+         toast.error(error || "Erro ao remover filme da lista.");
       }
    };
 
@@ -416,8 +420,8 @@ export function ListDetails({
 
             <div className={styles.titleSection}>
                <div>
-                  <h1 className={styles.title} style={{ wordBreak: 'break-word' }}>{list.name}</h1>
-                  {list.description && <p className={styles.description} style={{ wordBreak: 'break-word' }}>{list.description}</p>}
+                  <h1 className={styles.title}>{list.name}</h1>
+                  {list.description && <p className={styles.description}>{list.description}</p>}
                   
                   <div className="d-flex align-items-center gap-3 mt-2">
                      <p className={styles.metaInfo}>{listMovies.length} filmes na lista</p>
@@ -425,17 +429,11 @@ export function ListDetails({
                      {/* ─── NOTA DA LISTA ─── */}
                      {list.has_rating && (
                         <div 
-                           className="d-flex align-items-center gap-1" 
-                           style={{ 
-                              background: 'rgba(255, 193, 7, 0.1)', 
-                              padding: '0.2rem 0.6rem', 
-                              borderRadius: 'var(--radius-pill)',
-                              border: '1px solid var(--gold)'
-                           }}
+                           className={styles.ratingBadge}
                            title={list.rating_type === 'manual' ? "Nota Manual" : "Média dos Filmes"}
                         >
-                           <span style={{ fontSize: '14px' }}>⭐</span>
-                           <span style={{ fontWeight: 'bold', color: 'var(--gold)', fontSize: '0.9rem' }}>
+                           <span className={styles.ratingIcon}>⭐</span>
+                           <span className={styles.ratingValue}>
                               {list.rating_type === 'manual' 
                                  ? list.manual_rating?.toFixed(1)
                                  : (() => {
@@ -468,8 +466,7 @@ export function ListDetails({
                                  key={member.id} 
                                  src={member.avatar_url || ""} 
                                  alt={member.username} 
-                                 className={styles.avatarCircle} 
-                                 style={{ cursor: isOwner ? "pointer" : "default" }}
+                                 className={`${styles.avatarCircle} ${isOwner ? styles.avatarClickable : styles.avatarStatic}`}
                                  onClick={() => isOwner && setMemberToRemove(member)}
                                  title={isOwner ? `Clique para remover ${member.username}` : member.username}
                               />
@@ -542,9 +539,15 @@ export function ListDetails({
             onHide={() => setShowEditModal(false)}
             list={list}
             onUpdate={async (id, name, desc, has_rating, rating_type, manual_rating, auto_sync) => {
-               const success = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating, auto_sync);
-               if (success) onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating, auto_sync });
-               return success;
+               const { success, error } = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating, auto_sync);
+               
+               if (success) {
+                  toast.success("Lista atualizada com sucesso!");
+                  onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating, auto_sync });
+               } else {
+                  toast.error(error || "Erro ao atualizar a lista.");
+               }
+               return success; 
             }}
          />
 

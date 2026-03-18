@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { supabase } from '@/lib/supabase';
 
@@ -7,6 +7,11 @@ export function usePushNotifications(userId?: string) {
    useEffect(() => {
       // Só funciona se estivermos no mobile e se o usuário estiver logado
       if (!userId || !Capacitor.isNativePlatform()) return;
+
+      let registrationHandle: PluginListenerHandle | null = null;
+      let registrationErrorHandle: PluginListenerHandle | null = null;
+      let pushReceivedHandle: PluginListenerHandle | null = null;
+      let pushActionHandle: PluginListenerHandle | null = null;
 
       const setupPush = async () => {
          try {
@@ -26,7 +31,7 @@ export function usePushNotifications(userId?: string) {
             await PushNotifications.register();
 
             // Ouve a resposta do Firebase com o "Token" 
-            await PushNotifications.addListener('registration', async (token) => {
+            registrationHandle = await PushNotifications.addListener('registration', async (token) => {
                console.log('FCM Token recebido:', token.value);
 
                // Guarda o token na tabela do Supabase
@@ -42,17 +47,17 @@ export function usePushNotifications(userId?: string) {
                }
             });
 
-            await PushNotifications.addListener('registrationError', (error) => {
+            registrationErrorHandle = await PushNotifications.addListener('registrationError', (error) => {
                console.error('Erro ao registar no Firebase:', error);
             });
 
             // Ouve notificações quando o app está ABERTO (Foreground)
-            await PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            pushReceivedHandle = await PushNotifications.addListener('pushNotificationReceived', (notification) => {
                console.log('Notificação recebida com o app aberto:', notification);
             });
 
             // Ouve quando o utilizador TOCA na notificação
-            await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
+            pushActionHandle = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
                console.log('Utilizador tocou na notificação:', action);
             });
 
@@ -65,9 +70,10 @@ export function usePushNotifications(userId?: string) {
 
       // Limpeza de segurança ao sair do aplicativo
       return () => {
-         if (Capacitor.isNativePlatform()) {
-            PushNotifications.removeAllListeners();
-         }
+         if (registrationHandle) registrationHandle.remove();
+         if (registrationErrorHandle) registrationErrorHandle.remove();
+         if (pushReceivedHandle) pushReceivedHandle.remove();
+         if (pushActionHandle) pushActionHandle.remove();
       };
    }, [userId]);
 }

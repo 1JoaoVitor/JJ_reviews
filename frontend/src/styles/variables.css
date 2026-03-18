@@ -10,14 +10,21 @@
    --gold-hover: #FFC620;
    --gold-dim: #A37D00;
    --gold-glow: rgba(232, 177, 0, 0.25);
+   --gold-soft-bg: rgba(232, 177, 0, 0.1);
 
    --accent: #3B82F6;
    --accent-hover: #60A5FA;
+   --accent-soft-bg: rgba(59, 130, 246, 0.08);
 
    --success: #22C55E;
    --success-dim: #166534;
+   --success-soft-bg: rgba(34, 197, 94, 0.12);
+   --success-glow: rgba(34, 197, 94, 0.3);
    --danger: #EF4444;
    --danger-dim: #7F1D1D;
+   --danger-soft-bg: rgba(239, 68, 68, 0.1);
+   --danger-glow-sm: rgba(239, 68, 68, 0.2);
+   --danger-glow-md: rgba(239, 68, 68, 0.4);
 
    /* ─── Superfícies ─── */
    --bg-page: #0D0D0D;
@@ -48,6 +55,7 @@
 
    /* ─── Dashboard ─── */
    --dash-total: #E8B100;
+   --dash-average-icon: #EAB308;
    --dash-average: #3B82F6;
    --dash-international: #22C55E;
    --dash-director: #A855F7;
@@ -56,6 +64,7 @@
    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
+   --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
    --shadow-glow: 0 0 20px var(--gold-glow);
 
    /* ─── Border radius ─── */

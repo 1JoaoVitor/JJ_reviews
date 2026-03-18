@@ -3,9 +3,11 @@ import { Pencil, Trash2, Share2, MapPin, Image as ImageIcon } from "lucide-react
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import type { MovieData } from "@/types";
-import { getBadgeStyle } from "@/utils/badges";
+import { getBadgeTone } from "@/utils/badges";
 import styles from "./MovieModal.module.css";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface MovieModalProps {
    show: boolean;
@@ -14,7 +16,7 @@ interface MovieModalProps {
    isAdmin: boolean;
    onShare: (movie: MovieData) => void;
    onEdit: (movie: MovieData) => void;
-   onDelete: (movie: MovieData) => Promise<void> | void;
+   onDelete: (movie: MovieData) => Promise<{ success: boolean; error: string | null }>;
 }
 
 export function MovieModal({
@@ -27,6 +29,8 @@ export function MovieModal({
    onShare,
 }: MovieModalProps) {
 
+   useModalBack(show, onHide);
+
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
 
@@ -35,7 +39,12 @@ export function MovieModal({
       ? movie.list_average_recommended
       : movie?.recommended;
 
-   const badgeStyle = getBadgeStyle(displayRecommended || "");
+   const displayTone = getBadgeTone(displayRecommended || "");
+   const displayToneClass = styles[`recommendTone${displayTone.charAt(0).toUpperCase()}${displayTone.slice(1)}`];
+   const toneClassFromText = (text?: string | null) => {
+      const tone = getBadgeTone(text || "");
+      return styles[`recommendTone${tone.charAt(0).toUpperCase()}${tone.slice(1)}`];
+   };
 
    if (!movie) return null;
 
@@ -43,7 +52,7 @@ export function MovieModal({
       <>
       <Modal show={show} onHide={onHide} size="xl" centered fullscreen="sm-down" contentClassName={styles.modalContent}>
          <Modal.Header closeButton className={styles.header}>
-            <Modal.Title className="fw-bold" style={{ fontSize: "1.75rem" }}>
+            <Modal.Title className={`fw-bold ${styles.titleLarge}`}>
                {movie.title}
             </Modal.Title>
          </Modal.Header>
@@ -84,19 +93,10 @@ export function MovieModal({
                      <img
                         src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
                         alt={movie.title}
-                        className="img-fluid w-100 mb-3"
-                        style={{ borderRadius: "var(--radius-lg)" }}
+                        className={`img-fluid w-100 mb-3 ${styles.posterImg}`}
                      />
                   ) : (
-                     <div
-                        className="d-flex align-items-center justify-content-center mb-3"
-                        style={{
-                           height: 300,
-                           background: "var(--bg-elevated)",
-                           borderRadius: "var(--radius-lg)",
-                           color: "var(--text-muted)",
-                        }}
-                     >
+                     <div className={`d-flex align-items-center justify-content-center mb-3 ${styles.posterPlaceholder}`}>
                         Sem Imagem
                      </div>
                   )}
@@ -117,7 +117,7 @@ export function MovieModal({
                         </div>
                      </div>
                   ) : (
-                     <div style={{ textAlign: "center", color: "var(--text-muted)", fontSize: "var(--font-sm)" }}>
+                     <div className={styles.providersUnavailable}>
                         Indisponível em streamings no Brasil.
                      </div>
                   )}
@@ -128,22 +128,14 @@ export function MovieModal({
                   {movie.list_type === "partial_shared" ? (
                      <div className="mb-4">
                         <div className="d-flex align-items-center gap-2 mb-4">
-                           <h5 className={styles.sectionTitle} style={{ margin: 0, border: 'none' }}>Avaliações do Grupo</h5>
+                           <h5 className={`${styles.sectionTitle} ${styles.sectionTitlePlain}`}>Avaliações do Grupo</h5>
                            <span className={styles.groupAverageBadge}>
                               Média: {movie.list_average_rating ? movie.list_average_rating.toFixed(1) : "N/A"}
                            </span>
 
                            {displayRecommended && (
                               <span
-                                 className={styles.recommendBadge}
-                                 style={{
-                                    backgroundColor: badgeStyle.bg,
-                                    color: badgeStyle.color,
-                                    padding: "0.2rem 0.8rem",
-                                    borderRadius: "var(--radius-pill)",
-                                    fontSize: "0.85rem",
-                                    fontWeight: "bold"
-                                 }}
+                                 className={`${styles.recommendBadge} ${styles.recommendBadgeGroup} ${displayToneClass}`}
                               >
                                  Veredito: {displayRecommended}
                               </span>
@@ -163,17 +155,9 @@ export function MovieModal({
                                     )}
                                     <div className={styles.reviewerInfo}>
                                        <div className="d-flex align-items-center gap-2 flex-wrap mb-1">
-                                          <strong style={{ lineHeight: '2' }}>@{groupRev.user?.username || "Membro"}</strong>
+                                          <strong className={styles.reviewerName}>@{groupRev.user?.username || "Membro"}</strong>
                                           {groupRev.recommended && (
-                                                <span style={{
-                                                   fontSize: '0.65rem',
-                                                   padding: '0.15rem 0.4rem',
-                                                   borderRadius: 'var(--radius-pill)',
-                                                   backgroundColor: getBadgeStyle(groupRev.recommended).bg,
-                                                   color: getBadgeStyle(groupRev.recommended).color,
-                                                   fontWeight: 'bold',
-                                                   textTransform: 'uppercase'
-                                                }}>
+                                             <span className={`${styles.reviewerVerdict} ${toneClassFromText(groupRev.recommended)}`}>
                                                    {groupRev.recommended}
                                                 </span>
                                           )}
@@ -183,7 +167,7 @@ export function MovieModal({
                                              <StarRating value={groupRev.rating} max={10} readOnly={true} />
                                           </div>
                                        ) : (
-                                          <span className="text-muted" style={{ fontSize: '0.8rem' }}>Ainda não avaliou</span>
+                                          <span className={`text-muted ${styles.notRatedYet}`}>Ainda não avaliou</span>
                                        )}
                                     </div>
                                  </div>
@@ -199,7 +183,7 @@ export function MovieModal({
                      <>
                         <div className="d-flex align-items-center gap-4 mb-4 flex-wrap">
                            <div>
-                              <h5 className={styles.ratingLabel} style={{ marginBottom: "0.5rem" }}>
+                              <h5 className={`${styles.ratingLabel} ${styles.ratingLabelCompact}`}>
                                  {movie.list_type === "full_shared" ? "Avaliação Compartilhada" : "Sua Avaliação"}
                               </h5>
                               {movie.rating !== null && movie.rating !== undefined ? (
@@ -212,14 +196,7 @@ export function MovieModal({
                            {movie.recommended && (
                               <div className="ms-auto">
                                  <span
-                                    className={styles.recommendBadge}
-                                    style={{
-                                       backgroundColor: badgeStyle.bg,
-                                       color: badgeStyle.color,
-                                       padding: "0.5rem 1.25rem",
-                                       borderRadius: "var(--radius-pill)",
-                                       display: "inline-block",
-                                    }}
+                                    className={`${styles.recommendBadge} ${styles.recommendBadgeMain} ${displayToneClass}`}
                                  >
                                     {movie.recommended}
                                  </span>
@@ -229,11 +206,10 @@ export function MovieModal({
 
                         <div className="mb-4">
                            <div className="d-flex align-items-center gap-3 mb-2">
-                              <h5 className={styles.sectionTitle} style={{ margin: 0 }}>Review</h5>
+                              <h5 className={`${styles.sectionTitle} ${styles.sectionTitleNoMargin}`}>Review</h5>
                               {movie.location && (
                                  <span 
-                                    className="text-muted d-flex align-items-center gap-1" 
-                                    style={{ fontSize: "0.85rem", fontWeight: 500 }}
+                                    className={`text-muted d-flex align-items-center gap-1 ${styles.locationBadge}`}
                                  >
                                     <MapPin size={14} /> {movie.location}
                                  </span>
@@ -246,19 +222,14 @@ export function MovieModal({
 
                            {/* EXIBIÇÃO DA IMAGEM ANEXADA  */}
                            {movie.attachment_url && (
-                              <div className="mt-4 p-3" style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-                                 <span className="d-flex align-items-center gap-2 mb-3 text-uppercase" style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--gold)' }}>
+                              <div className={`mt-4 p-3 ${styles.attachmentBox}`}>
+                                 <span className={`d-flex align-items-center gap-2 mb-3 text-uppercase ${styles.attachmentLabel}`}>
                                     <ImageIcon size={14} /> Anexo
                                  </span>
                                  <img 
                                     src={movie.attachment_url} 
                                     alt="Anexo da avaliação" 
-                                    style={{ 
-                                       maxWidth: '100%', 
-                                       maxHeight: '400px', 
-                                       objectFit: 'contain', 
-                                       borderRadius: 'var(--radius-sm)' 
-                                    }} 
+                                    className={styles.attachmentImg}
                                  />
                               </div>
                            )}
@@ -272,11 +243,7 @@ export function MovieModal({
                         <h6 className={styles.sectionTitle}>Elenco Principal</h6>
                         <div className="d-flex flex-wrap gap-2">
                            {movie.cast.map((actor, idx) => (
-                              <span key={idx} className={styles.castBadge} style={{
-                                 padding: "0.3rem 0.65rem",
-                                 borderRadius: "var(--radius-pill)",
-                                 fontSize: "var(--font-sm)",
-                              }}>
+                              <span key={idx} className={styles.castBadge}>
                                  {actor}
                               </span>
                            ))}
@@ -313,7 +280,12 @@ export function MovieModal({
          onConfirm={async () => {
             setIsDeleting(true);
             try {
-               await onDelete(movie);
+               const { success, error } = await onDelete(movie);
+               if (success) {
+                  toast.success("Filme removido do perfil e das listas!");
+               } else {
+                  toast.error(error || "Erro ao excluir o filme.");
+               }
             } finally {
                setIsDeleting(false);
                setShowDeleteConfirm(false);

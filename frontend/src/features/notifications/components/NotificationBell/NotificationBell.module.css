@@ -25,7 +25,7 @@
    position: absolute;
    top: 0;
    right: 0;
-   background-color: #EF4444;
+   background-color: var(--danger);
    color: white;
    font-size: 0.65rem;
    font-weight: 800;
@@ -88,6 +88,11 @@
    font-size: 0.9rem;
 }
 
+.emptyIcon {
+   opacity: 0.2;
+   margin-bottom: 1rem;
+}
+
 /* Item da Notificação */
 .notificationItem {
    display: flex;
@@ -103,7 +108,7 @@
 }
 
 .unread {
-   background: rgba(232, 177, 0, 0.05); /* Um fundo levemente dourado se não foi lida */
+   background: var(--gold-soft-bg); /* Um fundo levemente dourado se não foi lida */
 }
 
 .avatar {

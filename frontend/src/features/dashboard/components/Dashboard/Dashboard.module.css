@@ -58,15 +58,15 @@
 }
 
 .statCardAverage::before {
-   background: #3B82F6;
+   background: var(--dash-average);
 }
 
 .statCardInternational::before {
-   background: #10B981;
+   background: var(--dash-international);
 }
 
 .statCardDirector::before {
-   background: #A855F7;
+   background: var(--dash-director);
 }
 
 .icon {
@@ -82,19 +82,19 @@
 }
 
 .iconYellow {
-   color: #EAB308;
+   color: var(--dash-average-icon);
 }
 
 .iconBlue {
-   color: #3B82F6;
+   color: var(--dash-average);
 }
 
 .iconGreen {
-   color: #10B981;
+   color: var(--dash-international);
 }
 
 .iconPurple {
-   color: #A855F7;
+   color: var(--dash-director);
 }
 
 .statValue {
@@ -135,7 +135,7 @@
 
 .clickable:hover {
    transform: translateY(-4px);
-   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+   box-shadow: var(--shadow-md);
    border-color: var(--gold);
    background: var(--bg-surface-hover);
 }

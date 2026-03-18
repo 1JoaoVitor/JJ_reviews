@@ -15,15 +15,24 @@
 .starsWrapper {
    display: flex;
    gap: 0.15rem;
+   width: max-content;
+}
+
+.editableWrapper {
    cursor: pointer;
    touch-action: none;
 }
 
+.readOnlyWrapper {
+   cursor: default;
+   touch-action: auto;
+}
+
 .starBtn {
-   background: none;
+   background: transparent;
    border: none;
    padding: 0;
-   cursor: pointer;
+   pointer-events: none;
    color: var(--border-medium); /* Cor de estrela apagada */
    transition: color 0.15s ease, transform 0.15s ease;
 }

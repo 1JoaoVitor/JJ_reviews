@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { enrichMovieWithTmdb } from "@/features/movies/services/tmdbService";
-import toast from "react-hot-toast";
 import type { MovieData } from "@/types";
 
 export function usePublicProfile(username: string | undefined) {
    const [movies, setMovies] = useState<MovieData[]>([]);
    const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null); 
+   
    const [profileName, setProfileName] = useState("");
    const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
    const [profileId, setProfileId] = useState<string | null>(null);
@@ -14,9 +15,10 @@ export function usePublicProfile(username: string | undefined) {
    const fetchPublicMovies = useCallback(async () => {
       if (!username) return;
       setLoading(true);
+      setError(null); 
 
       try {
-         //  Busca o ID do usuário através do username
+         // Busca o ID do usuário através do username
          const { data: profileData, error: profileError } = await supabase
             .from("profiles")
             .select("id, username, avatar_url")
@@ -41,18 +43,18 @@ export function usePublicProfile(username: string | undefined) {
          if (reviewsError) throw reviewsError;
          if (!reviewsData) return;
 
-         // 3Enriquecemos os dados com os posteres do TMDB
+         // Enriquecemos os dados com os posteres do TMDB
          const fullMovies = await Promise.all(
             reviewsData.map((movie) => enrichMovieWithTmdb(movie)),
          );
 
          setMovies(fullMovies);
       } catch (err) {
-            if (err instanceof Error) {
-                toast.error(err.message || "Erro ao carregar o perfil.");
-            } else {
-                toast.error("Ocorreu um erro desconhecido.");
-            }
+         if (err instanceof Error) {
+            setError(err.message || "Erro ao carregar o perfil.");
+         } else {
+            setError("Ocorreu um erro desconhecido.");
+         }
       } finally {
          setLoading(false);
       }
@@ -62,5 +64,5 @@ export function usePublicProfile(username: string | undefined) {
       fetchPublicMovies();
    }, [fetchPublicMovies]);
 
-   return { movies, loading, profileName, profileAvatar, profileId };
+   return { movies, loading, error, profileName, profileAvatar, profileId };
 }

@@ -18,9 +18,9 @@ interface AddMovieModalProps {
    onSuccess: () => void;
    movieToEdit?: MovieData | null;
    lists: CustomList[];
-   addMovieToList: (listId: string, tmdbId: number) => Promise<boolean>;
-   createList: (name: string, description: string, type?: "private" | "partial_shared" | "full_shared", collaboratorIds?: string[]) => Promise<CustomList | null>;
-   preselectedListId?: string;
+   addMovieToList: (listId: string, tmdbId: number) => Promise<{ success: boolean; error: string | null }>;
+   createList: (name: string, description: string, type?: "private" | "partial_shared" | "full_shared", collaboratorIds?: string[], has_rating?: boolean, rating_type?: "manual" | "average" | null, manual_rating?: number | null, auto_sync?: boolean) => Promise<{ success: boolean; data: CustomList | null; error: string | null }>;
+  preselectedListId?: string;
 }
 
 export function AddMovieModal({
@@ -487,16 +487,16 @@ export function AddMovieModal({
                         <Form.Group className="mb-4">
                            <Form.Label className={styles.formLabel}>Anexar Imagem (Opcional)</Form.Label>
                            {attachmentPreview ? (
-                              <div style={{ position: 'relative', width: 'fit-content' }}>
+                              <div className={styles.attachmentPreviewWrapper}>
                                  <img 
                                     src={attachmentPreview} 
                                     alt="Anexo" 
-                                    style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '8px', border: '2px solid var(--border-subtle)' }} 
+                                    className={styles.attachmentPreviewImage}
                                  />
                                  <button 
                                     type="button" 
                                     onClick={handleRemoveAttachment} 
-                                    style={{ position: 'absolute', top: -10, right: -10, background: '#dc3545', color: 'white', borderRadius: '50%', border: 'none', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
+                                    className={styles.attachmentRemoveBtn}
                                  >
                                     <X size={16} />
                                  </button>
@@ -507,14 +507,12 @@ export function AddMovieModal({
                                     type="file" 
                                     id="attachment-upload" 
                                     accept="image/*" 
-                                    style={{ display: 'none' }} 
+                                    className={styles.fileInputHidden}
                                     onChange={handleFileChange} 
                                  />
                                  <label 
                                     htmlFor="attachment-upload" 
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 16px', background: 'var(--bg-elevated)', border: '1px dashed var(--border-subtle)', borderRadius: '8px', color: 'var(--text-secondary)', fontWeight: 600, transition: 'all 0.2s' }}
-                                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--gold)'}
-                                    onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                                    className={styles.attachmentUploadLabel}
                                  >
                                     <ImagePlus size={18} /> Selecionar Foto (Bilhete, Coleção...)
                                  </label>
@@ -532,14 +530,14 @@ export function AddMovieModal({
                   )}
 
                   <Form.Group className="mt-4 mb-2">
-                     <Form.Label style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 600 }}>
+                     <Form.Label className={styles.listLabel}>
                         Adicionar a uma lista personalizada (Opcional)
                      </Form.Label>
                      {lists.length > 0 ? (
                         <Form.Select 
                            value={selectedListId} 
                            onChange={(e) => setSelectedListId(e.target.value)}
-                           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                           className={styles.listSelect}
                         >
                            <option value="">Nenhuma lista selecionada</option>
                            {lists.map(list => (
@@ -547,22 +545,22 @@ export function AddMovieModal({
                            ))}
                         </Form.Select>
                      ) : (
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                        <p className={styles.noListsText}>
                            Você ainda não tem listas.
                         </p>
                      )}
 
                      {isSharedList && (
-                        <div className="mt-3 p-3" style={{ background: 'var(--bg-surface)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                        <div className={`mt-3 p-3 ${styles.sharedListCard}`}>
                            <Form.Check 
                               type="switch"
                               id="exclusive-to-list-switch"
                               className={styles.customSwitch}
-                              label={<span style={{ fontWeight: 600, color: 'var(--gold)' }}>Salvar exclusivamente nesta lista compartilhada</span>}
+                              label={<span className={styles.sharedListTitle}>Salvar exclusivamente nesta lista compartilhada</span>}
                               checked={exclusiveToList}
                               onChange={(e) => setExclusiveToList(e.target.checked)}
                            />
-                           <Form.Text style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block', marginTop: '0.25rem' }}>
+                           <Form.Text className={styles.sharedListText}>
                               {exclusiveToList 
                                  ? "Este filme NÃO vai aparecer no seu perfil pessoal." 
                                  : "Este filme será adicionado ao seu perfil pessoal E também nesta lista."}
@@ -573,18 +571,7 @@ export function AddMovieModal({
                      <button
                         type="button"
                         onClick={() => setShowCreateList(true)}
-                        style={{
-                           background: 'none',
-                           border: 'none',
-                           color: 'var(--gold)',
-                           fontSize: '0.85rem',
-                           fontWeight: 600,
-                           padding: '0.8rem 0 0',
-                           cursor: 'pointer',
-                           display: 'flex',
-                           alignItems: 'center',
-                           gap: '0.3rem',
-                        }}
+                        className={styles.createListInlineBtn}
                      >
                         <ListPlus size={14} /> Criar nova lista
                      </button>

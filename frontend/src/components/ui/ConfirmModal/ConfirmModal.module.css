@@ -9,7 +9,7 @@
    border-radius: var(--radius-lg);
    padding: 2.5rem 2rem;
    text-align: center;
-   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+   box-shadow: var(--shadow-xl);
 }
 
 .iconContainer {
@@ -22,14 +22,14 @@
    width: 64px;
    height: 64px;
    border-radius: 50%;
-   background: rgba(239, 68, 68, 0.1); 
+   background: var(--danger-soft-bg);
    display: flex;
    align-items: center;
    justify-content: center;
 }
 
 .warningIcon {
-   color: #ef4444; /* Vermelho perigo */
+   color: var(--danger);
 }
 
 .title {
@@ -73,14 +73,14 @@
 }
 
 .confirmBtn {
-   background: #ef4444;
+   background: var(--danger);
    border: none;
-   color: #fff;
-   box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2);
+   color: var(--text-primary);
+   box-shadow: 0 4px 15px var(--danger-glow-sm);
 }
 
 .confirmBtn:hover:not(:disabled) {
-   background: #dc2626;
+   background: var(--danger-dim);
    transform: translateY(-2px);
-   box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+   box-shadow: 0 6px 20px var(--danger-glow-md);
 }
