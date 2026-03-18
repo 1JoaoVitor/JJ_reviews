@@ -37,6 +37,7 @@
    color: var(--gold);
    margin-bottom: 0.5rem;
    font-size: 2rem;
+   word-break: break-word;
 }
 
 .description {
@@ -44,6 +45,27 @@
    font-size: 1rem;
    margin-bottom: 0.5rem;
    max-width: 600px;
+   word-break: break-word;
+}
+
+.ratingBadge {
+   display: flex;
+   align-items: center;
+   gap: 0.25rem;
+   background: var(--gold-soft-bg);
+   padding: 0.2rem 0.6rem;
+   border-radius: var(--radius-pill);
+   border: 1px solid var(--gold);
+}
+
+.ratingIcon {
+   font-size: 14px;
+}
+
+.ratingValue {
+   font-weight: 700;
+   color: var(--gold);
+   font-size: 0.9rem;
 }
 
 .metaInfo {
@@ -77,9 +99,9 @@
 }
 
 .deleteBtn:hover {
-   color: #EF4444;
-   border-color: #EF4444;
-   background: rgba(239, 68, 68, 0.1);
+   color: var(--danger);
+   border-color: var(--danger);
+   background: var(--danger-soft-bg);
 }
 
 .toolbar {
@@ -150,7 +172,7 @@
    position: absolute;
    top: -8px;
    right: -8px;
-   background: #EF4444;
+   background: var(--danger);
    color: white;
    border: none;
    width: 28px;
@@ -255,4 +277,12 @@
 
 .avatarCircle:first-child {
    margin-left: 0;
+}
+
+.avatarClickable {
+   cursor: pointer;
+}
+
+.avatarStatic {
+   cursor: default;
 }

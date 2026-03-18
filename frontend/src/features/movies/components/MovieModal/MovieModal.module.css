@@ -11,6 +11,10 @@
    overflow-x: hidden;
 }
 
+.titleLarge {
+   font-size: 1.75rem;
+}
+
 .body {
    width: 100%;
    overflow-x: hidden;
@@ -43,6 +47,23 @@
    margin-bottom: 0.5rem;
 }
 
+.posterImg {
+   border-radius: var(--radius-lg);
+}
+
+.posterPlaceholder {
+   height: 300px;
+   background: var(--bg-elevated);
+   border-radius: var(--radius-lg);
+   color: var(--text-muted);
+}
+
+.providersUnavailable {
+   text-align: center;
+   color: var(--text-muted);
+   font-size: var(--font-sm);
+}
+
 /* Rating box – gold accent */
 .ratingLabel {
    font-weight: 700;
@@ -56,6 +77,48 @@
    font-size: var(--font-base);
    font-weight: 700;
    letter-spacing: 0.3px;
+}
+
+.recommendBadgeGroup {
+   padding: 0.2rem 0.8rem;
+   border-radius: var(--radius-pill);
+   font-size: 0.85rem;
+}
+
+.recommendBadgeMain {
+   padding: 0.5rem 1.25rem;
+   border-radius: var(--radius-pill);
+   display: inline-block;
+}
+
+.recommendToneGreat {
+   background-color: var(--badge-great);
+   color: #0D0D0D;
+}
+
+.recommendToneGood {
+   background-color: var(--badge-good);
+   color: #0D0D0D;
+}
+
+.recommendToneOk {
+   background-color: var(--badge-ok);
+   color: #0D0D0D;
+}
+
+.recommendToneBad {
+   background-color: var(--badge-bad);
+   color: #0D0D0D;
+}
+
+.recommendToneTerrible {
+   background-color: var(--badge-terrible);
+   color: #F5F5F5;
+}
+
+.recommendToneDefault {
+   background-color: var(--badge-default);
+   color: #F5F5F5;
 }
 
 /* Review text */
@@ -75,6 +138,15 @@
    margin-bottom: 0.75rem;
 }
 
+.sectionTitlePlain {
+   margin: 0;
+   border: none;
+}
+
+.sectionTitleNoMargin {
+   margin: 0;
+}
+
 /* Genre badges */
 .genreBadge {
    background: transparent !important;
@@ -92,6 +164,9 @@
    color: var(--text-primary) !important;
    border: 1px solid var(--border-subtle) !important;
    font-weight: 500;
+   padding: 0.3rem 0.65rem;
+   border-radius: var(--radius-pill);
+   font-size: var(--font-sm);
 }
 
 /* Synopsis */
@@ -155,13 +230,13 @@
 .adminBtn:hover {
    border-color: var(--accent);
    color: var(--accent);
-   background: rgba(59, 130, 246, 0.08);
+   background: var(--accent-soft-bg);
 }
 
 .adminBtnDanger:hover {
    border-color: var(--danger);
    color: var(--danger);
-   background: rgba(239, 68, 68, 0.08);
+   background: var(--danger-soft-bg);
 }
 
 /* Movie meta */
@@ -210,7 +285,7 @@
 
 /* ─── Fórum de Reviews (Lista Compartilhada) ─── */
 .groupAverageBadge {
-   background: rgba(232, 177, 0, 0.15);
+   background: var(--gold-soft-bg);
    color: var(--gold);
    border: 1px solid var(--gold);
    padding: 0.2rem 0.8rem;
@@ -263,6 +338,50 @@
 .reviewerInfo strong {
    color: var(--gold);
    font-size: 0.9rem;
+}
+
+.reviewerName {
+   line-height: 2;
+}
+
+.reviewerVerdict {
+   font-size: 0.65rem;
+   padding: 0.15rem 0.4rem;
+   border-radius: var(--radius-pill);
+   font-weight: 700;
+   text-transform: uppercase;
+}
+
+.notRatedYet {
+   font-size: 0.8rem;
+}
+
+.ratingLabelCompact {
+   margin-bottom: 0.5rem;
+}
+
+.locationBadge {
+   font-size: 0.85rem;
+   font-weight: 500;
+}
+
+.attachmentBox {
+   background: var(--bg-elevated);
+   border-radius: var(--radius-md);
+   border: 1px solid var(--border-subtle);
+}
+
+.attachmentLabel {
+   font-size: 0.8rem;
+   font-weight: 700;
+   color: var(--gold);
+}
+
+.attachmentImg {
+   max-width: 100%;
+   max-height: 400px;
+   object-fit: contain;
+   border-radius: var(--radius-sm);
 }
 
 .reviewerStars {

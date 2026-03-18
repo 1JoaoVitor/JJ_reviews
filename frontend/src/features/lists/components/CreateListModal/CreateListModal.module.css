@@ -199,3 +199,42 @@
 .cancelBtn:hover:not(:disabled) {
    background: var(--bg-elevated);
 }
+
+.ratingOptionsCard {
+   margin-bottom: 1.5rem;
+   padding: 1rem;
+   background: var(--bg-surface);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+}
+
+.switchLabel {
+   font-weight: 600;
+   color: var(--text-primary);
+}
+
+.ratingOptionsContent {
+   margin-top: 1rem;
+   padding-top: 1rem;
+   border-top: 1px solid var(--border-subtle);
+}
+
+.autoSyncCard {
+   margin: 0.5rem 0 1.5rem;
+   padding: 1rem;
+   background: var(--gold-soft-bg);
+   border: 1px solid var(--gold);
+   border-radius: var(--radius-md);
+}
+
+.autoSyncTitle {
+   font-weight: 600;
+   color: var(--gold);
+}
+
+.autoSyncDescription {
+   margin: 0;
+   margin-top: 0.125rem;
+   color: var(--text-muted);
+   font-size: 0.8rem;
+}

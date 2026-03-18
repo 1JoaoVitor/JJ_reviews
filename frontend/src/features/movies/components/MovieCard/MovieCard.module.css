@@ -85,6 +85,10 @@
    gap: 0.25rem;
 }
 
+.ratingIcon {
+   margin-top: -1px;
+}
+
 .ratingBadgeWatchlist {
    color: var(--text-secondary);
    border-color: var(--border-medium);
@@ -168,6 +172,47 @@
    font-weight: 600;
    font-size: var(--font-sm);
    margin-top: auto;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+.recommendFull {
+   max-width: 100%;
+}
+
+.recommendNarrow {
+   max-width: 130px;
+}
+
+.recommendToneGreat {
+   background-color: var(--badge-great);
+   color: #0D0D0D;
+}
+
+.recommendToneGood {
+   background-color: var(--badge-good);
+   color: #0D0D0D;
+}
+
+.recommendToneOk {
+   background-color: var(--badge-ok);
+   color: #0D0D0D;
+}
+
+.recommendToneBad {
+   background-color: var(--badge-bad);
+   color: #0D0D0D;
+}
+
+.recommendToneTerrible {
+   background-color: var(--badge-terrible);
+   color: #F5F5F5;
+}
+
+.recommendToneDefault {
+   background-color: var(--badge-default);
+   color: #F5F5F5;
 }
 
 .waitingBadge {
@@ -198,6 +243,10 @@
    justify-content: space-between;
    gap: 0.5rem;
    margin-top: auto;
+}
+
+.footerSpacer {
+   flex: 1;
 }
 
 .recommendBadge {

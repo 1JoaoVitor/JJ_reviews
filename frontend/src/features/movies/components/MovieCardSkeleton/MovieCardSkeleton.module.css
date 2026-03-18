@@ -63,6 +63,10 @@
    border-radius: var(--radius-pill);
 }
 
+.tagSkeletonSmall {
+   width: 40px;
+}
+
 .dividerSkeleton {
    height: 1px;
    background: var(--border-subtle);

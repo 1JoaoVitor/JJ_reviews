@@ -51,14 +51,11 @@ describe("battleOperations (Functional Core)", () => {
 
          expect(tournament.bracketSize).toBe(8);
          expect(tournament.fighters).toHaveLength(8);
-         expect(tournament.byes).toHaveLength(0); // Ninguém ganha folga num torneio perfeito
+         expect(tournament.byes).toHaveLength(0); 
       });
 
       it("deve calcular lutadores e folgas (byes) corretamente para números ímpares (Ex: 5 filmes)", () => {
          const movies = generateMockMovies(5);
-         // Se temos 5 filmes, a próxima potência é 8. 
-         // Folgas (byes) = 8 - 5 = 3 folgas.
-         // Lutadores iniciais = 5 - 3 = 2 lutadores.
          const tournament = setupTournament(movies, "random", 5);
 
          expect(tournament.bracketSize).toBe(8);
@@ -69,6 +66,38 @@ describe("battleOperations (Functional Core)", () => {
       it("Sad Path: deve lançar erro se tentar iniciar torneio com menos de 2 filmes", () => {
          const movies = generateMockMovies(1);
          expect(() => setupTournament(movies, "random", 8)).toThrowError("Mínimo de 2 filmes necessários");
+      });
+   });
+
+   describe("4. setupTournament - Cenários de Ordenação (Coverage Boost)", () => {
+      const generateMockMovies = (count: number) => {
+         return Array.from({ length: count }, (_, i) => ({
+            id: i, title: `Filme ${i}`, rating: i 
+         })) as MovieData[];
+      };
+
+      it("deve selecionar todos os filmes se quantity for -1", () => {
+         const movies = generateMockMovies(6);
+         const tournament = setupTournament(movies, "random", -1);
+         expect(tournament.fighters.length + tournament.byes.length).toBe(6);
+      });
+
+      it("deve passar pela ordenação de top_rated", () => {
+         const movies = generateMockMovies(4);
+         const tournament = setupTournament(movies, "top_rated", 4);
+         expect(tournament.bracketSize).toBe(4);
+      });
+
+      it("deve passar pela ordenação de worst_rated", () => {
+         const movies = generateMockMovies(4);
+         const tournament = setupTournament(movies, "worst_rated", 4);
+         expect(tournament.bracketSize).toBe(4);
+      });
+
+      it("deve passar pela ordenação de recent", () => {
+         const movies = generateMockMovies(4);
+         const tournament = setupTournament(movies, "recent", 4);
+         expect(tournament.bracketSize).toBe(4);
       });
    });
 });

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
+import type { PluginListenerHandle } from '@capacitor/core';
 import type { MovieData, CustomList } from "@/types";
 
 interface UseAppNavigationProps {
@@ -25,8 +26,10 @@ export function useAppNavigation({
 
    // ─── BOTÃO NATIVO DO ANDROID ───
    useEffect(() => {
+      let backButtonHandle: PluginListenerHandle | null = null;
+
       const setupCapacitorBackButton = async () => {
-         CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+         backButtonHandle = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
             if (canGoBack) {
                window.history.back(); 
             } else {
@@ -34,15 +37,23 @@ export function useAppNavigation({
             }
          });
       };
+
       setupCapacitorBackButton();
-      return () => { CapacitorApp.removeAllListeners(); };
+
+      return () => {
+         if (backButtonHandle) {
+            backButtonHandle.remove();
+         }
+      };
    }, []);
 
    // ─── DEEP LINKS ───
    useEffect(() => {
+      let appUrlOpenHandle: PluginListenerHandle | null = null;
+
       const setupDeepLinks = async () => {
          if (!Capacitor.isNativePlatform()) return;
-         CapacitorApp.addListener('appUrlOpen', (event) => {
+         appUrlOpenHandle = await CapacitorApp.addListener('appUrlOpen', (event) => {
             const url = new URL(event.url);
             const movieIdFromDeepLink = url.searchParams.get("movie");
             if (movieIdFromDeepLink) {
@@ -54,8 +65,11 @@ export function useAppNavigation({
          });
       };
       setupDeepLinks();
+
       return () => {
-         if (Capacitor.isNativePlatform()) CapacitorApp.removeAllListeners();
+         if (appUrlOpenHandle) {
+            appUrlOpenHandle.remove();
+         }
       };
    }, [setSearchParams]);
 

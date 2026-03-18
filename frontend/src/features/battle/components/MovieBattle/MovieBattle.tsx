@@ -133,7 +133,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                            <Form.Check type="radio" label="Melhores Notas" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
                            <Form.Check type="radio" label="Piores Notas" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
                            <Form.Check type="radio" label="Mais Recentes" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
-                           <div style={{ borderTop: "1px solid var(--border-subtle)", margin: "0.5rem 0" }} />
+                           <div className={styles.criteriaDivider} />
                            <Form.Check type="radio" label="Indicados Oscar 2026" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
                            <Form.Check type="radio" label="Nacionais" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
                         </div>
@@ -170,7 +170,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                            })}
                         </div>
                         {quantity !== -1 && quantity > availableMovies.length && (
-                           <div style={{ marginTop: "0.5rem", fontSize: "var(--font-sm)", color: "var(--accent)" }}>
+                           <div className={styles.byesHint}>
                               *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
                            </div>
                         )}
@@ -197,7 +197,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                <div className="text-center mb-4">
                   <span className={styles.roundBadge}>{getRoundTitle()}</span>
                   {byesWaiting > 0 && currentRoundMovies.length > 0 && (
-                     <div style={{ color: "var(--text-muted)", fontSize: "var(--font-sm)", marginBottom: "0.35rem" }}>
+                     <div className={styles.waitingHint}>
                         (+{byesWaiting} filmes aguardando na próxima fase)
                      </div>
                   )}
@@ -234,7 +234,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
                      className={styles.championImage}
                   />
                </div>
-               <h2 className="fw-bold" style={{ color: "var(--text-primary)" }}>{champion.title}</h2>
+               <h2 className={`fw-bold ${styles.championName}`}>{champion.title}</h2>
                <p className={styles.championInfo}>
                   {champion.release_date?.split("-")[0]} &middot; Dir. {champion.director}
                </p>
@@ -264,7 +264,7 @@ function BattleCard({ movie, onClick }: { movie: MovieData; onClick: () => void 
                   className={styles.battlePosterImage}
                />
             ) : (
-               <div style={{ color: "var(--text-muted)", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+               <div className={styles.noImageText}>
                   Sem Imagem
                </div>
             )}
