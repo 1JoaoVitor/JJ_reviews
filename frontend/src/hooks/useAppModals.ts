@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { MovieData, CustomList } from "@/types";
 import { useSearchParams } from "react-router-dom";
 
@@ -40,28 +40,28 @@ export function useAppModals() {
    };
 
    // ─── Helpers de Abertura/Fechamento ───
-   const openMovie = (movie: MovieData) => {
+   const openMovie = useCallback((movie: MovieData) => {
       setSelectedMovie(movie);
       setShowMovieModal(true);
-   };
+   }, []);
 
-   const closeMovie = () => {
+   const closeMovie = useCallback(() => {
       setShowMovieModal(false);
       const newParams = new URLSearchParams(searchParams);
       newParams.delete("movie");
       setSearchParams(newParams, { replace: true });
-   };
+   }, [searchParams, setSearchParams]);
 
-   const openAddMovie = (movie?: MovieData | null, listId?: string) => {
+   const openAddMovie = useCallback((movie?: MovieData | null, listId?: string) => {
       setMovieToEdit(movie || null);
       setPreselectedListId(listId || "");
       setShowAddModal(true);
-   };
+   }, []);
 
-   const openShare = (movie: MovieData) => {
+   const openShare = useCallback((movie: MovieData) => {
       setMovieToShare(movie);
       setShowShareModal(true);
-   };
+   }, []);
 
    return {
       // Visibilidade
