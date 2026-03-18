@@ -1,5 +1,5 @@
-import { Star, Bookmark, Users, Share2, Swords } from "lucide-react";
 import styles from "./LandingPage.module.css";
+import { Star, Bookmark, Users, Share2, Swords } from "lucide-react";
 
 interface LandingPageProps {
    onLoginClick: () => void;

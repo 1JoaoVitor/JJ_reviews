@@ -246,6 +246,13 @@
 }
 
 /* Footer buttons */
+
+.footer{
+   border: 0;
+   display: flex;
+   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 .shareBtn {
    display: inline-flex;
    align-items: center;

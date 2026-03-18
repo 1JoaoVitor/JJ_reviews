@@ -6,7 +6,9 @@ import { Dices, Plus} from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ─── Features ───
-import { useAuth, LoginModal, ProfileModal, FriendsModal, ResetPassword } from "@/features/auth";
+import { useAuth, LoginModal, ResetPassword } from "@/features/auth";
+import {FriendsModal} from "@/features/friends";
+import {ProfileModal} from "@/features/profile";
 import {
    MovieCardSkeleton,
    MovieModal,
@@ -25,6 +27,7 @@ import { PublicProfile } from "@/features/publicProfile";
 import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
+import { SupportPage } from "@/features/support";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -44,6 +47,8 @@ export default function App() {
          <Route path="/" element={<MainApp />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
+
+         <Route path="/support" element={<SupportPage />} />
       </Routes>
    );
 }
@@ -100,7 +105,7 @@ function MainApp() {
          <Toaster 
             position="bottom-right" 
             toastOptions={{
-               style: { background: 'var(--bg-elevated)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' },
+               className: 'custom-toast', 
                success: { iconTheme: { primary: 'var(--gold)', secondary: '#000' } }
             }} 
          />
