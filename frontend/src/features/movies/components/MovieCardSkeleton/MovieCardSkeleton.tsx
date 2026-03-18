@@ -13,7 +13,7 @@ export function MovieCardSkeleton() {
             
             <div className={styles.tagsSkeleton}>
                <div className={`${styles.skeletonPulse} ${styles.tagSkeleton}`}></div>
-               <div className={`${styles.skeletonPulse} ${styles.tagSkeleton}`} style={{ width: '40px' }}></div>
+               <div className={`${styles.skeletonPulse} ${styles.tagSkeleton} ${styles.tagSkeletonSmall}`}></div>
             </div>
             
             <div className={styles.dividerSkeleton}></div>

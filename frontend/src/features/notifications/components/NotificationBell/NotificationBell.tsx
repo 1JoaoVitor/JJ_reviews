@@ -80,7 +80,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
                </div>
             ) : notifications.length === 0 ? (
                <div className={styles.emptyState}>
-                  <Bell size={32} style={{ opacity: 0.2, marginBottom: "1rem" }} />
+                  <Bell size={32} className={styles.emptyIcon} />
                   <p>Você não tem novas notificações.</p>
                </div>
             ) : (

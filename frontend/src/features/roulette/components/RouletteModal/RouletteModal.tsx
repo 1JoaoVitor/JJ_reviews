@@ -3,6 +3,7 @@ import { Modal } from "react-bootstrap";
 import type { MovieData } from "@/types";
 import confetti from "canvas-confetti";
 import styles from "./RouletteModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface RouletteModalProps {
    show: boolean;
@@ -17,6 +18,8 @@ export function RouletteModal({
    watchlist,
    onMovieSelect,
 }: RouletteModalProps) {
+   useModalBack(show, onHide);
+
    const [currentMovie, setCurrentMovie] = useState<MovieData | null>(null);
    const [isSpinning, setIsSpinning] = useState(false);
    const [winner, setWinner] = useState<MovieData | null>(null);
@@ -63,7 +66,7 @@ export function RouletteModal({
 
          <Modal.Body className="text-center py-4">
             {watchlist.length === 0 ? (
-               <p style={{ color: "var(--text-muted)" }}>Sua Watchlist está vazia! Adicione filmes primeiro.</p>
+               <p className={styles.emptyMessage}>Sua Watchlist está vazia! Adicione filmes primeiro.</p>
             ) : (
                <div className="d-flex flex-column align-items-center">
                   <div

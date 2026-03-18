@@ -1,5 +1,5 @@
 import type { MovieData } from "@/types";
-import { getBadgeStyle } from "@/utils/badges";
+import { getBadgeTone } from "@/utils/badges";
 import styles from "./MovieCard.module.css";
 import { Star, Users } from "lucide-react";
 
@@ -25,7 +25,8 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
 
    const isWatchlist = displayRating === null || displayRating === undefined;
 
-   const badgeStyle = getBadgeStyle(displayRecommended || "");
+   const badgeTone = getBadgeTone(displayRecommended || "");
+   const badgeToneClass = styles[`recommendTone${badgeTone.charAt(0).toUpperCase()}${badgeTone.slice(1)}`];
 
    return (
       <div
@@ -54,7 +55,7 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
                   "Na Fila"
                ) : (
                   <>
-                     {isPartialShared ? <Users size={12} style={{ marginTop: "-1px" }} /> : <Star size={12} fill="currentColor" strokeWidth={2} style={{ marginTop: "-1px" }} />}
+                     {isPartialShared ? <Users size={12} className={styles.ratingIcon} /> : <Star size={12} fill="currentColor" strokeWidth={2} className={styles.ratingIcon} />}
                      {displayRating}
                   </>
                )}
@@ -83,23 +84,14 @@ export function MovieCard({ movie, onClick }: MovieCardProps) {
             <div className={styles.footerInfo}>
                {displayRecommended ? (
                   <span
-                     className={styles.recommendBadge}
-                     style={{
-                        backgroundColor: badgeStyle.bg,
-                        color: badgeStyle.color,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        maxWidth: (isPartialShared || isFullShared) ? "130px" : "100%", // Encolhe se tiver avatares do lado
-                        display: "inline-block"
-                     }}
+                     className={`${styles.recommendBadge} ${badgeToneClass} ${(isPartialShared || isFullShared) ? styles.recommendNarrow : styles.recommendFull}`}
                      title={displayRecommended}
                   >
                      {displayRecommended}
                   </span>
                ) : isWatchlist ? (
                   <span className={`${styles.recommendBadge} ${styles.waitingBadge}`}>Aguardando...</span>
-               ) : <div style={{ flex: 1 }}></div>}
+               ) : <div className={styles.footerSpacer}></div>}
 
                {/* Avatares dos membros que já avaliaram */}
                {isPartialShared && movie.list_group_reviews && movie.list_group_reviews.length > 0 && (

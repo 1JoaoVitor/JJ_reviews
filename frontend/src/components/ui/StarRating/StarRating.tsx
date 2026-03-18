@@ -68,15 +68,8 @@ export function StarRating({ value, onChange, max = 10, readOnly = false }: Star
    return (
       <div className={styles.starContainer}>
          <div 
-            className={styles.starsWrapper}
+            className={`${styles.starsWrapper} ${readOnly ? styles.readOnlyWrapper : styles.editableWrapper}`}
             ref={wrapperRef}
-            style={{ 
-               display: "inline-flex", 
-               width: "max-content", 
-               
-               cursor: readOnly ? "default" : "pointer", 
-               touchAction: readOnly ? "auto" : "none" 
-            }}
             onPointerLeave={() => !readOnly && setHover(null)}
             onPointerMove={handlePointerMove}
             onPointerDown={handlePointerDown}
@@ -93,7 +86,6 @@ export function StarRating({ value, onChange, max = 10, readOnly = false }: Star
                      key={index}
                      className={`${styles.starBtn} ${displayValue >= starNumber - 0.5 ? styles.active : ""}`}
                      title={readOnly ? `Nota: ${value}` : `Dar nota ${displayValue}`}
-                     style={{ pointerEvents: "none", padding: 0, background: "transparent", border: "none" }}
                   >
                      {isHalf ? (
                         <StarHalf size={22} fill="currentColor" strokeWidth={1.5} />

@@ -1,6 +1,7 @@
 import { Modal, Spinner } from "react-bootstrap";
 import { AlertTriangle } from "lucide-react";
 import styles from "./ConfirmModal.module.css";
+import { useModalBack } from "@/hooks/useModalBack";
 
 interface ConfirmModalProps {
    show: boolean;
@@ -16,6 +17,8 @@ export function ConfirmModal({
    show, onHide, onConfirm, title = "Atenção", 
    message, confirmText = "Sim, excluir", isProcessing = false 
 }: ConfirmModalProps) {
+   useModalBack(show, onHide);
+
    return (
       <Modal show={show} onHide={onHide} centered backdrop="static" contentClassName={styles.modalContent}>
          <Modal.Body className={styles.body}>

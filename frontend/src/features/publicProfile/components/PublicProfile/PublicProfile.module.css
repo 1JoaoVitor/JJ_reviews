@@ -119,21 +119,21 @@
    color: var(--bg-page);
    border: 1px solid var(--gold);
 }
-.addFriendBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(232, 177, 0, 0.3); }
+.addFriendBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--gold-glow); }
 
 .pendingBtn {
    background: transparent;
    color: var(--text-muted);
    border: 1px dashed var(--border-medium);
 }
-.pendingBtn:hover { border-color: #ef4444; color: #ef4444; }
+.pendingBtn:hover { border-color: var(--danger); color: var(--danger); }
 
 .acceptBtn {
-   background: #10B981; 
-   color: #fff;
-   border: 1px solid #10B981;
+   background: var(--success);
+   color: var(--text-primary);
+   border: 1px solid var(--success);
 }
-.acceptBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+.acceptBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--success-glow); }
 
 
 .friendsBtn {
@@ -141,7 +141,19 @@
    color: var(--gold);
    border: 1px solid var(--border-medium);
 }
-.friendsBtn:hover { border-color: #ef4444; color: #ef4444; } 
+.friendsBtn:hover { border-color: var(--danger); color: var(--danger); }
+
+.rejectFriendBtn {
+   background: var(--danger);
+   color: var(--text-inverse);
+   border-color: var(--danger);
+}
+
+.rejectFriendBtn:hover {
+   background: var(--danger-hover);
+   border-color: var(--danger-hover);
+   color: var(--text-inverse);
+}
 
 /* Mobile */
 @media (max-width: 767px) {
@@ -290,8 +302,8 @@
 }
 
 .mobileFilterBtnNationalActive {
-   background: #10B981;
-   color: #fff;
+   background: var(--success);
+   color: var(--text-primary);
 }
 
 .mobileFilterBtnOscarActive {
@@ -364,7 +376,7 @@
    display: flex;
    align-items: center;
    gap: 0.4rem;
-   background: rgba(255, 193, 7, 0.1);
+   background: var(--gold-soft-bg);
    color: var(--gold);
    border: 1px solid var(--gold);
    padding: 0.3rem 0.8rem;
@@ -377,5 +389,22 @@
 
 .filterBadge:hover {
    background: var(--gold);
-   color: #000;
+   color: var(--text-inverse);
+}
+
+.listCard {
+   background: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   cursor: pointer;
+   transition: border-color 0.2s;
+}
+
+.listCard:hover {
+   border-color: var(--gold);
+}
+
+.listCardTitle {
+   color: var(--gold);
+   font-weight: 700;
+   margin-bottom: 0.5rem;
 }

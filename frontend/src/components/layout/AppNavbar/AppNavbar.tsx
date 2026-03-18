@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react"; // 👈 Filter adicionado
+import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
 import { NotificationBell } from "@/features/notifications";
+import type { SortOrder } from "@/features/movies";
 
 interface AppNavbarProps {
    onlyNational: boolean;
    setOnlyNational: (val: boolean) => void;
    onlyOscar: boolean;
    setOnlyOscar: (val: boolean) => void;
-   sortOrder: string;
-   setSortOrder: (val: string) => void;
+   sortOrder: SortOrder;
+   setSortOrder: (val: SortOrder) => void;
    searchTerm: string;
    setSearchTerm: (val: string) => void;
    availableGenres: string[];
@@ -66,18 +67,18 @@ export function AppNavbar({
    return (
       <nav className={styles.navbar}>
          {/* ─── Row 1: Brand + Search + User ─── */}
-         <div className={styles.topRow} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.75rem' }}>
+         <div className={styles.topRow}>
             
             {/* LOGO  */}
-            <Link to="/" className={styles.brand} style={{ flexShrink: 0 }}>
+            <Link to="/" className={styles.brand}>
                <div className={styles.brandCircle}>JJ</div>
                <span className={`${styles.brandText} d-none d-sm-inline`}>Reviews</span>
             </Link>
 
             {/* BUSCA + FILTRO */}
-            <div className={styles.searchWrapper} style={{ flex: 1, minWidth: 0 }}>
-               <div style={{ position: "relative", display: "flex", gap: "0.5rem", width: "100%" }}>
-                  <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+            <div className={styles.searchWrapper}>
+               <div className={styles.searchRow}>
+                  <div className={styles.searchInputWrap}>
                      <Search size={16} className={styles.searchIcon} />
                      <input
                         type="search"
@@ -85,7 +86,6 @@ export function AppNavbar({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={styles.searchInput}
-                        style={{ width: '100%', textOverflow: 'ellipsis' }}
                      />
                   </div>
                   
@@ -93,17 +93,10 @@ export function AppNavbar({
                      <button
                         type="button"
                         onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                        style={{
-                           display: 'flex', alignItems: 'center', gap: '0.4rem',
-                           padding: '0.4rem 0.6rem', borderRadius: 'var(--radius-md)',
-                           border: `1px solid ${isFiltersOpen ? 'var(--gold)' : 'var(--border-subtle)'}`,
-                           background: isFiltersOpen ? 'rgba(232, 177, 0, 0.1)' : 'transparent',
-                           color: isFiltersOpen ? 'var(--gold)' : 'var(--text-secondary)',
-                           cursor: 'pointer', transition: 'all 0.2s', flexShrink: 0
-                        }}
+                        className={`${styles.filterToggleBtn} ${isFiltersOpen ? styles.filterToggleBtnActive : ""}`}
                      >
                         <Filter size={16} />
-                        <span className="d-none d-lg-inline" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                        <span className={`d-none d-lg-inline ${styles.filterToggleText}`}>
                            Filtros
                         </span>
                      </button>
@@ -112,7 +105,7 @@ export function AppNavbar({
             </div>
 
             {/*AÇÕES DO USUÁRIO */}
-            <div className={styles.userActions} style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: '0.5rem' }}>
+            <div className={styles.userActions}>
                {session ? (
                   <>
                      <NotificationBell userId={session.user.id} />
@@ -168,7 +161,7 @@ export function AppNavbar({
 
          {/* ─── Row 2: Filters ─── */}
          {showFilters && isFiltersOpen && (
-            <div className={styles.filtersRow} style={{ marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
+            <div className={styles.filtersRow}>
                {/* Filter chips */}
                <button
                   className={`${styles.chip} ${!onlyNational && !onlyOscar ? styles.chipActive : ""}`}

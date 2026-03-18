@@ -14,16 +14,7 @@ type ListType = "private" | "partial_shared" | "full_shared";
 interface CreateListModalProps {
    show: boolean;
    onHide: () => void;
-   onCreate: (
-      name: string, 
-      description: string, 
-      type: ListType, 
-      collaboratorIds: string[],
-      has_rating: boolean,
-      rating_type: "manual" | "average" | null,
-      manual_rating: number | null,
-      auto_sync: boolean,
-   ) => Promise<CustomList | null>;
+   onCreate: (name: string, description: string, type: "private" | "partial_shared" | "full_shared", collaboratorIds: string[], has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null, auto_sync: boolean) => Promise<{ success: boolean; data: CustomList | null; error: string | null }>;
 }
 
 export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps) {
@@ -125,16 +116,21 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
       }
 
       setLoading(true);
-      const success = await onCreate(
+      
+      const { success, error } = await onCreate(
          name.trim(), description.trim(), type, selectedFriends, 
          hasRating, hasRating ? ratingType : null, hasRating && ratingType === "manual" ? manualRating : null,
          autoSync,
       );
+      
       setLoading(false);
 
       if (success) {
          toast.success("Lista criada com sucesso!");
-         onHide();
+         onHide(); 
+
+      } else {
+         toast.error(error || "Erro ao criar a lista.");
       }
    };
 
@@ -173,17 +169,17 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
                </Form.Group>
 
                {/* ─── OPÇÕES DE NOTA DA LISTA ─── */}
-               <div className="mb-4 p-3" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)' }}>
+               <div className={styles.ratingOptionsCard}>
                   <Form.Check 
                      type="switch"
                      id="has-rating-switch"
-                     label={<span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Dar uma nota a esta lista?</span>}
+                     label={<span className={styles.switchLabel}>Dar uma nota a esta lista?</span>}
                      checked={hasRating}
                      onChange={(e) => setHasRating(e.target.checked)}
                   />
                   
                   {hasRating && (
-                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                     <div className={styles.ratingOptionsContent}>
                         <Form.Label className={styles.label}>Como a nota será calculada?</Form.Label>
                         <Form.Select 
                            value={ratingType} 
@@ -277,14 +273,14 @@ export function CreateListModal({ show, onHide, onCreate }: CreateListModalProps
 
                {/* ─── AUTO-SINCRONIZAÇÃO (SOMENTE UNIFICADA) ─── */}
                {type === "full_shared" && (
-                  <div className="mb-4 mt-2 p-3" style={{ background: 'rgba(255, 193, 7, 0.05)', border: '1px solid var(--gold)', borderRadius: 'var(--radius-md)' }}>
+                  <div className={styles.autoSyncCard}>
                      <Form.Check 
                         type="switch"
                         id="create-auto-sync-switch"
                         label={
                            <div>
-                              <span style={{ fontWeight: 600, color: 'var(--gold)' }}>Auto-Sincronização</span>
-                              <p className="text-muted small mb-0" style={{ fontSize: '0.8rem' }}>
+                              <span className={styles.autoSyncTitle}>Auto-Sincronização</span>
+                              <p className={styles.autoSyncDescription}>
                                  Avaliações feitas nesta lista serão copiadas automaticamente para o perfil de todos os membros.
                               </p>
                            </div>

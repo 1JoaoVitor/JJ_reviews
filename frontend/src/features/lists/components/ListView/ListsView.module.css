@@ -1,0 +1,62 @@
+.listsContainer {
+   width: 100%;
+}
+
+.createListBtn {
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background-color: var(--gold);
+   color: var(--bg-page);
+   border: none;
+   padding: 0.5rem 1rem;
+   font-size: 0.85rem; 
+   font-weight: 700;
+   border-radius: var(--radius-xl);;
+   height: 38px; 
+   transition: transform 0.2s;
+}
+
+.createListBtn:hover {
+   background: var(--gold-hover);
+   transform: translateY(-2px);
+}
+
+.groupTitle {
+   color: var(--text-secondary);
+   font-weight: 600;
+   font-size: 1.05rem;
+   border-bottom: 1px solid var(--border-subtle);
+   padding-bottom: 0.5rem;
+}
+
+.listCard {
+   background: var(--bg-elevated);
+   border: 1px solid var(--border-subtle);
+   cursor: pointer;
+   padding: 1.5rem; 
+   border-radius: var(--radius-md);
+   height: 100%;
+   transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.listCard:hover {
+   border-color: var(--gold);
+   transform: translateY(-2px);
+   box-shadow: var(--shadow-glow);
+}
+
+.listTitle {
+   color: var(--gold);
+   font-weight: 700;
+   margin-bottom: 0.5rem;
+   word-break: break-word;
+}
+
+.listDescription {
+   word-break: break-word;
+}
+
+.listCount {
+   font-weight: 600;
+}
