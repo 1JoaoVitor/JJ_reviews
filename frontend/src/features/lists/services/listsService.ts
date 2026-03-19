@@ -154,3 +154,161 @@ export async function removeMovieFromListRecord(listId: string, tmdbId: number):
    const { error } = await supabase.from("list_movies").delete().match({ list_id: listId, tmdb_id: tmdbId });
    if (error) throw error;
 }
+
+export interface ListOwnerProfile {
+   username: string;
+   avatar_url: string;
+}
+
+export interface SharedListReviewRow {
+   tmdb_id: number;
+   user_id: string | null;
+   rating: number | null;
+   review: string | null;
+   recommended: string | null;
+   user: { id: string; username: string; avatar_url: string } | { id: string; username: string; avatar_url: string }[] | null;
+}
+
+export interface ListCollaboratorRow {
+   user_id: string;
+   status: string;
+   user: { id: string; username: string; avatar_url: string } | { id: string; username: string; avatar_url: string }[] | null;
+}
+
+export async function fetchListMovieIds(listId: string): Promise<number[]> {
+   const { data, error } = await supabase.from("list_movies").select("tmdb_id").eq("list_id", listId);
+   if (error) throw error;
+
+   return (data || []).map((item: { tmdb_id: number }) => item.tmdb_id);
+}
+
+export async function fetchPrivateListReviews(ownerId: string, tmdbIds: number[]) {
+   if (tmdbIds.length === 0) return [];
+
+   const { data, error } = await supabase
+      .from("reviews")
+      .select("*")
+      .eq("user_id", ownerId)
+      .in("tmdb_id", tmdbIds);
+
+   if (error) throw error;
+   return data || [];
+}
+
+export async function fetchSharedListReviews(listId: string, tmdbIds: number[]): Promise<SharedListReviewRow[]> {
+   if (tmdbIds.length === 0) return [];
+
+   const { data, error } = await supabase
+      .from("list_reviews")
+      .select("*, user:profiles(id, username, avatar_url)")
+      .eq("list_id", listId)
+      .in("tmdb_id", tmdbIds);
+
+   if (error) throw error;
+   return (data || []) as SharedListReviewRow[];
+}
+
+export async function fetchListOwnerProfile(ownerId: string): Promise<ListOwnerProfile | null> {
+   const { data, error } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", ownerId)
+      .single();
+
+   if (error) throw error;
+   return (data as ListOwnerProfile | null) || null;
+}
+
+export async function fetchListCollaborators(listId: string): Promise<ListCollaboratorRow[]> {
+   const { data, error } = await supabase
+      .from("list_collaborators")
+      .select(
+         `
+               user_id,
+               status,
+               user:profiles(id, username, avatar_url)
+            `
+      )
+      .eq("list_id", listId);
+
+   if (error) throw error;
+   return (data || []) as ListCollaboratorRow[];
+}
+
+export function subscribeListDetailsChanges(
+   listId: string,
+   currentUserId: string | undefined,
+   onListMoviesChange: () => void
+): () => void {
+   const channel = supabase
+      .channel(`list_updates_${listId}`)
+      .on(
+         "postgres_changes",
+         { event: "*", schema: "public", table: "list_movies", filter: `list_id=eq.${listId}` },
+         onListMoviesChange
+      )
+      .on(
+         "postgres_changes",
+         { event: "*", schema: "public", table: "list_reviews", filter: `list_id=eq.${listId}` },
+         onListMoviesChange
+      );
+
+   if (currentUserId) {
+      channel.on(
+         "postgres_changes",
+         { event: "*", schema: "public", table: "reviews", filter: `user_id=eq.${currentUserId}` },
+         onListMoviesChange
+      );
+   }
+
+   channel.subscribe();
+
+   return () => {
+      supabase.removeChannel(channel);
+   };
+}
+
+export async function acceptListInvite(listId: string, userId: string): Promise<void> {
+   const { error } = await supabase
+      .from("list_collaborators")
+      .update({ status: "accepted" })
+      .eq("list_id", listId)
+      .eq("user_id", userId);
+
+   if (error) throw error;
+}
+
+export async function rejectListInvite(listId: string, userId: string): Promise<void> {
+   const { error } = await supabase
+      .from("list_collaborators")
+      .delete()
+      .eq("list_id", listId)
+      .eq("user_id", userId);
+
+   if (error) throw error;
+}
+
+export async function deleteListRecord(listId: string): Promise<void> {
+   const { error } = await supabase.from("lists").delete().eq("id", listId);
+   if (error) throw error;
+}
+
+export async function deleteUserListReviews(listId: string, userId: string): Promise<void> {
+   const { error } = await supabase
+      .from("list_reviews")
+      .delete()
+      .eq("list_id", listId)
+      .eq("user_id", userId);
+
+   if (error) throw error;
+}
+
+export async function removeUserFromListCollaborators(listId: string, userId: string): Promise<void> {
+   const { error } = await supabase
+      .from("list_collaborators")
+      .delete()
+      .eq("list_id", listId)
+      .eq("user_id", userId);
+
+   if (error) throw error;
+}
