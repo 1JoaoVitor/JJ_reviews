@@ -54,7 +54,14 @@ import {
    notifyListCollaborators,
    removeMovieFromListRecord,
    subscribeListsChanges,
+   subscribeListDetailsChanges,
    updateListRecord,
+   fetchListMovieIds,
+   acceptListInvite,
+   rejectListInvite,
+   deleteListRecord,
+   deleteUserListReviews,
+   removeUserFromListCollaborators,
 } from "../listsService";
 
 describe("listsService", () => {
@@ -311,5 +318,384 @@ describe("listsService", () => {
    it("throws when removing movie from list fails", async () => {
       matchMock.mockResolvedValue({ error: new Error("remove-movie-failed") });
       await expect(removeMovieFromListRecord("l1", 10)).rejects.toThrow("remove-movie-failed");
+   });
+
+   it("throws when fetching list owner profile fails", async () => {
+      const eqLocalMock = vi.fn().mockReturnValue({ single: singleMock });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+      singleMock.mockResolvedValue({ data: null, error: new Error("profile-fetch-failed") });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "profiles") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(fetchListOwnerProfile("u1")).rejects.toThrow("profile-fetch-failed");
+   });
+
+   it("throws when fetching list collaborators fails", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ data: null, error: new Error("collabs-fetch-failed") });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(fetchListCollaborators("l1")).rejects.toThrow("collabs-fetch-failed");
+   });
+
+   it("fetches list movie ids", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ data: [{ tmdb_id: 10 }, { tmdb_id: 20 }], error: null });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_movies") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      const result = await fetchListMovieIds("l1");
+      expect(result).toEqual([10, 20]);
+   });
+
+   it("returns empty array when no movies in list", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ data: [], error: null });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_movies") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      const result = await fetchListMovieIds("l1");
+      expect(result).toEqual([]);
+   });
+
+   it("throws when fetching movie ids fails", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ data: null, error: new Error("movie-ids-failed") });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_movies") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(fetchListMovieIds("l1")).rejects.toThrow("movie-ids-failed");
+   });
+
+   it("throws when fetching shared list reviews fails", async () => {
+      const inLocalMock = vi.fn().mockResolvedValue({ data: null, error: new Error("reviews-failed") });
+      const eqLocalMock = vi.fn().mockReturnValue({ in: inLocalMock });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_reviews") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(fetchSharedListReviews("l1", [10])).rejects.toThrow("reviews-failed");
+   });
+
+   it("throws when fetching private list reviews fails", async () => {
+      const inLocalMock = vi.fn().mockResolvedValue({ data: null, error: new Error("private-reviews-failed") });
+      const eqLocalMock = vi.fn().mockReturnValue({ in: inLocalMock });
+      const selectLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "reviews") {
+            return { select: selectLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(fetchPrivateListReviews("u1", [10])).rejects.toThrow("private-reviews-failed");
+   });
+
+   it("accepts list invite", async () => {
+      const eqLocalMock1 = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+      const updateLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock1 });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { update: updateLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(acceptListInvite("l1", "u2")).resolves.toBeUndefined();
+   });
+
+   it("throws when accepting list invite fails", async () => {
+      const eqLocalMock1 = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: new Error("accept-failed") }) });
+      const updateLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock1 });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { update: updateLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(acceptListInvite("l1", "u2")).rejects.toThrow("accept-failed");
+   });
+
+   it("rejects list invite", async () => {
+      const eqLocalMock1 = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock1 });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(rejectListInvite("l1", "u2")).resolves.toBeUndefined();
+   });
+
+   it("throws when rejecting list invite fails", async () => {
+      const eqLocalMock1 = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: new Error("reject-failed") }) });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock1 });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(rejectListInvite("l1", "u2")).rejects.toThrow("reject-failed");
+   });
+
+   it("deletes list record", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ error: null });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "lists") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(deleteListRecord("l1")).resolves.toBeUndefined();
+   });
+
+   it("throws when deleting list record fails", async () => {
+      const eqLocalMock = vi.fn().mockResolvedValue({ error: new Error("delete-list-failed") });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: eqLocalMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "lists") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(deleteListRecord("l1")).rejects.toThrow("delete-list-failed");
+   });
+
+   it("deletes user list reviews", async () => {
+      const secondEqMock = vi.fn().mockResolvedValue({ error: null });
+      const firstEqMock = vi.fn().mockReturnValue({ eq: secondEqMock });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: firstEqMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_reviews") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(deleteUserListReviews("l1", "u1")).resolves.toBeUndefined();
+   });
+
+   it("throws when deleting user list reviews fails", async () => {
+      const secondEqMock = vi.fn().mockResolvedValue({ error: new Error("delete-reviews-failed") });
+      const firstEqMock = vi.fn().mockReturnValue({ eq: secondEqMock });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: firstEqMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_reviews") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(deleteUserListReviews("l1", "u1")).rejects.toThrow("delete-reviews-failed");
+   });
+
+   it("removes user from list collaborators", async () => {
+      const secondEqMock = vi.fn().mockResolvedValue({ error: null });
+      const firstEqMock = vi.fn().mockReturnValue({ eq: secondEqMock });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: firstEqMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(removeUserFromListCollaborators("l1", "u1")).resolves.toBeUndefined();
+   });
+
+   it("throws when removing user from list collaborators fails", async () => {
+      const secondEqMock = vi.fn().mockResolvedValue({ error: new Error("remove-collab-failed") });
+      const firstEqMock = vi.fn().mockReturnValue({ eq: secondEqMock });
+      const deleteLocalMock = vi.fn().mockReturnValue({ eq: firstEqMock });
+
+      fromMock.mockImplementation((table: string) => {
+         if (table === "list_collaborators") {
+            return { delete: deleteLocalMock };
+         }
+         return {
+            select: selectMock,
+            match: matchMock,
+            insert: insertMock,
+            update: updateMock,
+            delete: deleteMock,
+         };
+      });
+
+      await expect(removeUserFromListCollaborators("l1", "u1")).rejects.toThrow("remove-collab-failed");
+   });
+
+   it("subscribes to list details changes with current user", () => {
+      const onChange = vi.fn();
+      const unsubscribe = subscribeListDetailsChanges("l1", "u1", onChange);
+
+      expect(channelMock).toHaveBeenCalledWith("list_updates_l1");
+      expect(onMock).toHaveBeenCalledTimes(3); // list_movies, list_reviews, reviews
+      unsubscribe();
+      expect(removeChannelMock).toHaveBeenCalled();
+   });
+
+   it("subscribes to list details changes without current user", () => {
+      const onChange = vi.fn();
+      const unsubscribe = subscribeListDetailsChanges("l1", undefined, onChange);
+
+      expect(channelMock).toHaveBeenCalledWith("list_updates_l1");
+      expect(onMock).toHaveBeenCalledTimes(2); // list_movies, list_reviews (no reviews when no currentUserId)
+      unsubscribe();
+      expect(removeChannelMock).toHaveBeenCalled();
+   });
+
+   it("subscribes to list details changes with null current user", () => {
+      const onChange = vi.fn();
+      const unsubscribe = subscribeListDetailsChanges("l1", null, onChange);
+
+      expect(channelMock).toHaveBeenCalledWith("list_updates_l1");
+      expect(onMock).toHaveBeenCalledTimes(2); // list_movies, list_reviews (no reviews when no currentUserId)
+      unsubscribe();
+      expect(removeChannelMock).toHaveBeenCalled();
    });
 });
