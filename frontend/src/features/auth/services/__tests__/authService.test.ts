@@ -96,6 +96,20 @@ describe("authService", () => {
       expect(unsubscribeMock).toHaveBeenCalled();
    });
 
+   it("forwards auth state changes to callback", () => {
+      const handlerRef: { fn?: (_event: unknown, session: { user: { id: string } } | null) => void } = {};
+      onAuthStateChangeMock.mockImplementation((handler) => {
+         handlerRef.fn = handler;
+         return { data: { subscription: { unsubscribe: unsubscribeMock } } };
+      });
+
+      const onSessionChange = vi.fn();
+      subscribeToAuthStateChanges(onSessionChange);
+      handlerRef.fn?.("SIGNED_IN", { user: { id: "u1" } });
+
+      expect(onSessionChange).toHaveBeenCalledWith({ user: { id: "u1" } });
+   });
+
    it("checks if username is taken", async () => {
       maybeSingleMock.mockResolvedValue({ data: { username: "taken" }, error: null });
       const taken = await isUsernameTaken("taken");
@@ -128,14 +142,54 @@ describe("authService", () => {
       await expect(getEmailByUsername("ghost")).resolves.toBeNull();
    });
 
+   it("throws when fetching profile fails", async () => {
+      singleMock.mockResolvedValue({ data: null, error: new Error("profile-failed") });
+      await expect(fetchProfileByUserId("u1")).rejects.toThrow("profile-failed");
+   });
+
+   it("returns null current session when no session exists", async () => {
+      getSessionMock.mockResolvedValue({ data: { session: null } });
+      await expect(getCurrentSession()).resolves.toBeNull();
+   });
+
+   it("throws when username lookup fails", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: new Error("username-failed") });
+      await expect(isUsernameTaken("taken")).rejects.toThrow("username-failed");
+   });
+
+   it("throws when sign in fails", async () => {
+      signInWithPasswordMock.mockResolvedValue({ error: new Error("signin-failed") });
+      await expect(signInWithEmailPassword("a@a.com", "123456")).rejects.toThrow("signin-failed");
+   });
+
+   it("throws when sign up fails", async () => {
+      signUpMock.mockResolvedValue({ error: new Error("signup-failed") });
+      await expect(signUpWithUsername("a@a.com", "123456", "jv")).rejects.toThrow("signup-failed");
+   });
+
+   it("throws when fetching email by username fails", async () => {
+      rpcMock.mockResolvedValue({ data: null, error: new Error("rpc-failed") });
+      await expect(getEmailByUsername("jv")).rejects.toThrow("rpc-failed");
+   });
+
    it("sends reset password link", async () => {
       resetPasswordForEmailMock.mockResolvedValue({ error: null });
       await expect(sendResetPasswordLink("a@a.com", "http://localhost/reset-password")).resolves.toBeUndefined();
    });
 
+   it("throws when sending reset password link fails", async () => {
+      resetPasswordForEmailMock.mockResolvedValue({ error: new Error("reset-link-failed") });
+      await expect(sendResetPasswordLink("a@a.com", "http://localhost/reset-password")).rejects.toThrow("reset-link-failed");
+   });
+
    it("updates current user password", async () => {
       updateUserMock.mockResolvedValue({ error: null });
       await expect(updateCurrentUserPassword("abcdef")).resolves.toBeUndefined();
+   });
+
+   it("throws when updating current user password fails", async () => {
+      updateUserMock.mockResolvedValue({ error: new Error("update-password-failed") });
+      await expect(updateCurrentUserPassword("abcdef")).rejects.toThrow("update-password-failed");
    });
 
    it("signs out current user", async () => {

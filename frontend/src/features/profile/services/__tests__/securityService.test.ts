@@ -42,8 +42,18 @@ describe("securityService", () => {
       await expect(updateCurrentUserPassword("654321")).resolves.toBeUndefined();
    });
 
+   it("throws when updating user password fails", async () => {
+      updateUserMock.mockResolvedValue({ error: new Error("update-password-failed") });
+      await expect(updateCurrentUserPassword("654321")).rejects.toThrow("update-password-failed");
+   });
+
    it("deletes current user account", async () => {
       rpcMock.mockResolvedValue({ error: null });
       await expect(deleteCurrentUserAccount()).resolves.toBeUndefined();
+   });
+
+   it("throws when deleting current user account fails", async () => {
+      rpcMock.mockResolvedValue({ error: new Error("delete-user-failed") });
+      await expect(deleteCurrentUserAccount()).rejects.toThrow("delete-user-failed");
    });
 });

@@ -34,6 +34,7 @@ vi.mock("@/lib/supabase", () => ({
 
 import {
    fetchRecentNotifications,
+   markAllUserNotificationsAsRead,
    markNotificationAsRead,
    subscribeNotifications,
 } from "../notificationsService";
@@ -68,10 +69,34 @@ describe("notificationsService", () => {
       await expect(markNotificationAsRead("n1")).resolves.toBeUndefined();
    });
 
+   it("marks all user notifications as read", async () => {
+      eqMock.mockReturnValueOnce({ eq: eqMock });
+      eqMock.mockResolvedValue({ error: null });
+
+      await expect(markAllUserNotificationsAsRead("u1")).resolves.toBeUndefined();
+      expect(fromMock).toHaveBeenCalledWith("notifications");
+   });
+
    it("subscribes and unsubscribes notification channel", () => {
       const unsubscribe = subscribeNotifications("u1", vi.fn());
       expect(channelMock).toHaveBeenCalledWith("realtime:notifications");
       unsubscribe();
       expect(removeChannelMock).toHaveBeenCalledWith({ id: "notif-channel" });
+   });
+
+   it("throws when fetching notifications fails", async () => {
+      limitMock.mockResolvedValue({ data: null, error: new Error("fetch-notifications-failed") });
+      await expect(fetchRecentNotifications("u1")).rejects.toThrow("fetch-notifications-failed");
+   });
+
+   it("throws when marking notification as read fails", async () => {
+      eqMock.mockResolvedValue({ error: new Error("mark-one-failed") });
+      await expect(markNotificationAsRead("n1")).rejects.toThrow("mark-one-failed");
+   });
+
+   it("throws when marking all notifications as read fails", async () => {
+      eqMock.mockReturnValueOnce({ eq: eqMock });
+      eqMock.mockResolvedValue({ error: new Error("mark-all-failed") });
+      await expect(markAllUserNotificationsAsRead("u1")).rejects.toThrow("mark-all-failed");
    });
 });
