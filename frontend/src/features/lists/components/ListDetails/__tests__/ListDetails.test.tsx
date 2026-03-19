@@ -8,6 +8,8 @@ const {
    fetchListCollaboratorsMock,
    subscribeListDetailsChangesMock,
    acceptListInviteMock,
+   deleteUserListReviewsMock,
+   removeUserFromListCollaboratorsMock,
    toastSuccessMock,
    toastErrorMock,
 } = vi.hoisted(() => ({
@@ -16,6 +18,8 @@ const {
    fetchListCollaboratorsMock: vi.fn(),
    subscribeListDetailsChangesMock: vi.fn(),
    acceptListInviteMock: vi.fn(),
+   deleteUserListReviewsMock: vi.fn(),
+   removeUserFromListCollaboratorsMock: vi.fn(),
    toastSuccessMock: vi.fn(),
    toastErrorMock: vi.fn(),
 }));
@@ -29,7 +33,8 @@ vi.mock("@/features/movies", () => ({
 }));
 
 vi.mock("@/components/ui/ConfirmModal/ConfirmModal", () => ({
-   ConfirmModal: () => null,
+   ConfirmModal: ({ show, confirmText, onConfirm }: { show: boolean; confirmText?: string; onConfirm: () => void }) =>
+      show ? <button onClick={onConfirm}>{confirmText || "confirmar"}</button> : null,
 }));
 
 vi.mock("../EditListModal/EditListModal", () => ({
@@ -46,14 +51,14 @@ vi.mock("react-hot-toast", () => ({
 vi.mock("../../../services/listsService", () => ({
    acceptListInvite: acceptListInviteMock,
    deleteListRecord: vi.fn(),
-   deleteUserListReviews: vi.fn(),
+   deleteUserListReviews: deleteUserListReviewsMock,
    fetchListCollaborators: fetchListCollaboratorsMock,
    fetchListMovieIds: fetchListMovieIdsMock,
    fetchListOwnerProfile: fetchListOwnerProfileMock,
    fetchPrivateListReviews: vi.fn(),
    fetchSharedListReviews: vi.fn(),
    rejectListInvite: vi.fn(),
-   removeUserFromListCollaborators: vi.fn(),
+   removeUserFromListCollaborators: removeUserFromListCollaboratorsMock,
    subscribeListDetailsChanges: subscribeListDetailsChangesMock,
 }));
 
@@ -63,16 +68,18 @@ describe("ListDetails", () => {
    beforeEach(() => {
       vi.clearAllMocks();
       fetchListMovieIdsMock.mockResolvedValue([]);
-      fetchListOwnerProfileMock.mockResolvedValue({ username: "owner", avatar_url: "" });
+      fetchListOwnerProfileMock.mockResolvedValue({ username: "owner", avatar_url: "owner.png" });
       fetchListCollaboratorsMock.mockResolvedValue([
          {
             user_id: "u2",
             status: "pending",
-            user: { id: "u2", username: "guest", avatar_url: "" },
+            user: { id: "u2", username: "guest", avatar_url: "guest.png" },
          },
       ]);
       subscribeListDetailsChangesMock.mockReturnValue(() => undefined);
       acceptListInviteMock.mockResolvedValue(undefined);
+      deleteUserListReviewsMock.mockResolvedValue(undefined);
+      removeUserFromListCollaboratorsMock.mockResolvedValue(undefined);
    });
 
    it("accepts pending invite through service", async () => {
@@ -136,6 +143,89 @@ describe("ListDetails", () => {
       await waitFor(() => {
          expect(acceptListInviteMock).toHaveBeenCalledWith("l1", "u2");
          expect(toastErrorMock).toHaveBeenCalledWith("Erro ao aceitar convite.");
+      });
+   });
+
+   it("lets accepted collaborator leave list", async () => {
+      fetchListCollaboratorsMock.mockResolvedValue([
+         {
+            user_id: "u2",
+            status: "accepted",
+            user: { id: "u2", username: "guest", avatar_url: "guest.png" },
+         },
+      ]);
+
+      const onBack = vi.fn();
+      const onListDeleted = vi.fn();
+
+      render(
+         <ListDetails
+            list={{
+               id: "l1",
+               owner_id: "u1",
+               name: "Lista Colab",
+               type: "partial_shared",
+               created_at: "2026-03-18",
+            }}
+            allMovies={[]}
+            currentUserId="u2"
+            onBack={onBack}
+            onListDeleted={onListDeleted}
+            onListUpdated={vi.fn()}
+            onUpdateList={vi.fn().mockResolvedValue({ success: true, error: null })}
+            onRemoveMovie={vi.fn().mockResolvedValue({ success: true, error: null })}
+            onAddMovieClick={vi.fn()}
+            onMovieClick={vi.fn()}
+         />
+      );
+
+      await userEvent.click(await screen.findByTitle("Sair da Lista"));
+      await userEvent.click(screen.getByRole("button", { name: "Sim, sair" }));
+
+      await waitFor(() => {
+         expect(deleteUserListReviewsMock).toHaveBeenCalledWith("l1", "u2");
+         expect(removeUserFromListCollaboratorsMock).toHaveBeenCalledWith("l1", "u2");
+         expect(onBack).toHaveBeenCalled();
+         expect(onListDeleted).toHaveBeenCalled();
+      });
+   });
+
+   it("lets owner remove an accepted member", async () => {
+      fetchListCollaboratorsMock.mockResolvedValue([
+         {
+            user_id: "u3",
+            status: "accepted",
+            user: { id: "u3", username: "membro", avatar_url: "membro.png" },
+         },
+      ]);
+
+      render(
+         <ListDetails
+            list={{
+               id: "l1",
+               owner_id: "u1",
+               name: "Lista Colab",
+               type: "partial_shared",
+               created_at: "2026-03-18",
+            }}
+            allMovies={[]}
+            currentUserId="u1"
+            onBack={vi.fn()}
+            onListDeleted={vi.fn()}
+            onListUpdated={vi.fn()}
+            onUpdateList={vi.fn().mockResolvedValue({ success: true, error: null })}
+            onRemoveMovie={vi.fn().mockResolvedValue({ success: true, error: null })}
+            onAddMovieClick={vi.fn()}
+            onMovieClick={vi.fn()}
+         />
+      );
+
+      await userEvent.click(await screen.findByTitle("Clique para remover membro"));
+      await userEvent.click(screen.getByRole("button", { name: "Sim, remover" }));
+
+      await waitFor(() => {
+         expect(deleteUserListReviewsMock).toHaveBeenCalledWith("l1", "u3");
+         expect(removeUserFromListCollaboratorsMock).toHaveBeenCalledWith("l1", "u3");
       });
    });
 });

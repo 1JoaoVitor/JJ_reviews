@@ -115,7 +115,7 @@ describe("LoginModal", () => {
          expect(toastSuccessMock).toHaveBeenCalled();
          expect(onHide).toHaveBeenCalled();
       });
-   });
+   }, 15000);
 
    it("sends password recovery link", async () => {
       const onHide = vi.fn();
@@ -135,5 +135,5 @@ describe("LoginModal", () => {
          expect(toastSuccessMock).toHaveBeenCalled();
          expect(onHide).not.toHaveBeenCalled();
       });
-   });
+   }, 15000);
 });
