@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { enrichMovieWithTmdb } from "@/features/movies/services/tmdbService";
 import { Spinner } from "react-bootstrap";
 import { ArrowLeft, Pencil, Trash2, Plus, X, Check, LogOut } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { MovieCard } from "@/features/movies";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { EditListModal } from "../EditListModal/EditListModal";
@@ -11,6 +10,19 @@ import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
 import { calculateAverageBadge } from "@/utils/badges";
 import type { BaseMovieRow } from "@/features/movies";
+import {
+   acceptListInvite,
+   deleteListRecord,
+   deleteUserListReviews,
+   fetchListCollaborators,
+   fetchListMovieIds,
+   fetchListOwnerProfile,
+   fetchPrivateListReviews,
+   fetchSharedListReviews,
+   rejectListInvite,
+   removeUserFromListCollaborators,
+   subscribeListDetailsChanges,
+} from "../../services/listsService";
 
 const listCache: Record<string, number[]> = {};
 
@@ -67,15 +79,7 @@ export function ListDetails({
    // Busca os filmes da lista e junta com as avaliações corretas
    const fetchListMovies = useCallback(async () => {
       try {
-         // Busca os IDs na tabela da lista
-         const { data: listMoviesData, error: lmError } = await supabase
-            .from("list_movies")
-            .select("tmdb_id")
-            .eq("list_id", list.id);
-            
-         if (lmError) throw lmError;
-
-         const tmdbIds = listMoviesData?.map(d => d.tmdb_id) || [];
+         const tmdbIds = await fetchListMovieIds(list.id);
          
          if (tmdbIds.length === 0) {
             setListMovies([]);
@@ -86,35 +90,32 @@ export function ListDetails({
          const reviewsMap: Record<number, Partial<MovieData>> = {};
 
          if (list.type === "private") {
-            const { data: personalReviews } = await supabase
-               .from("reviews")
-               .select("*")
-               .eq("user_id", list.owner_id)
-               .in("tmdb_id", tmdbIds);
+            const personalReviews = await fetchPrivateListReviews(list.owner_id, tmdbIds);
                
             personalReviews?.forEach(r => {
                reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
             });
          } else {
             // Se for compartilhada, busca TODAS as reviews (de todos os membros) para calcular a média
-            const { data: listReviews } = await supabase
-               .from("list_reviews")
-               .select("*, user:profiles(id, username, avatar_url)")
-               .eq("list_id", list.id)
-               .in("tmdb_id", tmdbIds);
+            const listReviews = await fetchSharedListReviews(list.id, tmdbIds);
             
             tmdbIds.forEach(id => {
                // Filtra as reviews apenas deste filme
                const movieReviews = listReviews?.filter(r => r.tmdb_id === id) || [];
                
                // Formata o array de reviews do grupo (Múltiplas opiniões)
-               const groupReviews = movieReviews.map(r => ({
-                  user_id: r.user_id,
-                  rating: r.rating,
-                  review: r.review,
-                  recommended: r.recommended,
-                  user: Array.isArray(r.user) ? r.user[0] : r.user
-               }));
+               const groupReviews = movieReviews.map(r => {
+                  const rawUser = Array.isArray(r.user) ? r.user[0] : r.user;
+                  return {
+                     user_id: r.user_id ?? undefined,
+                     rating: r.rating ?? undefined,
+                     review: r.review ?? undefined,
+                     recommended: r.recommended ?? undefined,
+                     user: rawUser
+                        ? { username: rawUser.username, avatar_url: rawUser.avatar_url ?? null }
+                        : undefined,
+                  };
+               });
 
                // Calcula a Média (ignorando quem não deu nota)
                const validRatings = groupReviews.filter(r => r.rating != null);
@@ -123,7 +124,11 @@ export function ListDetails({
                   : undefined;
 
                // Calcula a Média do Veredito (Badge) 
-               const avgBadge = calculateAverageBadge(groupReviews.map(r => r.recommended));
+               const avgBadge = calculateAverageBadge(
+                  groupReviews
+                     .map(r => r.recommended)
+                     .filter((value): value is string => !!value)
+               );
 
                // Descobre qual é a "minha" review (para o modal e botão de editar funcionarem com a minha nota)
                const myReview = groupReviews.find(r => r.user_id === currentUserId);
@@ -169,11 +174,7 @@ export function ListDetails({
       setLoadingCollabs(true);
       try {
          //  Busca os dados do Dono da Lista
-         const { data: ownerData } = await supabase
-            .from("profiles")
-            .select("username, avatar_url")
-            .eq("id", list.owner_id)
-            .single();
+         const ownerData = await fetchListOwnerProfile(list.owner_id);
 
          if (ownerData) setListOwner(ownerData);
 
@@ -185,19 +186,7 @@ export function ListDetails({
          }
 
          // 3Se for compartilhada, busca os convidados e faz o JOIN simplificado com profiles
-         const { data: collabs, error } = await supabase
-            .from("list_collaborators")
-            .select(`
-               user_id, 
-               status, 
-               user:profiles(id, username, avatar_url)
-            `)
-            .eq("list_id", list.id);
-
-         if (error) {
-            console.error("Erro do Supabase ao buscar colaboradores:", error.message);
-            throw error;
-         }
+         const collabs = await fetchListCollaborators(list.id);
 
         // Tipagem rápida para o TypeScript entender o retorno do Supabase
          type ProfileData = { id: string; username: string; avatar_url: string };
@@ -216,7 +205,7 @@ export function ListDetails({
          if (currentUserId === list.owner_id) {
             setCurrentUserStatus("owner");
          } else {
-            const myCollab = collabs?.find(c => c.user_id === currentUserId);
+            const myCollab = collabs.find(c => c.user_id === currentUserId);
             setCurrentUserStatus(myCollab ? (myCollab.status as 'pending' | 'accepted') : "none");
          }
 
@@ -236,37 +225,7 @@ export function ListDetails({
 
       // TEMPO REAL (Multiplayer & Sincronização) 
       // Inscreve a página para ouvir qualquer mudança nos filmes desta lista
-      const channel = supabase
-         .channel(`list_updates_${list.id}`)
-         // Ouve novos filmes adicionados ou removidos da lista
-         .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "list_movies", filter: `list_id=eq.${list.id}` },
-            () => { fetchListMovies(); }
-         )
-         // Ouve mudanças nas notas exclusivas desta lista colaborativa
-         .on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "list_reviews", filter: `list_id=eq.${list.id}` },
-            () => { fetchListMovies(); }
-         );
-
-      // Se o usuário estiver logado, também ouve as mudanças no diário pessoal dele
-      // (Porque a lista pode estar usando uma nota puxada do perfil dele)
-      if (currentUserId) {
-         channel.on(
-            "postgres_changes",
-            { event: "*", schema: "public", table: "reviews", filter: `user_id=eq.${currentUserId}` },
-            () => { fetchListMovies(); }
-         );
-      }
-
-      channel.subscribe();
-
-      // Limpa a inscrição quando sair da tela da lista
-      return () => {
-         supabase.removeChannel(channel);
-      };
+      return subscribeListDetailsChanges(list.id, currentUserId, fetchListMovies);
    }, [fetchListMovies, fetchCollaborators, list.id, currentUserId]);
 
    // Permissões Derivadas
@@ -278,16 +237,11 @@ export function ListDetails({
    const handleAcceptInvite = async () => {
       if (!currentUserId) return;
       setIsAccepting(true);
-      const { error } = await supabase
-         .from('list_collaborators')
-         .update({ status: 'accepted' })
-         .eq('list_id', list.id)
-         .eq('user_id', currentUserId);
-         
-      if (!error) {
+      try {
+         await acceptListInvite(list.id, currentUserId);
          toast.success("Convite aceito! Bem-vindo à lista.");
          fetchCollaborators(); // Recarrega para mudar o status e mostrar a foto dele
-      } else {
+      } catch {
          toast.error("Erro ao aceitar convite.");
       }
       setIsAccepting(false);
@@ -296,15 +250,12 @@ export function ListDetails({
    const handleRejectInvite = async () => {
       if (!currentUserId) return;
       setIsAccepting(true);
-      const { error } = await supabase
-         .from('list_collaborators')
-         .delete()
-         .eq('list_id', list.id)
-         .eq('user_id', currentUserId);
-         
-      if (!error) {
+      try {
+         await rejectListInvite(list.id, currentUserId);
          toast.success("Convite recusado.");
          onBack(); // Manda o usuário de volta para a tela anterior
+      } catch {
+         toast.error("Erro ao recusar convite.");
       }
       setIsAccepting(false);
    };
@@ -313,8 +264,7 @@ export function ListDetails({
    const handleDeleteList = async () => {
       setIsDeleting(true);
       try {
-         const { error } = await supabase.from("lists").delete().eq("id", list.id);
-         if (error) throw error;
+         await deleteListRecord(list.id);
          toast.success("Lista excluída com sucesso!");
          onListDeleted();
       } catch (err) {
@@ -352,11 +302,10 @@ export function ListDetails({
       try {
          // 1Apaga as avaliações que ele fez ESPECIFICAMENTE para esta lista 
          // (Se for uma lista de totalmente compartilhada  onde o user_id é nulo, isto não apaga nada, o que é o comportamento correto)
-         await supabase.from('list_reviews').delete().eq('list_id', list.id).eq('user_id', currentUserId);
+         await deleteUserListReviews(list.id, currentUserId);
 
          // emove o utilizador dos colaboradores
-         const { error } = await supabase.from('list_collaborators').delete().eq('list_id', list.id).eq('user_id', currentUserId);
-         if (error) throw error;
+         await removeUserFromListCollaborators(list.id, currentUserId);
          
          toast.success("Você saiu da lista.");
          onBack();
@@ -376,11 +325,10 @@ export function ListDetails({
       setIsRemovingMember(true);
       try {
          // Apaga as avaliações do membro expulso
-         await supabase.from('list_reviews').delete().eq('list_id', list.id).eq('user_id', memberToRemove.id);
+         await deleteUserListReviews(list.id, memberToRemove.id);
 
          // Remove o membro dos colaboradores
-         const { error } = await supabase.from('list_collaborators').delete().eq('list_id', list.id).eq('user_id', memberToRemove.id);
-         if (error) throw error;
+         await removeUserFromListCollaborators(list.id, memberToRemove.id);
          
          toast.success(`${memberToRemove.username} foi removido da lista.`);
          fetchCollaborators(); 

@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
-export async function deleteReviewById(reviewId: string): Promise<void> {
+export async function deleteReviewById(reviewId: string | number): Promise<void> {
    const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
    if (error) throw error;
 }
