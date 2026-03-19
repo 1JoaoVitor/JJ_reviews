@@ -5,10 +5,10 @@
 
 import { parseCsv, getField, getNumericField, getDateField } from "../utils/csvParser";
 import { batchMatchMovies } from "../utils/movieMatcher";
-import {
+import { IssueSeverity } from "../types/importTypes";
+import type {
   ValidationIssue,
   ValidationResult,
-  IssueSeverity,
   ProfileData,
   RatingData,
   ReviewData,
@@ -148,7 +148,7 @@ function parseProfileCsv(rows: Record<string, string>[]): ProfileData | null {
 
 function parseRatingsCsv(rows: Record<string, string>[]): RatingData[] {
   return rows
-    .map((row) => {
+    .flatMap((row) => {
       const { value: name, error: nameError } = getField(row, "Name", { required: true });
       const { value: year, error: yearError } = getNumericField(row, "Year", {
         required: true,
@@ -162,26 +162,25 @@ function parseRatingsCsv(rows: Record<string, string>[]): RatingData[] {
       });
 
       if (nameError || !name || yearError || !year || ratingError || rating === null) {
-        return null; // Skip invalid rows
+        return []; // Skip invalid rows
       }
 
       const { value: date } = getDateField(row, "Date");
       const { value: letterboxdUri } = getField(row, "Letterboxd URI");
 
-      return {
+      return [{
         date: date || new Date().toISOString(),
         name,
         year,
         rating,
         letterboxdUri: letterboxdUri || undefined,
-      };
-    })
-    .filter((item): item is RatingData => item !== null);
+      }];
+    });
 }
 
 function parseReviewsCsv(rows: Record<string, string>[]): ReviewData[] {
   return rows
-    .map((row) => {
+    .flatMap((row) => {
       const { value: name, error: nameError } = getField(row, "Name", { required: true });
       const { value: year, error: yearError } = getNumericField(row, "Year", {
         required: true,
@@ -190,7 +189,7 @@ function parseReviewsCsv(rows: Record<string, string>[]): ReviewData[] {
       });
 
       if (nameError || !name || yearError || !year) {
-        return null;
+        return [];
       }
 
       const { value: date } = getDateField(row, "Date");
@@ -203,23 +202,22 @@ function parseReviewsCsv(rows: Record<string, string>[]): ReviewData[] {
       const { value: tags } = getField(row, "Tags");
       const { value: letterboxdUri } = getField(row, "Letterboxd URI");
 
-      return {
+      return [{
         date: date || new Date().toISOString(),
         name,
         year,
-        rating: rating || undefined,
+        rating: rating ?? undefined,
         review: review || undefined,
         rewatch: rewatch?.toLowerCase() === "yes",
         tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
         letterboxdUri: letterboxdUri || undefined,
-      };
-    })
-    .filter((item): item is ReviewData => item !== null);
+      }];
+    });
 }
 
 function parseWatchedCsv(rows: Record<string, string>[]): WatchedMovieData[] {
   return rows
-    .map((row) => {
+    .flatMap((row) => {
       const { value: name } = getField(row, "Name", { required: true });
       const { value: year } = getNumericField(row, "Year", {
         required: true,
@@ -227,24 +225,23 @@ function parseWatchedCsv(rows: Record<string, string>[]): WatchedMovieData[] {
         max: 2100,
       });
 
-      if (!name || !year) return null;
+      if (!name || !year) return [];
 
       const { value: date } = getDateField(row, "Date");
       const { value: letterboxdUri } = getField(row, "Letterboxd URI");
 
-      return {
+      return [{
         date: date || new Date().toISOString(),
         name,
         year,
         letterboxdUri: letterboxdUri || undefined,
-      };
-    })
-    .filter((item): item is WatchedMovieData => item !== null);
+      }];
+    });
 }
 
 function parseWatchlistCsv(rows: Record<string, string>[]): WatchlistMovieData[] {
   return rows
-    .map((row) => {
+    .flatMap((row) => {
       const { value: name } = getField(row, "Name", { required: true });
       const { value: year } = getNumericField(row, "Year", {
         required: true,
@@ -252,19 +249,18 @@ function parseWatchlistCsv(rows: Record<string, string>[]): WatchlistMovieData[]
         max: 2100,
       });
 
-      if (!name || !year) return null;
+      if (!name || !year) return [];
 
       const { value: date } = getDateField(row, "Date");
       const { value: letterboxdUri } = getField(row, "Letterboxd URI");
 
-      return {
+      return [{
         date: date || new Date().toISOString(),
         name,
         year,
         letterboxdUri: letterboxdUri || undefined,
-      };
-    })
-    .filter((item): item is WatchlistMovieData => item !== null);
+      }];
+    });
 }
 
 function parseListCsv(rows: Record<string, string>[]): ListData | null {
@@ -294,7 +290,7 @@ function parseListCsv(rows: Record<string, string>[]): ListData | null {
   // Parse movie rows
   const movies: ListMovieData[] = rows
     .slice(dataStartIndex)
-    .map((row) => {
+    .flatMap((row) => {
       const { value: position } = getNumericField(row, "Position");
       const { value: name } = getField(row, "Name", { required: true });
       const { value: year } = getNumericField(row, "Year", {
@@ -303,22 +299,21 @@ function parseListCsv(rows: Record<string, string>[]): ListData | null {
         max: 2100,
       });
 
-      if (!name || !year) return null;
+      if (!name || !year) return [];
 
       const { value: description } = getField(row, "Description");
       const { value: tags } = getField(row, "Tags");
       const { value: letterboxdUri } = getField(row, "URL");
 
-      return {
+      return [{
         position: position || 0,
         name,
         year,
         description: description || undefined,
         tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
         letterboxdUri: letterboxdUri || undefined,
-      };
+      }];
     })
-    .filter((item): item is ListMovieData => item !== null)
     // Re-sort by position if available
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 

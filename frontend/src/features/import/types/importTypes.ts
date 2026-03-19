@@ -3,16 +3,20 @@
  * Defines all types needed for Letterboxd-compatible import/export
  */
 
-export enum IssueSeverity {
-  ERROR = "error",      // Blocks import
-  WARNING = "warning",  // User can accept and continue
-  INFO = "info",        // Informational only
-}
+export const IssueSeverity = {
+  ERROR: "error",      // Blocks import
+  WARNING: "warning",  // User can accept and continue
+  INFO: "info",        // Informational only
+} as const;
 
-export enum RatingScale {
-  SCALE_0_TO_10 = "0-10",  // Convert 0-5 to 0-10 (multiply by 2)
-  SCALE_1_TO_1 = "1:1",    // Keep as-is (5 stays 5)
-}
+export type IssueSeverity = (typeof IssueSeverity)[keyof typeof IssueSeverity];
+
+export const RatingScale = {
+  SCALE_0_TO_10: "0-10",  // Convert 0-5 to 0-10 (multiply by 2)
+  SCALE_1_TO_1: "1:1",    // Keep as-is (5 stays 5)
+} as const;
+
+export type RatingScale = (typeof RatingScale)[keyof typeof RatingScale];
 
 export type ListType = "private" | "partial_shared" | "full_shared";
 

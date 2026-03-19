@@ -3,7 +3,7 @@
  * Extracts ZIP files and auto-detects Letterboxd export structure
  */
 
-import {
+import type {
   DetectedFile,
   DetectedFileSet,
 } from "../types/importTypes";
