@@ -1,5 +1,5 @@
-import { supabase } from "@/lib/supabase";
 import type { MovieData, CustomList } from "@/types";
+import { deleteReviewById, removeMovieFromPrivateLists } from "../services/movieReviewService";
 
 interface UseDeleteMovieProps {
    lists: CustomList[];
@@ -12,21 +12,18 @@ export function useDeleteMovie({ lists, fetchMovies, fetchLists, closeModal }: U
    
    const handleDeleteMovie = async (movie: MovieData) => {
       try {
-         const { error } = await supabase.from("reviews").delete().eq("id", movie.id);
-         if (error) throw error;
+         await deleteReviewById(movie.id);
 
          const privateListIds = lists
             .filter(l => l.type === "private" || !l.type)
             .map(l => l.id);
 
          if (privateListIds.length > 0 && movie.tmdb_id) {
-            const { error: listError } = await supabase
-               .from("list_movies")
-               .delete()
-               .eq("tmdb_id", movie.tmdb_id)
-               .in("list_id", privateListIds);
-            
-            if (listError) console.error("Erro ao limpar das listas particulares:", listError);
+            try {
+               await removeMovieFromPrivateLists(movie.tmdb_id, privateListIds);
+            } catch (listError) {
+               console.error("Erro ao limpar das listas particulares:", listError);
+            }
          }
 
          closeModal();

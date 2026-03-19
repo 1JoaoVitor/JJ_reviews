@@ -6,8 +6,16 @@ import { Search, ArrowLeft, ListPlus, ImagePlus, X } from "lucide-react";
 import { StarRating } from "@/components/ui/StarRating/StarRating";
 import { searchMovies, getMovieDetails} from "../../services/tmdbService";
 import { CreateListModal } from "@/features/lists";
-
-import { supabase } from "@/lib/supabase";
+import {
+   getAuthenticatedUser,
+   getExistingProfileReview,
+   hasUserReview,
+   syncReviewToListMembers,
+   uploadReviewAttachment,
+   upsertFullSharedListReview,
+   upsertPartialSharedListReview,
+   upsertPersonalReview,
+} from "../../services/moviePersistenceService";
 import type { TmdbSearchResult, MovieData, CustomList } from "@/types";
 import styles from "./AddMovieModal.module.css";
 import { useModalBack } from "@/hooks/useModalBack";
@@ -105,16 +113,10 @@ export function AddMovieModal({
    useEffect(() => {
       const checkProfileExistence = async () => {
          if (step === "form" && selectedMovie) {
-            const { data: { user } } = await supabase.auth.getUser();
+            const user = await getAuthenticatedUser();
             if (user) {
-               const { data } = await supabase
-                  .from("reviews")
-                  .select("id")
-                  .eq("user_id", user.id)
-                  .eq("tmdb_id", selectedMovie.id)
-                  .maybeSingle();
-               
-               setExclusiveToList(!data);
+               const hasReview = await hasUserReview(user.id, selectedMovie.id);
+               setExclusiveToList(!hasReview);
             }
          }
       };
@@ -181,21 +183,15 @@ export function AddMovieModal({
             }
          }
 
-         const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-         if (userError || !user) {
+         const user = await getAuthenticatedUser();
+         if (!user) {
             toast.error("Você precisa estar logado para adicionar filmes.");
             setSaving(false);
             return;
          }
 
          if (!exclusiveToList && !movieToEdit) {
-            const { data: existingMovie } = await supabase
-               .from("reviews")
-               .select("id, status")
-               .eq("user_id", user.id)
-               .eq("tmdb_id", selectedMovie.id)
-               .maybeSingle();
+            const existingMovie = await getExistingProfileReview(user.id, selectedMovie.id);
 
             if (existingMovie) {
                const statusNome = existingMovie.status === "watched" ? "Assistidos" : "Watchlist";
@@ -209,22 +205,7 @@ export function AddMovieModal({
          let finalAttachmentUrl = movieToEdit?.attachment_url || null; // Começa com o antigo
 
          if (attachmentFile) {
-            // Gera um nome único: ID_do_usuario/timestamp_aleatorio.extensao
-            const fileExt = attachmentFile.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-            const { error: uploadError } = await supabase.storage
-               .from('review_attachments')
-               .upload(fileName, attachmentFile);
-
-            if (uploadError) throw uploadError;
-
-            // Pega o Link Público do Supabase
-            const { data: { publicUrl } } = supabase.storage
-               .from('review_attachments')
-               .getPublicUrl(fileName);
-
-            finalAttachmentUrl = publicUrl;
+            finalAttachmentUrl = await uploadReviewAttachment(user.id, attachmentFile);
          } else if (!attachmentPreview) {
             // Se não tem arquivo novo e apagaram o preview, limpa do banco
             finalAttachmentUrl = null; 
@@ -232,30 +213,15 @@ export function AddMovieModal({
 
          // SALVAR NO PERFIL PESSOAL
          if (!exclusiveToList) {
-            const payload = {
-               tmdb_id: selectedMovie.id,
+            await upsertPersonalReview(user.id, selectedMovie.id, {
                rating: formStatus === "watched" ? rating : null,
                review: formStatus === "watched" ? review : null,
                recommended: formStatus === "watched" ? recommended : null,
                runtime: movieRuntime,
                location: formStatus === "watched" ? location : null,
                status: formStatus,
-               user_id: user.id,
                attachment_url: formStatus === "watched" ? finalAttachmentUrl : null, // 👈 Anexo aqui!
-            };
-
-            const { data: existingPersonalReview } = await supabase
-               .from("reviews")
-               .select("id")
-               .eq("user_id", user.id)
-               .eq("tmdb_id", selectedMovie.id)
-               .maybeSingle();
-
-            if (existingPersonalReview) {
-               await supabase.from("reviews").update(payload).eq("id", existingPersonalReview.id);
-            } else {
-               await supabase.from("reviews").insert([payload]);
-            }
+            });
          }
 
          // SALVAR NA LISTA
@@ -267,49 +233,31 @@ export function AddMovieModal({
 
             if (isSharedList && formStatus === "watched") {
                if (selectedListDetails.type === "full_shared") {
-                  const { data: existingGroupReview } = await supabase
-                     .from('list_reviews')
-                     .select('id')
-                     .eq('list_id', selectedListId)
-                     .eq('tmdb_id', selectedMovie.id)
-                     .is('user_id', null)
-                     .maybeSingle();
-
-                  if (existingGroupReview) {
-                     await supabase.from('list_reviews').update({ rating, review, recommended }).eq('id', existingGroupReview.id);
-                  } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: null, rating, review, recommended });
-                  }
+                  await upsertFullSharedListReview(selectedListId, selectedMovie.id, { rating, review, recommended });
                } else {
-                  const { data: existingUserReview } = await supabase
-                     .from('list_reviews')
-                     .select('id')
-                     .eq('list_id', selectedListId)
-                     .eq('tmdb_id', selectedMovie.id)
-                     .eq('user_id', user.id)
-                     .maybeSingle();
-
-                  if (existingUserReview) {
-                     await supabase.from('list_reviews').update({ rating, review, recommended, location, runtime: movieRuntime}).eq('id', existingUserReview.id);
-                  } else {
-                     await supabase.from('list_reviews').insert({ list_id: selectedListId, tmdb_id: selectedMovie.id, user_id: user.id, rating, review, recommended, location, runtime: movieRuntime });
-                  }
+                  await upsertPartialSharedListReview(selectedListId, selectedMovie.id, user.id, {
+                     rating,
+                     review,
+                     recommended,
+                     location,
+                     runtime: movieRuntime,
+                  });
                }
 
                if (selectedListDetails.auto_sync && !exclusiveToList) {
-                  const { error: syncError } = await supabase.rpc('sync_review_to_list_members', {
-                     p_list_id: selectedListId,
-                     p_tmdb_id: selectedMovie.id,
-                     p_rating: rating,
-                     p_review: review,
-                     p_recommended: recommended,
-                     p_status: formStatus,
-                     p_added_by: user.id,
-                     p_location: location,
-                     p_runtime: movieRuntime,
-                  });
-
-                  if (syncError) {
+                  try {
+                     await syncReviewToListMembers({
+                        listId: selectedListId,
+                        tmdbId: selectedMovie.id,
+                        rating,
+                        review,
+                        recommended,
+                        status: formStatus,
+                        addedBy: user.id,
+                        location,
+                        runtime: movieRuntime,
+                     });
+                  } catch (syncError) {
                      console.error("Erro ao sincronizar filme com membros da lista:", syncError);
                   }
                }
