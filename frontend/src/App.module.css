@@ -147,3 +147,11 @@
    margin-top: 4rem;
    color: var(--text-muted);
 }
+
+/* ─── Toasts Customizados ─── */
+.custom-toast {
+   background-color: var(--bg-elevated) !important;
+   color: var(--text-primary) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-md) !important;
+}

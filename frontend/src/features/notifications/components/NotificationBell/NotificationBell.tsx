@@ -39,12 +39,14 @@ export function NotificationBell({ userId }: NotificationBellProps) {
       if (!notif.is_read) markAsRead(notif.id);
       
       // Redireciona dependendo do tipo da notificação USANDO A URL DIRETAMENTE
-      if (notif.type === "list_invite" || notif.type === "movie_added") {
+      if (notif.type === "list_invite") {
          if (notif.reference_id) {
-            navigate(`/?aba=lists&listId=${notif.reference_id}`);
+            window.location.assign(`/?aba=lists&listId=${notif.reference_id}`);
          } else {
             navigate(`/?aba=lists`);
          }
+      } else if (notif.type === "movie_added") {
+         navigate(`/?aba=lists`);
       } else if (notif.type === "friend_request") {
          if (notif.sender?.username) {
             navigate(`/perfil/${notif.sender.username}`);

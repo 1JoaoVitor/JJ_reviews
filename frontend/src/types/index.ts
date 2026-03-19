@@ -87,6 +87,7 @@ export interface AppNotification {
    id: string;
    user_id: string;
    sender_id?: string;
+   reference_id?: string;
    type: "friend_request" | "list_invite" | "movie_added" | "general";
    message: string;
    is_read: boolean;
@@ -116,6 +117,8 @@ export interface CustomList {
    rating_type?: "manual" | "average" | null;
    manual_rating?: number | null;
    auto_sync?: boolean;
+   likes_count?: number;
+   is_liked?: boolean;
 }
 
 export interface ListCollaborator {

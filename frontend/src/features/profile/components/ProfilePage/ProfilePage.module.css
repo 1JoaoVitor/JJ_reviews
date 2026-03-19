@@ -1,0 +1,405 @@
+/* ─── CONTAINER PRINCIPAL (Com Safe Areas para Mobile) ─── */
+.pageContainer {
+  min-height: 100vh;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+
+  /* Respiro para a navegação do celular embaixo */
+  padding-bottom: max(6rem, env(safe-area-inset-bottom));
+}
+
+/* ─── HEADER ─── */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+
+  padding: 1.5rem 1.5rem 0;
+  padding-top: max(1.5rem, env(safe-area-inset-top)); /* safe area */
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  margin-bottom: 1rem;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+
+  color: var(--text-primary);
+
+  padding: 0.5rem;
+  margin-left: -0.5rem;
+
+  transition: background-color 0.2s;
+}
+
+.backBtn:hover {
+  background-color: var(--bg-elevated);
+}
+
+.title {
+  margin: 0;
+
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+}
+
+/* ─── TABS ─── */
+.tabs {
+  display: flex;
+  gap: 1.5rem;
+
+  margin-bottom: -1px; /* sobrepor borda */
+}
+
+.tabBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+
+  color: var(--text-muted);
+  font-weight: 600;
+
+  padding: 0.75rem 0;
+
+  transition: all 0.2s;
+}
+
+.tabBtn:hover {
+  color: var(--text-primary);
+}
+
+.tabBtnActive {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* ─── BODY ─── */
+.body {
+  max-width: 600px;
+  margin: 0 auto;
+
+  padding: 2rem 1.5rem;
+}
+
+/* ─── AVATAR ─── */
+.avatarWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-bottom: 1.5rem;
+}
+
+.avatarCircle {
+  width: 120px;
+  height: 120px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+  overflow: hidden;
+
+  background: var(--bg-elevated);
+  border: 3px solid var(--border-subtle);
+
+  margin-bottom: 0.75rem;
+}
+
+.avatarImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  color: var(--text-muted);
+}
+
+.changePhotoBtn {
+  padding: 0.4rem 1.5rem;
+
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-pill);
+
+  background: transparent;
+  color: var(--gold);
+
+  font-weight: 600;
+  font-size: var(--font-sm);
+
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.changePhotoBtn:hover {
+  background: var(--gold);
+  color: var(--bg-base);
+}
+
+/* ─── FORM ─── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border-subtle);
+  margin: 0.5rem 0 1rem;
+}
+
+.label {
+  display: block;
+
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: 600;
+
+  margin-bottom: 0.5rem;
+}
+
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  height: 48px;
+
+  padding-left: 2.75rem !important;
+
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+
+  color: var(--text-primary);
+}
+
+.input:focus {
+  outline: none;
+
+  background-color: var(--bg-elevated);
+  border-color: var(--gold);
+  color: var(--text-primary);
+
+  box-shadow: 0 0 0 2px rgba(232, 177, 0, 0.2);
+}
+
+/* ─── BOTÕES ─── */
+.saveBtn {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+
+  border: none;
+  border-radius: var(--radius-md);
+
+  background: var(--gold);
+  color: var(--bg-base);
+
+  font-weight: 700;
+  font-size: 1rem;
+
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: var(--gold);
+  transform: translateY(-1px);
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.shareLinkBtn,
+.supportBtn {
+  width: 100%;
+  padding: 0.75rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+
+  background: transparent;
+  color: var(--text-primary);
+
+  font-weight: 600;
+  font-size: 1rem;
+
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.shareLinkBtn:hover,
+.supportBtn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ─── CROPPER ─── */
+.cropperContainer {
+  width: 100%;
+  height: 300px;
+
+  position: relative;
+
+  background: var(--bg-base);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.zoomLabel {
+  margin-bottom: 0;
+
+  font-size: var(--font-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+
+  color: var(--text-muted);
+}
+
+.cropActions {
+  display: flex;
+  gap: 0.75rem;
+
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 0.65rem;
+
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+
+  background: transparent;
+  color: var(--text-secondary);
+
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.confirmBtn {
+  flex: 1;
+  padding: 0.65rem;
+
+  border: none;
+  border-radius: var(--radius-md);
+
+  background: var(--gold);
+  color: var(--bg-base);
+
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: var(--gold);
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── AÇÕES PERIGOSAS ─── */
+.logoutBtn {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 0.75rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  background: transparent;
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-sm);
+
+  color: #ef4444;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logoutBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.deleteAccountBtn {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 0.75rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-sm);
+
+  color: #ef4444;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteAccountBtn:hover {
+  background: #ef4444;
+  color: #ffffff;
+}

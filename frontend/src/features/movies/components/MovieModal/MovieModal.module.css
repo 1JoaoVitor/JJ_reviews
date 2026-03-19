@@ -11,6 +11,12 @@
    overflow-x: hidden;
 }
 
+@media (max-width: 767px) {
+   .modalContent {
+      padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+   }
+}
+
 .titleLarge {
    font-size: 1.75rem;
 }
@@ -18,6 +24,7 @@
 .body {
    width: 100%;
    overflow-x: hidden;
+   padding-bottom: 1rem;
 }
 
 .providerLogo {
@@ -246,6 +253,29 @@
 }
 
 /* Footer buttons */
+
+.footer{
+   border: 0;
+   display: flex;
+   align-items: center;
+   gap: 0.5rem;
+   background: var(--bg-surface);
+   padding: 0.75rem 1rem;
+}
+
+@media (max-width: 767px) {
+   .footer {
+      position: static;
+      z-index: auto;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-subtle);
+   }
+
+   .body {
+      padding-bottom: 1.5rem;
+   }
+}
+
 .shareBtn {
    display: inline-flex;
    align-items: center;
