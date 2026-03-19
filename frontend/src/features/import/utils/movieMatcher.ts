@@ -4,7 +4,11 @@
  * Handles batch queries and rate limiting
  */
 
-import { TmdbMatchResult, TmdbBatchMatchRequest, TmdbBatchMatchResult } from "../types/importTypes";
+import type {
+  TmdbMatchResult,
+  TmdbBatchMatchRequest,
+  TmdbBatchMatchResult,
+} from "../types/importTypes";
 
 // Simple in-memory cache for TMDB matches (session-scoped)
 const matchCache = new Map<string, TmdbMatchResult>();

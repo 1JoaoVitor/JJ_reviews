@@ -136,22 +136,13 @@ describe("movieMatcher", () => {
     });
 
     it("should handle missing API key", async () => {
-      // Temporarily unset the env var
-      const originalEnv = import.meta.env.VITE_TMDB_API_KEY;
-      Object.defineProperty(import.meta.env, "VITE_TMDB_API_KEY", {
-        value: undefined,
-        configurable: true,
-      });
+      vi.stubEnv("VITE_TMDB_API_KEY", "");
 
       const result = await searchMovieInTmdb("The Matrix", 1999);
       expect(result.matched).toBe(false);
       expect(result.confidence).toBe(0);
 
-      // Restore
-      Object.defineProperty(import.meta.env, "VITE_TMDB_API_KEY", {
-        value: originalEnv,
-        configurable: true,
-      });
+      vi.unstubAllEnvs();
     });
 
     it("should include format in query string", async () => {
