@@ -1,7 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { toAuthProfile } from "../logic/profileSync";
+import {
+   fetchProfileByUserId,
+   getCurrentSession,
+   signOutCurrentUser,
+   subscribeToAuthStateChanges,
+} from "../services/authService";
 
 /**
  * Shell de autenticação: integra Supabase e mantém estado global de sessão/perfil.
@@ -14,12 +19,7 @@ export function useAuthState() {
 
    const fetchProfile = useCallback(async (userId: string) => {
       try {
-         const { data, error } = await supabase
-            .from("profiles")
-            .select("username, avatar_url")
-            .eq("id", userId)
-            .single();
-         if (error) throw error;
+         const data = await fetchProfileByUserId(userId);
 
          const profile = toAuthProfile(data);
          setUsername(profile.username);
@@ -30,15 +30,13 @@ export function useAuthState() {
    }, []);
 
    useEffect(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      getCurrentSession().then((session) => {
          setSession(session);
          if (session) fetchProfile(session.user.id);
          setLoading(false);
       });
 
-      const {
-         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
+      const unsubscribe = subscribeToAuthStateChanges((session) => {
          setSession(session);
          if (session) {
             fetchProfile(session.user.id);
@@ -48,11 +46,11 @@ export function useAuthState() {
          }
       });
 
-      return () => subscription.unsubscribe();
+      return unsubscribe;
    }, [fetchProfile]);
 
    const logout = useCallback(async () => {
-      await supabase.auth.signOut();
+      await signOutCurrentUser();
       window.location.href = "/";
    }, []);
 
