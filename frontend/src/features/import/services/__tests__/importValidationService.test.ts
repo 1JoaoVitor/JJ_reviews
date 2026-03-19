@@ -3,7 +3,7 @@ import { validateImportFiles, parseImportCsvContent } from "../importValidationS
 import type { ProfileData, RatingData, WatchedMovieData, ListData } from "../../types/importTypes";
 
 // Mock the movieMatcher module
-vi.mock("../utils/movieMatcher", () => ({
+vi.mock("../../utils/movieMatcher", () => ({
   batchMatchMovies: vi.fn(async () => ({
     successful: 2,
     failed: 0,
@@ -11,6 +11,8 @@ vi.mock("../utils/movieMatcher", () => ({
     cacheHits: 0,
   })),
 }));
+
+const { batchMatchMovies } = await import("../../utils/movieMatcher");
 
 describe("importValidationService", () => {
   beforeEach(() => {
@@ -133,6 +135,75 @@ describe("importValidationService", () => {
       const result = await validateImportFiles({ ratings });
       expect(result.issues.length).toBeGreaterThan(0);
       expect(result.warnings.length).toBeGreaterThan(0);
+    });
+
+    it("should warn on invalid watchlist movie fields", async () => {
+      const watchlist = [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          name: "",
+          year: 1400,
+        },
+      ];
+
+      const result = await validateImportFiles({ watchlist });
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.issues.some((i) => i.section === "watchlist")).toBe(true);
+    });
+
+    it("should warn on invalid list metadata and movies", async () => {
+      const lists: ListData[] = [
+        {
+          date: "2024-01-01",
+          name: "",
+          movies: [
+            { position: 1, name: "", year: 1999 },
+            { position: 2, name: "Valid", year: 1500 },
+          ],
+        },
+      ];
+
+      const result = await validateImportFiles({ lists });
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.issues.some((i) => i.section === "lists")).toBe(true);
+    });
+
+    it("should add TMDB warning when batch match returns failed movies", async () => {
+      vi.mocked(batchMatchMovies).mockResolvedValueOnce({
+        successful: 1,
+        failed: 2,
+        results: new Map(),
+        cacheHits: 5,
+      });
+
+      const ratings: RatingData[] = [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          name: "The Matrix",
+          year: 1999,
+          rating: 5,
+        },
+      ];
+
+      const result = await validateImportFiles({ ratings });
+      expect(result.warnings.some((w) => w.includes("could not be matched in TMDB"))).toBe(true);
+      expect(result.issues.some((i) => i.details && typeof i.details === "object")).toBe(true);
+    });
+
+    it("should add TMDB warning when batch match throws", async () => {
+      vi.mocked(batchMatchMovies).mockRejectedValueOnce(new Error("network down"));
+
+      const ratings: RatingData[] = [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          name: "The Matrix",
+          year: 1999,
+          rating: 5,
+        },
+      ];
+
+      const result = await validateImportFiles({ ratings });
+      expect(result.warnings.some((w) => w.includes("TMDB matching failed"))).toBe(true);
     });
   });
 
