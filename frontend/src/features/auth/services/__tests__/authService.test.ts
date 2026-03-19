@@ -53,11 +53,14 @@ vi.mock("@/lib/supabase", () => ({
 import {
    fetchProfileByUserId,
    getCurrentSession,
+   getEmailByUsername,
    isUsernameTaken,
    sendResetPasswordLink,
    signInWithEmailPassword,
+   signUpWithUsername,
    signOutCurrentUser,
    subscribeToAuthStateChanges,
+   updateCurrentUserPassword,
 } from "../authService";
 
 describe("authService", () => {
@@ -99,9 +102,30 @@ describe("authService", () => {
       expect(taken).toBe(true);
    });
 
+   it("returns false when username is not taken", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      const taken = await isUsernameTaken("free_user");
+      expect(taken).toBe(false);
+   });
+
    it("signs in with email and password", async () => {
       signInWithPasswordMock.mockResolvedValue({ error: null });
       await expect(signInWithEmailPassword("a@a.com", "123456")).resolves.toBeUndefined();
+   });
+
+   it("signs up with username", async () => {
+      signUpMock.mockResolvedValue({ error: null });
+      await expect(signUpWithUsername("a@a.com", "123456", "jv")).resolves.toBeUndefined();
+   });
+
+   it("returns email by username", async () => {
+      rpcMock.mockResolvedValue({ data: "mail@site.com", error: null });
+      await expect(getEmailByUsername("jv")).resolves.toBe("mail@site.com");
+   });
+
+   it("returns null when username email is not found", async () => {
+      rpcMock.mockResolvedValue({ data: null, error: null });
+      await expect(getEmailByUsername("ghost")).resolves.toBeNull();
    });
 
    it("sends reset password link", async () => {
@@ -109,8 +133,18 @@ describe("authService", () => {
       await expect(sendResetPasswordLink("a@a.com", "http://localhost/reset-password")).resolves.toBeUndefined();
    });
 
+   it("updates current user password", async () => {
+      updateUserMock.mockResolvedValue({ error: null });
+      await expect(updateCurrentUserPassword("abcdef")).resolves.toBeUndefined();
+   });
+
    it("signs out current user", async () => {
       signOutMock.mockResolvedValue({ error: null });
       await expect(signOutCurrentUser()).resolves.toBeUndefined();
+   });
+
+   it("throws when sign out fails", async () => {
+      signOutMock.mockResolvedValue({ error: new Error("fail") });
+      await expect(signOutCurrentUser()).rejects.toThrow("fail");
    });
 });

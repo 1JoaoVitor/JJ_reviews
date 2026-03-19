@@ -31,7 +31,10 @@ vi.mock("@/lib/supabase", () => ({
 import {
    acceptListInvite,
    deleteListRecord,
+   deleteUserListReviews,
    fetchListMovieIds,
+   rejectListInvite,
+   removeUserFromListCollaborators,
    subscribeListDetailsChanges,
 } from "../listsService";
 
@@ -84,5 +87,32 @@ describe("listsService ListDetails helpers", () => {
 
       unsubscribe();
       expect(removeChannelMock).toHaveBeenCalledWith({ on: onMock, subscribe: subscribeMock });
+   });
+
+   it("rejects invite by deleting collaborator relation", async () => {
+      const secondEq = vi.fn().mockResolvedValue({ error: null });
+      const firstEq = vi.fn().mockReturnValue({ eq: secondEq });
+      deleteMock.mockReturnValue({ eq: firstEq });
+
+      await expect(rejectListInvite("l1", "u2")).resolves.toBeUndefined();
+      expect(fromMock).toHaveBeenCalledWith("list_collaborators");
+   });
+
+   it("deletes user list reviews", async () => {
+      const secondEq = vi.fn().mockResolvedValue({ error: null });
+      const firstEq = vi.fn().mockReturnValue({ eq: secondEq });
+      deleteMock.mockReturnValue({ eq: firstEq });
+
+      await expect(deleteUserListReviews("l1", "u2")).resolves.toBeUndefined();
+      expect(fromMock).toHaveBeenCalledWith("list_reviews");
+   });
+
+   it("removes user from list collaborators", async () => {
+      const secondEq = vi.fn().mockResolvedValue({ error: null });
+      const firstEq = vi.fn().mockReturnValue({ eq: secondEq });
+      deleteMock.mockReturnValue({ eq: firstEq });
+
+      await expect(removeUserFromListCollaborators("l1", "u2")).resolves.toBeUndefined();
+      expect(fromMock).toHaveBeenCalledWith("list_collaborators");
    });
 });
