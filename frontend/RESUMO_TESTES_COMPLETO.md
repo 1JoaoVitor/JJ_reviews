@@ -309,7 +309,7 @@ it("subscribes to list details changes without current user", () => {
 // Branch 3: null como usuário (mesmo comportamento que undefined)
 it("subscribes to list details changes with null current user", () => {
     const onChange = vi.fn();
-    const unsubscribe = subscribeListDetailsChanges("l1", null as any, onChange);
+    const unsubscribe = subscribeListDetailsChanges("l1", null, onChange);
     
     expect(onMock).toHaveBeenCalledTimes(2);
 });

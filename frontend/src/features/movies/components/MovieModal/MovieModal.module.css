@@ -11,6 +11,12 @@
    overflow-x: hidden;
 }
 
+@media (max-width: 767px) {
+   .modalContent {
+      padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+   }
+}
+
 .titleLarge {
    font-size: 1.75rem;
 }
@@ -251,23 +257,22 @@
 .footer{
    border: 0;
    display: flex;
+   align-items: center;
+   gap: 0.5rem;
    background: var(--bg-surface);
-   padding: 0.75rem 1rem max(1rem, env(safe-area-inset-bottom));
+   padding: 0.75rem 1rem;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 767px) {
    .footer {
-      position: sticky;
-      bottom: 0;
-      z-index: 1060;
-      padding-bottom: max(
-         calc(env(safe-area-inset-bottom) + 1rem),
-         calc(env(safe-area-inset-bottom) + 4.5rem)
-      );
+      position: static;
+      z-index: auto;
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border-subtle);
    }
 
    .body {
-      padding-bottom: 2rem;
+      padding-bottom: 1.5rem;
    }
 }
 
