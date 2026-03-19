@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
 import styles from "./AppNavbar.module.css";
@@ -19,13 +19,11 @@ interface AppNavbarProps {
    availableGenres: string[];
    selectedGenre: string;
    setSelectedGenre: (val: string) => void;
-   onStartBattle: () => void;
    session: Session | null;
    onLogout: () => void;
    onLoginClick: () => void;
    username: string;
    avatarUrl?: string | null;
-   onProfileClick: () => void;
    showFilters?: boolean;
    showBattle?: boolean;
    onFriendsClick?: () => void;
@@ -43,18 +41,17 @@ export function AppNavbar({
    availableGenres,
    selectedGenre,
    setSelectedGenre,
-   onStartBattle,
    session,
    onLogout,
    onLoginClick,
    username,
    avatarUrl,
-   onProfileClick,
    showFilters = true,
    showBattle = true,
    onFriendsClick,
 }: AppNavbarProps) {
 
+   const navigate = useNavigate();
    const [isFiltersOpen, setIsFiltersOpen] = useState(false); 
 
    const sortOptions: Record<string, string> = {
@@ -115,7 +112,7 @@ export function AppNavbar({
                         {showBattle && (
                            <button
                               className={styles.iconBtn}
-                              onClick={onStartBattle}
+                              onClick={() => navigate("/batalha")}
                               title="Modo Batalha"
                            >
                               <Swords size={18} />
@@ -129,7 +126,7 @@ export function AppNavbar({
                            </button>
                         )}
 
-                        <button className={styles.avatarBtn} onClick={onProfileClick}>
+                        <button className={styles.avatarBtn} onClick={() => navigate("/perfil")}>
                            {avatarUrl ? (
                               <img src={avatarUrl} alt="Avatar" className={styles.avatarImg} />
                            ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect} from "react";
-import { useParams, useNavigate, useSearchParams} from "react-router-dom";
+import { useParams, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock, X} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
@@ -8,14 +8,12 @@ import { Dashboard } from "@/features/dashboard";
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
-import { useAuth, LoginModal, ProfileModal } from "@/features/auth";
-import { MovieBattle } from "@/features/battle";
-import type { MovieData, CustomList } from "@/types";
+import { useAuth, LoginModal } from "@/features/auth";
+import type { MovieData } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
-import { useFriendship } from "@/features/friends"; 
-import { FriendsModal } from "@/features/auth";
+import { useFriendship, FriendsModal} from "@/features/friends"; 
 import { useLists, ListDetails } from "@/features/lists";
 import { toast } from "react-hot-toast";
 
@@ -23,24 +21,21 @@ import { toast } from "react-hot-toast";
 
 
 export function PublicProfile() {
-   const navigate = useNavigate();
-
    const { username: profileUsername } = useParams<{ username: string }>();
    
    const { movies, loading, error, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
-   const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
+   const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout } = useAuth();
    const filters = useMovieFilters(movies);
 
    const { lists, loading: listsLoading } = useLists(profileId || undefined);
-   const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
    const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
    const [searchParams, setSearchParams] = useSearchParams();
+   const listIdInUrl = searchParams.get("listId");
+   const selectedList = listIdInUrl ? lists.find((item) => item.id === listIdInUrl) || null : null;
 
    const [showLoginModal, setShowLoginModal] = useState(false);
-   const [showProfileModal, setShowProfileModal] = useState(false);
-   const [isBattleMode, setIsBattleMode] = useState(false);
 
    const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel, rejectRequest } = 
       useFriendship(session?.user.id, profileId ?? undefined);
@@ -118,17 +113,6 @@ export function PublicProfile() {
       );
    }
 
-   if (isBattleMode) {
-      return (
-         <div className={styles.profilePage}>
-            <MovieBattle
-               allMovies={movies}
-               onExit={() => setIsBattleMode(false)}
-            />
-         </div>
-      );
-   }
-
    return (
       <div className={styles.profilePage}>
          <AppNavbar
@@ -143,13 +127,11 @@ export function PublicProfile() {
             availableGenres={filters.availableGenres}
             selectedGenre={filters.selectedGenre}
             setSelectedGenre={filters.setSelectedGenre}
-            onStartBattle={() => setIsBattleMode(true)}
             onLoginClick={() => setShowLoginModal(true)}
             session={session}
             onLogout={() => setShowLogoutConfirm(true)}
             username={loggedInUsername}
             avatarUrl={loggedInAvatar}
-            onProfileClick={() => setShowProfileModal(true)}
             onFriendsClick={() => setShowFriendsModal(true)}
          />
 
@@ -331,10 +313,16 @@ export function PublicProfile() {
                      list={selectedList}
                      allMovies={movies}
                      currentUserId={session?.user.id}
-                     onBack={() => setSelectedList(null)}
+                     onBack={() => {
+                        setSearchParams((prev) => {
+                           prev.delete("listId");
+                           return prev;
+                        });
+                     }}
                      // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
                      onListDeleted={() => {}}
                      onListUpdated={() => {}}
+                     onListDuplicated={() => {}}
                      onUpdateList={async () => ({ success: false, error: null })}
                      onRemoveMovie={async () => ({ success: false, error: null })}
                      onAddMovieClick={() => {}}
@@ -358,7 +346,12 @@ export function PublicProfile() {
                               <div key={list.id} className="col-12 col-md-6 col-lg-4">
                                  <div 
                                     className={`p-4 rounded h-100 ${styles.listCard}`}
-                                    onClick={() => setSelectedList(list)}
+                                    onClick={() => {
+                                       setSearchParams((prev) => {
+                                          prev.set("listId", list.id);
+                                          return prev;
+                                       });
+                                    }}
                                  >
                                     <h5 className={styles.listCardTitle}>{list.name}</h5>
                                     <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
@@ -446,19 +439,6 @@ export function PublicProfile() {
             onHide={() => setShowLoginModal(false)}
          />
 
-         <ProfileModal
-            show={showProfileModal}
-            onHide={() => setShowProfileModal(false)}
-            session={session}
-            currentUsername={loggedInUsername}
-            onUpdate={updateUsername}
-            onLogout={() => {
-               setShowProfileModal(false);
-               setShowLogoutConfirm(true);
-            }}
-            forceLogout={logout}
-         />
-
          <FriendsModal 
             show={showFriendsModal} 
             onHide={() => setShowFriendsModal(false)} 
@@ -468,16 +448,10 @@ export function PublicProfile() {
          <BottomNav
             session={session}
             avatarUrl={loggedInAvatar}
-            onHomeClick={() => {
-               navigate("/");
-               window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);
                setShowAddModal(true);
             }}
-            onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
             onFriendsClick={() => setShowFriendsModal(true)}
          />

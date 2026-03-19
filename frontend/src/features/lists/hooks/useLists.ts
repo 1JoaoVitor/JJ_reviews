@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
 import type { CustomList } from "@/types";
 import { 
    mergeLists, 
@@ -8,6 +7,18 @@ import {
    sortListsByDate,
    type RawSupabaseList 
 } from "../logic/listOperations";
+import {
+   addCollaboratorsToList,
+   addMovieToListRecord,
+   createListRecord,
+   fetchCollaborativeLists,
+   fetchOwnedLists,
+   listMovieExists,
+   notifyListCollaborators,
+   removeMovieFromListRecord,
+   subscribeListsChanges,
+   updateListRecord,
+} from "../services/listsService";
 
 
 export function useLists(userId?: string) {
@@ -18,22 +29,8 @@ export function useLists(userId?: string) {
       if (!userId) return;
       setLoading(true);
       try {
-         const { data: myLists, error: err1 } = await supabase
-            .from("lists")
-            .select("*, list_movies(count)")
-            .eq("owner_id", userId);
-
-         if (err1) throw err1;
-
-         const { data: collabData, error: err2 } = await supabase
-            .from("list_collaborators")
-            .select("list_id, lists(*, list_movies(count))")
-            .eq("user_id", userId)
-            .in("status", ["accepted", "pending"]);
-
-         if (err2) throw err2;
-
-         const sharedLists = collabData?.flatMap(item => item.lists) || [];
+         const myLists = await fetchOwnedLists(userId);
+         const sharedLists = await fetchCollaborativeLists(userId);
 
          const merged = mergeLists(myLists as unknown as RawSupabaseList[], sharedLists as unknown as RawSupabaseList[]);
          const unique = deduplicateLists(merged);
@@ -58,15 +55,7 @@ export function useLists(userId?: string) {
    useEffect(() => {
       if (!userId) return;
 
-      const listsChannel = supabase
-         .channel('custom-all-lists-changes')
-         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'lists' }, () => { fetchLists(); })
-         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'list_collaborators' , filter: `user_id=eq.${userId}` }, () => { fetchLists(); })
-         .subscribe();
-
-      return () => {
-         supabase.removeChannel(listsChannel);
-      };
+      return subscribeListsChanges(userId, fetchLists);
    }, [userId, fetchLists]);
 
    const createList = async (
@@ -83,29 +72,20 @@ export function useLists(userId?: string) {
       setLoading(true);
 
       try {
-         const { data: newList, error } = await supabase
-            .from("lists")
-            .insert([{ owner_id: userId, name, description, type, has_rating, rating_type, manual_rating, auto_sync }])
-            .select()
-            .single();
-
-         if (error) throw error;
+         const newList = await createListRecord({
+            ownerId: userId,
+            name,
+            description,
+            type,
+            has_rating,
+            rating_type,
+            manual_rating,
+            auto_sync,
+         });
 
          if (type !== "private" && collaboratorIds.length > 0) {
-            const collaboratorsData = collaboratorIds.map(friendId => ({
-               list_id: newList.id, user_id: friendId, role: 'member', status: 'pending'
-            }));
-
-            const { error: collabError } = await supabase.from("list_collaborators").insert(collaboratorsData);
-            if (collabError) throw collabError;
-
-            const notificationsData = collaboratorIds.map(friendId => ({
-               user_id: friendId, sender_id: userId, type: 'list_invite',
-               message: type === 'full_shared' ? 'convidou você para uma Lista Unificada!' : 'convidou você para uma Lista Colaborativa!',
-               reference_id: newList.id,
-            }));
-
-            await supabase.from("notifications").insert(notificationsData);
+            await addCollaboratorsToList(newList.id, collaboratorIds);
+            await notifyListCollaborators(userId, newList.id, type, collaboratorIds);
          }
 
          setLists((prev) => [newList as CustomList, ...prev]);
@@ -121,23 +101,13 @@ export function useLists(userId?: string) {
    const addMovieToList = async (listId: string, tmdbId: number) => {
       if (!userId) return { success: false, error: "Usuário não autenticado." };
       try {
-         const { data: existingMovie, error: fetchError } = await supabase
-            .from("list_movies")
-            .select("tmdb_id")
-            .match({ list_id: listId, tmdb_id: tmdbId })
-            .maybeSingle(); 
+         const exists = await listMovieExists(listId, tmdbId);
 
-         if (fetchError) throw fetchError;
-
-         if (existingMovie) {
+         if (exists) {
             return { success: true, error: null };
          }
 
-         const { error: insertError } = await supabase
-            .from("list_movies")
-            .insert([{ list_id: listId, tmdb_id: tmdbId, added_by: userId }]);
-            
-         if (insertError) throw insertError;
+         await addMovieToListRecord(listId, tmdbId, userId);
 
          setLists(prev => prev.map(list => 
             list.id === listId ? { ...list, movie_count: (list.movie_count || 0) + 1 } : list
@@ -160,12 +130,7 @@ export function useLists(userId?: string) {
       auto_sync: boolean,
    ) => {
       try {
-         const { error } = await supabase
-            .from("lists")
-            .update({ name, description, has_rating, rating_type, manual_rating, auto_sync })
-            .eq("id", listId);
-
-         if (error) throw error;
+         await updateListRecord(listId, { name, description, has_rating, rating_type, manual_rating, auto_sync });
          
          fetchLists(); 
          return { success: true, error: null };
@@ -177,12 +142,7 @@ export function useLists(userId?: string) {
 
    const removeMovieFromList = async (listId: string, tmdbId: number) => {
       try {
-         const { error } = await supabase
-            .from("list_movies")
-            .delete()
-            .match({ list_id: listId, tmdb_id: tmdbId });
-
-         if (error) throw error;
+         await removeMovieFromListRecord(listId, tmdbId);
          
          setLists(prev => prev.map(list => 
             list.id === listId ? { ...list, movie_count: Math.max(0, (list.movie_count || 0) - 1) } : list

@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Container, Form, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import styles from "./ResetPassword.module.css";
+import { getCurrentSession, updateCurrentUserPassword } from "../../services/authService";
 
 export function ResetPassword() {
    const [newPassword, setNewPassword] = useState("");
@@ -15,7 +15,7 @@ export function ResetPassword() {
 
    // Verifica se o utilizador chegou aqui através de um link válido
    useEffect(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      getCurrentSession().then((session) => {
          if (!session) {
             toast.error("Link de recuperação inválido ou expirado.");
             navigate("/"); // Expulsa para a página inicial se não tiver o token
@@ -37,8 +37,7 @@ export function ResetPassword() {
       setLoading(true);
       try {
          // O Supabase já logou o utilizador com o clique no email, basta atualizar a senha
-         const { error } = await supabase.auth.updateUser({ password: newPassword });
-         if (error) throw error;
+         await updateCurrentUserPassword(newPassword);
 
          toast.success("Senha alterada com sucesso! Bem-vindo de volta.");
          navigate("/"); // Manda o utilizador de volta para a página inicial

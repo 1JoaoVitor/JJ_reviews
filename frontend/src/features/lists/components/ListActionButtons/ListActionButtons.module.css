@@ -1,0 +1,69 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 1.5rem;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.actionButton:hover:not(:disabled) {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.liked {
+  color: #ef4444; 
+}
+
+.liked svg {
+  fill: #ef4444;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.secondaryActionButton {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-pill);
+}
+
+.secondaryActionButton:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.secondaryActionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

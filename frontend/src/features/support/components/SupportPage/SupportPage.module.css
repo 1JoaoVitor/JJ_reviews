@@ -1,0 +1,162 @@
+.pageContainer {
+   min-height: 100vh;
+   background-color: var(--bg-base);
+   color: var(--text-primary);
+   padding-bottom: max(5rem, env(safe-area-inset-bottom));
+}
+
+.header {
+   display: flex;
+   align-items: center;
+   gap: 1rem;
+   padding: 1.5rem 1rem;
+   background-color: var(--bg-surface);
+   border-bottom: 1px solid var(--border-subtle);
+   position: sticky;
+   top: 0;
+   z-index: 10;
+}
+
+.backBtn {
+   background: transparent;
+   border: none;
+   color: var(--text-primary);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 0.5rem;
+   border-radius: var(--radius-full);
+   transition: background-color 0.2s;
+}
+
+.backBtn:hover {
+   background-color: var(--bg-elevated);
+}
+
+.title {
+   margin: 0;
+   font-size: 1.25rem;
+   font-weight: 700;
+}
+
+.content {
+   max-width: 600px;
+   margin: 0 auto;
+   padding: 2rem 1rem;
+}
+
+.description {
+   color: var(--text-secondary);
+   margin-bottom: 2rem;
+}
+
+.formContainer {
+   display: flex;
+   flex-direction: column;
+   gap: 1.5rem;
+}
+
+.label {
+   font-weight: 600;
+   font-size: 0.9rem;
+   color: var(--text-secondary);
+   margin-bottom: 0.5rem;
+   display: block;
+}
+
+.selectInput,
+.textArea {
+   width: 100%;
+   background-color: var(--bg-elevated);
+   color: var(--text-primary);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-md);
+   padding: 0.75rem;
+   font-size: 1rem;
+}
+
+.selectInput:focus,
+.textArea:focus {
+   outline: none;
+   border-color: var(--gold);
+}
+
+.submitBtn {
+   background-color: var(--gold);
+   color: var(--bg-input);
+   border: none;
+   border-radius: var(--radius-pill);
+   padding: 0.75rem 1.5rem;
+   font-weight: bold;
+   width: 100%;
+   margin-top: 1rem;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.submitBtn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+}
+
+/* ─── Custom Dropdowns (Substituindo os Selects nativos) ─── */
+.customDropdownToggle {
+   background-color: var(--bg-elevated) !important;
+   border: 1px solid var(--border-medium) !important;
+   border-radius: var(--radius-pill) !important;
+   color: var(--text-primary) !important;
+   font-size: var(--font-sm) !important;
+   font-weight: 600 !important;
+   width: 100% !important;
+   padding: 0.375rem 1rem 0.375rem 1rem !important;
+   display: flex;
+   align-items: center; 
+   justify-content: space-between;
+   gap: 0.5rem;
+   transition: border-color var(--transition-fast);
+}
+
+.customDropdownToggle:hover,
+.customDropdownToggle:focus {
+   border-color: var(--gold) !important;
+}
+
+/* Reduz o tamanho da setinha padrão do Bootstrap */
+.customDropdownToggle::after {
+   border-top-width: 0.25em;
+   border-right-width: 0.25em;
+   border-left-width: 0.25em;
+}
+
+/* Menu */
+.dropdownMenu {
+   background-color: var(--bg-surface) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-md) !important;
+   box-shadow: var(--shadow-lg) !important;
+   width: 100% !important;
+   padding: 0.5rem 0 !important;
+   margin-top: 0.5rem !important;
+   min-width: 180px !important;
+}
+
+.dropdownItem {
+   color: var(--text-secondary) !important;
+   font-size: var(--font-sm) !important;
+   font-weight: 500 !important;
+   padding: 0.4rem 1rem !important;
+   transition: all var(--transition-fast) !important;
+   cursor: pointer;
+}
+
+.dropdownItem:hover {
+   background-color: var(--bg-elevated) !important;
+   color: var(--gold) !important;
+}
+
+.dropdownItemActive {
+   background-color: var(--gold-soft-bg) !important;
+   color: var(--gold) !important;
+   font-weight: 700 !important;
+}
