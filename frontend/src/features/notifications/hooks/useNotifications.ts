@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
 import type { AppNotification } from "@/types";
 import { formatNotifications, countUnread, type RawNotification } from "../logic/notificationOperations";
+import {
+   fetchRecentNotifications,
+   markAllUserNotificationsAsRead,
+   markNotificationAsRead,
+   subscribeNotifications,
+} from "../services/notificationsService";
 
 export function useNotifications(userId?: string) {
    const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -13,20 +18,7 @@ export function useNotifications(userId?: string) {
       setLoading(true);
       
       try {
-         const { data, error } = await supabase
-            .from("notifications")
-            .select(`
-               *,
-               sender:profiles!sender_id(username, avatar_url)
-            `)
-            .eq("user_id", userId)
-            .order("created_at", { ascending: false })
-            .limit(50);
-
-         if (error) {
-            console.error("Erro do Supabase ao buscar notificações:", error.message);
-            throw error;
-         }
+         const data = await fetchRecentNotifications(userId);
 
          const formattedData = formatNotifications(data as RawNotification[]);
          setNotifications(formattedData);
@@ -42,12 +34,7 @@ export function useNotifications(userId?: string) {
    // Marca uma notificação específica como lida
    const markAsRead = async (notificationId: string) => {
       try {
-         const { error } = await supabase
-            .from("notifications")
-            .update({ is_read: true })
-            .eq("id", notificationId);
-
-         if (error) throw error;
+         await markNotificationAsRead(notificationId);
 
          setNotifications((prev) => {
             const updated = prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n));
@@ -64,13 +51,7 @@ export function useNotifications(userId?: string) {
    const markAllAsRead = async () => {
       if (!userId || unreadCount === 0) return;
       try {
-         const { error } = await supabase
-            .from("notifications")
-            .update({ is_read: true })
-            .eq("user_id", userId)
-            .eq("is_read", false);
-
-         if (error) throw error;
+         await markAllUserNotificationsAsRead(userId);
 
          setNotifications((prev) => {
             const updated = prev.map((n) => ({ ...n, is_read: true }));
@@ -87,25 +68,7 @@ export function useNotifications(userId?: string) {
 
       if (!userId) return;
 
-      const subscription = supabase
-         .channel("realtime:notifications")
-         .on(
-            "postgres_changes",
-            {
-               event: "INSERT",
-               schema: "public",
-               table: "notifications",
-               filter: `user_id=eq.${userId}`
-            },
-            () => {
-               fetchNotifications();
-            }
-         )
-         .subscribe();
-
-      return () => {
-         supabase.removeChannel(subscription);
-      };
+      return subscribeNotifications(userId, fetchNotifications);
    }, [userId, fetchNotifications]);
 
    return {
