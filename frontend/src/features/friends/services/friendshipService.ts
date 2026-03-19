@@ -22,6 +22,30 @@ export async function fetchFriendshipBetween(
    return (data as RawFriendship | null) || null;
 }
 
+export async function fetchFriendshipsForTargets(
+   loggedUserId: string,
+   targetUserIds: string[]
+): Promise<RawFriendship[]> {
+   if (targetUserIds.length === 0) return [];
+
+   const sanitizedIds = targetUserIds
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .join(",");
+
+   if (!sanitizedIds) return [];
+
+   const { data, error } = await supabase
+      .from("friendships")
+      .select("requester_id, receiver_id, status")
+      .or(
+         `and(requester_id.eq.${loggedUserId},receiver_id.in.(${sanitizedIds})),and(receiver_id.eq.${loggedUserId},requester_id.in.(${sanitizedIds}))`
+      );
+
+   if (error) throw error;
+   return (data as RawFriendship[]) || [];
+}
+
 export async function createFriendRequest(requesterId: string, receiverId: string): Promise<void> {
    const { error } = await supabase.from("friendships").insert({
       requester_id: requesterId,

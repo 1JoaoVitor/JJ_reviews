@@ -5,7 +5,24 @@ import { ArrowLeft, Pencil, Trash2, Plus, X, Check, LogOut } from "lucide-react"
 import { MovieCard } from "@/features/movies";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { EditListModal } from "../EditListModal/EditListModal";
+import { ListActionButtons } from "../ListActionButtons/ListActionButtons"; 
+import { DuplicateListModal } from "../DuplicateListModal/DuplicateListModal"; 
+import { ListLikesModal } from "../ListLikesModal/ListLikesModal";
+import { useListSocial } from "../../hooks/useListSocial"; 
+import type { ListType } from "../../logic/listSocial"; 
+import { fetchListLikers, type ListLiker } from "../../services/listSocialService";
+import { mapFriendshipStatus, type DerivedFriendshipStatus } from "@/features/friends/logic/mapFriendshipStatus";
+import {
+   acceptFriendRequest,
+   createFriendRequest,
+   deleteFriendshipBetween,
+   deleteIncomingFriendRequest,
+   fetchFriendshipsForTargets,
+   notifyFriendAccepted,
+   notifyFriendRequest,
+} from "@/features/friends/services/friendshipService";
 import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import type { CustomList, MovieData } from "@/types";
 import styles from "./ListDetails.module.css";
 import { calculateAverageBadge } from "@/utils/badges";
@@ -33,6 +50,7 @@ interface ListDetailsProps {
    onBack: () => void;
    onListDeleted: () => void;
    onListUpdated: (updatedList: CustomList) => void;
+   onListDuplicated?: (duplicatedList: CustomList) => void;
    onUpdateList: (id: string, name: string, description: string, has_rating: boolean, rating_type: "manual" | "average" | null, manual_rating: number | null, auto_sync: boolean) => Promise<{ success: boolean; error: string | null }>;
    onRemoveMovie: (listId: string, tmdbId: number) => Promise<{ success: boolean; error: string | null }>;
    onAddMovieClick: () => void;
@@ -46,13 +64,16 @@ export function ListDetails({
    onBack, 
    onListDeleted,
    onListUpdated,
+   onListDuplicated,
    onUpdateList,
    onRemoveMovie,
    onAddMovieClick,
    onMovieClick,
 }: ListDetailsProps) {
+   const navigate = useNavigate();
    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
    const [showEditModal, setShowEditModal] = useState(false);
+   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
    const [isDeleting, setIsDeleting] = useState(false);
    const [movieToRemove, setMovieToRemove] = useState<number | null>(null);
    const [isRemovingMovie, setIsRemovingMovie] = useState(false);
@@ -66,6 +87,11 @@ export function ListDetails({
    const [activeMembers, setActiveMembers] = useState<{ id: string; username: string; avatar_url: string }[]>([]);
    const [loadingCollabs, setLoadingCollabs] = useState(true);
    const [isAccepting, setIsAccepting] = useState(false);
+   const [showLikesModal, setShowLikesModal] = useState(false);
+   const [likers, setLikers] = useState<ListLiker[]>([]);
+   const [loadingLikers, setLoadingLikers] = useState(false);
+   const [friendshipStatusByUserId, setFriendshipStatusByUserId] = useState<Record<string, DerivedFriendshipStatus>>({});
+   const [friendActionLoadingByUserId, setFriendActionLoadingByUserId] = useState<Record<string, boolean>>({});
 
    const [listMovies, setListMovies] = useState<MovieData[]>(() => {
       if (listCache[list.id]) {
@@ -76,34 +102,163 @@ export function ListDetails({
    
    const [loading, setLoading] = useState(!listCache[list.id]);
 
-   // Busca os filmes da lista e junta com as avaliações corretas
+   const { 
+      isLiked, 
+      likesCount, 
+      isActionLoading, 
+      handleToggleLike, 
+      handleShare, 
+      handleDuplicate 
+   } = useListSocial({
+      listId: list.id,
+      initialLikes: list.likes_count ?? 0,
+      isInitialLiked: list.is_liked ?? false,
+      ownerUsername: listOwner?.username || "",
+      currentUserId
+   });
+
+   const onLike = async () => {
+      const res = await handleToggleLike();
+      if (!res.success && res.error) toast.error(res.error);
+      if (res.success && showLikesModal) {
+         await loadLikers();
+      }
+   };
+
+   const onShare = async () => {
+      const res = await handleShare();
+      if (res.success) toast.success("Compartilhado com sucesso!");
+      else toast.error(res.error || "Erro ao compartilhar lista");
+   };
+
+   const onConfirmDuplicate = async (
+      newName: string,
+      type: ListType,
+      collaboratorIds: string[],
+      copyRatings: boolean,
+      ratingsExclusiveToList: boolean
+   ) => {
+      const res = await handleDuplicate(newName, type, {
+         collaboratorIds,
+         copyRatings,
+         ratingsExclusiveToList,
+      });
+
+      if (res.success && res.data) {
+         toast.success("Lista duplicada com sucesso!");
+         setShowDuplicateModal(false);
+         onListDuplicated?.(res.data);
+         navigate(`/?aba=lists&listId=${res.data.id}`);
+      } else {
+         toast.error(res.error || "Erro ao duplicar");
+      }
+   };
+
+   const loadLikers = useCallback(async () => {
+      setLoadingLikers(true);
+      try {
+         const data = await fetchListLikers(list.id);
+         setLikers(data);
+
+         if (!currentUserId || data.length === 0) {
+            setFriendshipStatusByUserId({});
+            return;
+         }
+
+         const friendships = await fetchFriendshipsForTargets(
+            currentUserId,
+            data.map((liker) => liker.id)
+         );
+
+         const statusMap: Record<string, DerivedFriendshipStatus> = {};
+         data.forEach((liker) => {
+            const friendship = friendships.find(
+               (item) =>
+                  (item.requester_id === currentUserId && item.receiver_id === liker.id) ||
+                  (item.receiver_id === currentUserId && item.requester_id === liker.id)
+            ) || null;
+
+            statusMap[liker.id] = mapFriendshipStatus(currentUserId, liker.id, friendship);
+         });
+
+         setFriendshipStatusByUserId(statusMap);
+      } catch (error) {
+         console.error("Erro ao buscar curtidas da lista:", error);
+         toast.error("Erro ao carregar curtidas.");
+      } finally {
+         setLoadingLikers(false);
+      }
+   }, [currentUserId, list.id]);
+
+   const openLikesModal = async () => {
+      setShowLikesModal(true);
+      await loadLikers();
+   };
+
+   const handleFriendActionFromLikes = useCallback(
+      async (targetUserId: string, action: "send" | "accept" | "reject" | "remove") => {
+         if (!currentUserId) {
+            toast.error("Faça login para interagir.");
+            return;
+         }
+
+         setFriendActionLoadingByUserId((previous) => ({ ...previous, [targetUserId]: true }));
+         try {
+            if (action === "send") {
+               await createFriendRequest(currentUserId, targetUserId);
+               await notifyFriendRequest(targetUserId, currentUserId);
+               setFriendshipStatusByUserId((previous) => ({ ...previous, [targetUserId]: "request_sent" }));
+               toast.success("Pedido de amizade enviado.");
+               return;
+            }
+
+            if (action === "accept") {
+               await acceptFriendRequest(targetUserId, currentUserId);
+               await notifyFriendAccepted(targetUserId, currentUserId);
+               setFriendshipStatusByUserId((previous) => ({ ...previous, [targetUserId]: "friends" }));
+               toast.success("Pedido aceito.");
+               return;
+            }
+
+            if (action === "reject") {
+               await deleteIncomingFriendRequest(targetUserId, currentUserId);
+               setFriendshipStatusByUserId((previous) => ({ ...previous, [targetUserId]: "none" }));
+               toast.success("Pedido recusado.");
+               return;
+            }
+
+            await deleteFriendshipBetween(currentUserId, targetUserId);
+            setFriendshipStatusByUserId((previous) => ({ ...previous, [targetUserId]: "none" }));
+            toast.success("Conexao removida.");
+         } catch (error) {
+            console.error("Erro ao processar amizade no modal de curtidas:", error);
+            toast.error("Erro ao processar acao de amizade.");
+         } finally {
+            setFriendActionLoadingByUserId((previous) => ({ ...previous, [targetUserId]: false }));
+         }
+      },
+      [currentUserId]
+   );
+
    const fetchListMovies = useCallback(async () => {
       try {
          const tmdbIds = await fetchListMovieIds(list.id);
-         
          if (tmdbIds.length === 0) {
             setListMovies([]);
             return;
          }
 
-         // Buscar as notas de TODOS os membros e calcular a Média!
          const reviewsMap: Record<number, Partial<MovieData>> = {};
 
          if (list.type === "private") {
             const personalReviews = await fetchPrivateListReviews(list.owner_id, tmdbIds);
-               
             personalReviews?.forEach(r => {
-               reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
+                reviewsMap[r.tmdb_id] = { ...r, list_type: "private" };
             });
          } else {
-            // Se for compartilhada, busca TODAS as reviews (de todos os membros) para calcular a média
             const listReviews = await fetchSharedListReviews(list.id, tmdbIds);
-            
             tmdbIds.forEach(id => {
-               // Filtra as reviews apenas deste filme
                const movieReviews = listReviews?.filter(r => r.tmdb_id === id) || [];
-               
-               // Formata o array de reviews do grupo (Múltiplas opiniões)
                const groupReviews = movieReviews.map(r => {
                   const rawUser = Array.isArray(r.user) ? r.user[0] : r.user;
                   return {
@@ -111,26 +266,16 @@ export function ListDetails({
                      rating: r.rating ?? undefined,
                      review: r.review ?? undefined,
                      recommended: r.recommended ?? undefined,
-                     user: rawUser
-                        ? { username: rawUser.username, avatar_url: rawUser.avatar_url ?? null }
-                        : undefined,
+                     user: rawUser ? { username: rawUser.username, avatar_url: rawUser.avatar_url ?? null } : undefined,
                   };
                });
 
-               // Calcula a Média (ignorando quem não deu nota)
                const validRatings = groupReviews.filter(r => r.rating != null);
                const avg = validRatings.length > 0 
                   ? validRatings.reduce((acc, r) => acc + (r.rating || 0), 0) / validRatings.length 
                   : undefined;
 
-               // Calcula a Média do Veredito (Badge) 
-               const avgBadge = calculateAverageBadge(
-                  groupReviews
-                     .map(r => r.recommended)
-                     .filter((value): value is string => !!value)
-               );
-
-               // Descobre qual é a "minha" review (para o modal e botão de editar funcionarem com a minha nota)
+               const avgBadge = calculateAverageBadge(groupReviews.map(r => r.recommended).filter((value): value is string => !!value));
                const myReview = groupReviews.find(r => r.user_id === currentUserId);
 
                reviewsMap[id] = {
@@ -138,7 +283,6 @@ export function ListDetails({
                   list_average_rating: avg,
                   list_average_recommended: avgBadge,
                   list_group_reviews: groupReviews,
-                  // Se for totalmente compartilhada, a nota base é única (a primeira). Se for parcialmente, o rating base é o MEU rating.
                   rating: list.type === "full_shared" ? groupReviews[0]?.rating : myReview?.rating,
                   review: list.type === "full_shared" ? groupReviews[0]?.review : myReview?.review,
                   recommended: list.type === "full_shared" ? groupReviews[0]?.recommended : myReview?.recommended,
@@ -146,21 +290,8 @@ export function ListDetails({
             });
          }
 
-         // Junta as notas com os "esqueletos" (Resolvendo também a tipagem do TypeScript de forma segura)
-         const rawMovies: BaseMovieRow[] = tmdbIds.map(id => {
-            const reviewData = reviewsMap[id] || {};
-            
-            return {
-               ...reviewData,
-               tmdb_id: id
-            };
-         });
-
-         // Vai ao TMDB buscar as capas
-         const fullListMovies = await Promise.all(
-            rawMovies.map(movie => enrichMovieWithTmdb(movie))
-         );
-
+         const rawMovies: BaseMovieRow[] = tmdbIds.map(id => ({ ...reviewsMap[id], tmdb_id: id }));
+         const fullListMovies = await Promise.all(rawMovies.map(movie => enrichMovieWithTmdb(movie)));
          setListMovies(fullListMovies);
       } catch (error) {
          console.error("Erro ao buscar filmes da lista:", error);
@@ -169,46 +300,35 @@ export function ListDetails({
       }
    }, [list.id, list.type, list.owner_id, currentUserId]);
 
-   // Busca os colaboradores e o status do usuário logado
    const fetchCollaborators = useCallback(async () => {
       setLoadingCollabs(true);
       try {
-         //  Busca os dados do Dono da Lista
          const ownerData = await fetchListOwnerProfile(list.owner_id);
-
          if (ownerData) setListOwner(ownerData);
 
-         //  Se a lista for privada, o usuário só pode ser o dono
          if (list.type === "private") {
             setCurrentUserStatus(currentUserId === list.owner_id ? "owner" : "none");
             setActiveMembers([]);
             return;
          }
 
-         // 3Se for compartilhada, busca os convidados e faz o JOIN simplificado com profiles
          const collabs = await fetchListCollaborators(list.id);
-
-        // Tipagem rápida para o TypeScript entender o retorno do Supabase
          type ProfileData = { id: string; username: string; avatar_url: string };
          type CollabData = { user_id: string; status: string; user: ProfileData | ProfileData[] | null };
-
          const typedCollabs = (collabs as unknown as CollabData[]) || [];
 
-         // Descobre quem são os membros que já aceitaram o convite
          const accepted = typedCollabs
             .filter(c => c.status === "accepted" && c.user)
             .map(c => Array.isArray(c.user) ? c.user[0] : c.user!);
          
          setActiveMembers(accepted);
 
-         // Define os poderes do usuário logado nesta tela
          if (currentUserId === list.owner_id) {
             setCurrentUserStatus("owner");
          } else {
             const myCollab = collabs.find(c => c.user_id === currentUserId);
             setCurrentUserStatus(myCollab ? (myCollab.status as 'pending' | 'accepted') : "none");
          }
-
       } catch (error) {
          console.error("Erro ao processar colaboradores:", error);
       } finally {
@@ -217,33 +337,24 @@ export function ListDetails({
    }, [list.id, list.type, list.owner_id, currentUserId]);
 
    useEffect(() => {
-      // Carregamento inicial
       fetchListMovies();
       fetchCollaborators();
-
       if (!list.id) return;
-
-      // TEMPO REAL (Multiplayer & Sincronização) 
-      // Inscreve a página para ouvir qualquer mudança nos filmes desta lista
       return subscribeListDetailsChanges(list.id, currentUserId, fetchListMovies);
    }, [fetchListMovies, fetchCollaborators, list.id, currentUserId]);
 
-   // Permissões Derivadas
    const isOwner = currentUserStatus === 'owner';
    const canEditMovies = currentUserStatus === 'owner' || currentUserStatus === 'accepted';
    const canEditListInfo = currentUserStatus === 'owner' || currentUserStatus === 'accepted';
 
-   // ─── AÇÕES DE CONVITE ───
    const handleAcceptInvite = async () => {
       if (!currentUserId) return;
       setIsAccepting(true);
       try {
          await acceptListInvite(list.id, currentUserId);
-         toast.success("Convite aceito! Bem-vindo à lista.");
-         fetchCollaborators(); // Recarrega para mudar o status e mostrar a foto dele
-      } catch {
-         toast.error("Erro ao aceitar convite.");
-      }
+         toast.success("Convite aceito!");
+         fetchCollaborators();
+      } catch { toast.error("Erro ao aceitar convite."); }
       setIsAccepting(false);
    };
 
@@ -253,26 +364,19 @@ export function ListDetails({
       try {
          await rejectListInvite(list.id, currentUserId);
          toast.success("Convite recusado.");
-         onBack(); // Manda o usuário de volta para a tela anterior
-      } catch {
-         toast.error("Erro ao recusar convite.");
-      }
+         onBack();
+      } catch { toast.error("Erro ao recusar convite."); }
       setIsAccepting(false);
    };
 
-   // ─── AÇÕES DA LISTA ───
    const handleDeleteList = async () => {
       setIsDeleting(true);
       try {
          await deleteListRecord(list.id);
-         toast.success("Lista excluída com sucesso!");
+         toast.success("Lista excluída!");
          onListDeleted();
       } catch (err) {
-         if (err instanceof Error) {
-            toast.error(err.message || "Erro ao excluir a lista.");
-         } else {
-            toast.error("Erro desconhecido ao excluir a lista.");
-         }
+         toast.error(err instanceof Error ? err.message : "Erro ao excluir.");
       } finally {
          setIsDeleting(false);
          setShowDeleteConfirm(false);
@@ -283,62 +387,37 @@ export function ListDetails({
       if (!movieToRemove) return;
       setIsRemovingMovie(true);
       const { success, error } = await onRemoveMovie(list.id, movieToRemove);
-      
       setIsRemovingMovie(false);
-      
       if (success) {
-         toast.success("Filme removido da lista.");
+         toast.success("Filme removido.");
          setMovieToRemove(null);
          fetchListMovies();
-      } else {
-         toast.error(error || "Erro ao remover filme da lista.");
-      }
+      } else { toast.error(error || "Erro ao remover."); }
    };
 
-   // Ação: Convidado sai da lista
    const handleLeaveList = async () => {
       if (!currentUserId) return;
       setIsLeaving(true);
       try {
-         // 1Apaga as avaliações que ele fez ESPECIFICAMENTE para esta lista 
-         // (Se for uma lista de totalmente compartilhada  onde o user_id é nulo, isto não apaga nada, o que é o comportamento correto)
          await deleteUserListReviews(list.id, currentUserId);
-
-         // emove o utilizador dos colaboradores
          await removeUserFromListCollaborators(list.id, currentUserId);
-         
          toast.success("Você saiu da lista.");
          onBack();
          onListDeleted(); 
-      } catch (err) {
-         console.log("Erro: " + err);
-         toast.error("Erro ao sair da lista.");
-      } finally {
-         setIsLeaving(false);
-         setShowLeaveConfirm(false);
-      }
+      } catch { toast.error("Erro ao sair da lista."); }
+      finally { setIsLeaving(false); setShowLeaveConfirm(false); }
    };
 
-   // Ação: Dono expulsa um membro
    const confirmRemoveMember = async () => {
       if (!memberToRemove) return;
       setIsRemovingMember(true);
       try {
-         // Apaga as avaliações do membro expulso
          await deleteUserListReviews(list.id, memberToRemove.id);
-
-         // Remove o membro dos colaboradores
          await removeUserFromListCollaborators(list.id, memberToRemove.id);
-         
-         toast.success(`${memberToRemove.username} foi removido da lista.`);
+         toast.success(`${memberToRemove.username} removido.`);
          fetchCollaborators(); 
-      } catch (err) {
-         console.log("Erro: " + err);
-         toast.error("Erro ao remover membro.");
-      } finally {
-         setIsRemovingMember(false);
-         setMemberToRemove(null);
-      }
+      } catch { toast.error("Erro ao remover membro."); }
+      finally { setIsRemovingMember(false); setMemberToRemove(null); }
    };
 
    return (
@@ -349,94 +428,89 @@ export function ListDetails({
                <span>Voltar às listas</span>
             </button>
 
-            {/* ─── BANNER DE CONVITE PENDENTE ─── */}
             {currentUserStatus === 'pending' && !loadingCollabs && (
                <div className={styles.inviteBanner}>
                   <div className={styles.inviteText}>
-                     <strong>@{listOwner?.username}</strong> convidou você para colaborar nesta lista!
+                     <strong>@{listOwner?.username}</strong> convidou você para esta lista!
                   </div>
                   <div className={styles.inviteActions}>
-                     <button onClick={handleRejectInvite} disabled={isAccepting} className={styles.rejectBtn}>
-                        Recusar
-                     </button>
+                     <button onClick={handleRejectInvite} disabled={isAccepting} className={styles.rejectBtn}>Recusar</button>
                      <button onClick={handleAcceptInvite} disabled={isAccepting} className={styles.acceptBtn}>
-                        {isAccepting ? <Spinner size="sm" animation="border" /> : <><Check size={16} /> Aceitar Convite</>}
+                        {isAccepting ? <Spinner size="sm" /> : <><Check size={16} /> Aceitar</>}
                      </button>
                   </div>
                </div>
             )}
 
             <div className={styles.titleSection}>
-               <div>
+               <div className="flex-grow-1">
                   <h1 className={styles.title}>{list.name}</h1>
                   {list.description && <p className={styles.description}>{list.description}</p>}
                   
-                  <div className="d-flex align-items-center gap-3 mt-2">
-                     <p className={styles.metaInfo}>{listMovies.length} filmes na lista</p>
+                  <div className="d-flex align-items-center gap-3 mt-2 flex-wrap">
+                     <p className={styles.metaInfo}>{listMovies.length} filmes</p>
 
-                     {/* ─── NOTA DA LISTA ─── */}
                      {list.has_rating && (
-                        <div 
-                           className={styles.ratingBadge}
-                           title={list.rating_type === 'manual' ? "Nota Manual" : "Média dos Filmes"}
-                        >
-                           <span className={styles.ratingIcon}>⭐</span>
+                        <div className={styles.ratingBadge}>
+                           <span>⭐</span>
                            <span className={styles.ratingValue}>
-                              {list.rating_type === 'manual' 
-                                 ? list.manual_rating?.toFixed(1)
-                                 : (() => {
-                                    // Calcula a média em tempo real
-                                    const validRatings = listMovies
-                                       .map(m => m.list_type === "partial_shared" && m.list_average_rating ? m.list_average_rating : m.rating)
-                                       .filter(r => r !== null && r !== undefined) as number[];
-                                    
-                                    if (validRatings.length === 0) return "-";
-                                    return (validRatings.reduce((a, b) => a + b, 0) / validRatings.length).toFixed(1);
-                                 })()
-                              }
+                              {list.rating_type === 'manual' ? list.manual_rating?.toFixed(1) : (() => {
+                                 const valid = listMovies.map(m => m.list_type === "partial_shared" && m.list_average_rating ? m.list_average_rating : m.rating).filter(r => r != null) as number[];
+                                 return valid.length ? (valid.reduce((a, b) => a + b, 0) / valid.length).toFixed(1) : "-";
+                              })()}
                            </span>
                         </div>
                      )}
                      
-                     {/* ─── EXIBIÇÃO DOS AVATARES (MEMBROS) ─── */}
                      {list.type !== 'private' && (
-                        <div className={styles.collaboratorsAvatars} title="Membros desta lista">
-                           {/* Avatar do Dono */}
-                           {listOwner?.avatar_url ? (
-                              <img src={listOwner.avatar_url} alt="Dono" className={styles.avatarCircle} />
-                           ) : (
-                              <div className={styles.avatarCircle}>{listOwner?.username.charAt(0).toUpperCase()}</div>
+                        <div className={styles.collaboratorsAvatars}>
+                           {listOwner && (
+                              <img src={listOwner.avatar_url || ""} alt="Dono" className={styles.avatarCircle} title={`Dono: ${listOwner.username}`} />
                            )}
-                           
-                           {/* Avatares dos Membros Aceitos */}
                            {activeMembers.map(member => (
                               <img 
                                  key={member.id} 
                                  src={member.avatar_url || ""} 
-                                 alt={member.username} 
                                  className={`${styles.avatarCircle} ${isOwner ? styles.avatarClickable : styles.avatarStatic}`}
+                                 data-testid={isOwner ? `remove-member-${member.id}` : `member-${member.id}`}
                                  onClick={() => isOwner && setMemberToRemove(member)}
-                                 title={isOwner ? `Clique para remover ${member.username}` : member.username}
+                                 title={isOwner ? `Remover ${member.username}` : member.username}
                               />
                            ))}
                         </div>
                      )}
                   </div>
+
+
+                  <ListActionButtons 
+                     isLiked={isLiked}
+                     likesCount={likesCount}
+                     isActionLoading={isActionLoading}
+                     onLike={onLike}
+                     onShowLikes={openLikesModal}
+                     onShare={onShare}
+                     onDuplicate={() => setShowDuplicateModal(true)}
+                  />
                </div>
 
                <div className={styles.actions}>
                   {canEditListInfo && (
-                     <button className={styles.actionBtn} onClick={() => setShowEditModal(true)} title="Editar Lista">
+                     <button className={styles.actionBtn} onClick={() => setShowEditModal(true)} title="Editar">
                         <Pencil size={18} />
                      </button>
                   )}
                   {currentUserStatus === 'accepted' && (
-                     <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => setShowLeaveConfirm(true)} title="Sair da Lista">
+                     <button
+                        className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                        onClick={() => setShowLeaveConfirm(true)}
+                        title="Sair"
+                        data-testid="leave-list-action"
+                     >
                         <LogOut size={18} />
                      </button>
                   )}
                   {isOwner && (
-                     <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => setShowDeleteConfirm(true)} title="Excluir Lista">
+                     <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={() => setShowDeleteConfirm(true)} title="Excluir">
                         <Trash2 size={18} />
                      </button>
                   )}
@@ -445,7 +519,6 @@ export function ListDetails({
          </div>
 
          <div className={styles.toolbar}>
-            {/* Se o usuário é Dono ou Convidado Aceito, ele pode adicionar filmes! */}
             {canEditMovies && (
                <button className={styles.addBtn} onClick={onAddMovieClick}>
                   <Plus size={18} /> Adicionar Filme
@@ -458,7 +531,6 @@ export function ListDetails({
          ) : listMovies.length === 0 ? (
             <div className={styles.emptyState}>
                <p>Esta lista ainda não tem filmes.</p>
-               <p>Clique em Adicionar Filme ou escolha uma lista ao Editar um filme.</p>
             </div>
          ) : (
             <div className="movie-grid">
@@ -466,14 +538,7 @@ export function ListDetails({
                   <div key={movie.tmdb_id} className={styles.movieWrapper}>
                      <MovieCard movie={movie} onClick={() => onMovieClick(movie)} />
                      {canEditMovies && (
-                        <button 
-                           className={styles.removeMovieBtn} 
-                           onClick={(e) => {
-                              e.stopPropagation();
-                              setMovieToRemove(movie.tmdb_id);
-                           }}
-                           title="Remover da lista"
-                        >
+                        <button className={styles.removeMovieBtn} onClick={(e) => { e.stopPropagation(); setMovieToRemove(movie.tmdb_id); }}>
                            <X size={14} />
                         </button>
                      )}
@@ -482,50 +547,54 @@ export function ListDetails({
             </div>
          )}
 
+         <DuplicateListModal
+            key={list.id} 
+            show={showDuplicateModal}
+            onHide={() => setShowDuplicateModal(false)}
+            originalTitle={list.name}
+            onConfirm={onConfirmDuplicate}
+            isProcessing={isActionLoading}
+         />
+
          <EditListModal
             show={showEditModal}
             onHide={() => setShowEditModal(false)}
             list={list}
             onUpdate={async (id, name, desc, has_rating, rating_type, manual_rating, auto_sync) => {
                const { success, error } = await onUpdateList(id, name, desc, has_rating, rating_type, manual_rating, auto_sync);
-               
                if (success) {
-                  toast.success("Lista atualizada com sucesso!");
+                  toast.success("Atualizada!");
                   onListUpdated({ ...list, name, description: desc, has_rating, rating_type, manual_rating, auto_sync });
-               } else {
-                  toast.error(error || "Erro ao atualizar a lista.");
-               }
+               } else { toast.error(error || "Erro."); }
                return success; 
             }}
          />
 
-        <ConfirmModal
-            show={showDeleteConfirm}
+         <ConfirmModal 
+            show={showDeleteConfirm} 
             onHide={() => setShowDeleteConfirm(false)}
             onConfirm={handleDeleteList}
-            title="Excluir Lista"
-            message={`Tem certeza que deseja excluir a lista "${list.name}"? Os filmes não serão apagados dos perfis.`}
-            confirmText="Sim, excluir"
-            isProcessing={isDeleting}
+            title="Excluir"
+            message={`Excluir "${list.name}"?`}
+            confirmText="Excluir"
+            isProcessing={isDeleting} 
          />
 
-         <ConfirmModal
+         <ConfirmModal 
             show={movieToRemove !== null}
             onHide={() => setMovieToRemove(null)}
             onConfirm={confirmRemoveMovie}
-            title="Remover Filme"
-            message="Tem certeza que deseja remover este filme desta lista?"
-            confirmText="Sim, remover"
-            isProcessing={isRemovingMovie}
+            title="Remover" message="Remover este filme?"
+            confirmText="Remover" isProcessing={isRemovingMovie}
          />
 
          <ConfirmModal
             show={showLeaveConfirm}
             onHide={() => setShowLeaveConfirm(false)}
             onConfirm={handleLeaveList}
-            title="Sair da Lista"
-            message={`Tem a certeza que deseja abandonar a lista "${list.name}"?`}
-            confirmText="Sim, sair"
+            title="Sair"
+            message={`Sair de "${list.name}"?`}
+            confirmText="Sair"
             isProcessing={isLeaving}
          />
 
@@ -534,9 +603,27 @@ export function ListDetails({
             onHide={() => setMemberToRemove(null)}
             onConfirm={confirmRemoveMember}
             title="Remover Membro"
-            message={`Tem a certeza que deseja remover ${memberToRemove?.username} desta lista?`}
-            confirmText="Sim, remover"
+            message={`Remover ${memberToRemove?.username}?`}
+            confirmText="Remover"
             isProcessing={isRemovingMember}
+         />
+
+         <ListLikesModal
+            show={showLikesModal}
+            onHide={() => {
+               setShowLikesModal(false);
+               setFriendActionLoadingByUserId({});
+            }}
+            likers={likers}
+            isLoading={loadingLikers}
+            currentUserId={currentUserId}
+            friendshipStatusByUserId={friendshipStatusByUserId}
+            friendActionLoadingByUserId={friendActionLoadingByUserId}
+            onFriendAction={handleFriendActionFromLikes}
+            onProfileClick={(username) => {
+               setShowLikesModal(false);
+               navigate(`/perfil/${username}`);
+            }}
          />
       </div>
    );

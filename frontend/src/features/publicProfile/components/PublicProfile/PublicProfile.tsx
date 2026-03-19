@@ -33,6 +33,7 @@ export function PublicProfile() {
    const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
    const [searchParams, setSearchParams] = useSearchParams();
+   const listIdInUrl = searchParams.get("listId");
 
    const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -102,6 +103,14 @@ export function PublicProfile() {
          toast.error(error);
       }
    }, [error]);
+
+   useEffect(() => {
+      if (!listIdInUrl || listsLoading || lists.length === 0) return;
+      const listToOpen = lists.find((item) => item.id === listIdInUrl);
+      if (listToOpen) {
+         setSelectedList(listToOpen);
+      }
+   }, [listIdInUrl, lists, listsLoading]);
 
    if (loading) {
       return (
@@ -316,6 +325,7 @@ export function PublicProfile() {
                      // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
                      onListDeleted={() => {}}
                      onListUpdated={() => {}}
+                     onListDuplicated={() => {}}
                      onUpdateList={async () => ({ success: false, error: null })}
                      onRemoveMovie={async () => ({ success: false, error: null })}
                      onAddMovieClick={() => {}}

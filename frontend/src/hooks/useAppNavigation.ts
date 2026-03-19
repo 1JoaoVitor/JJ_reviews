@@ -45,9 +45,16 @@ export function useAppNavigation({
          appUrlOpenHandle = await CapacitorApp.addListener('appUrlOpen', (event) => {
             const url = new URL(event.url);
             const movieIdFromDeepLink = url.searchParams.get("movie");
+            const listIdFromDeepLink = url.searchParams.get("listId") || url.searchParams.get("list");
             if (movieIdFromDeepLink) {
                setSearchParams(prev => {
                   prev.set("movie", movieIdFromDeepLink);
+                  return prev;
+               }, { replace: true });
+            } else if (listIdFromDeepLink) {
+               setSearchParams(prev => {
+                  prev.set("aba", "lists");
+                  prev.set("listId", listIdFromDeepLink);
                   return prev;
                }, { replace: true });
             }

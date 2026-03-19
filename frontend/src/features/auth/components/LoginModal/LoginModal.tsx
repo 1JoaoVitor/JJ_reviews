@@ -123,7 +123,15 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
       } catch (err) {
          if (err instanceof Error) {
             console.error(err);
-            toast.error(err.message || "Ocorreu um erro inesperado. Verifique os seus dados.");
+            const normalizedMessage = err.message.toLowerCase();
+
+            if (normalizedMessage.includes("invalid login credentials")) {
+               toast.error("Email/usuário ou senha incorretos.");
+            } else if (normalizedMessage.includes("email not confirmed")) {
+               toast.error("Confirme o seu email antes de fazer login.");
+            } else {
+               toast.error(err.message || "Ocorreu um erro inesperado. Verifique os seus dados.");
+            }
          } else {
             console.error(err);
             toast.error("Ocorreu um erro inesperado. Verifique os seus dados.");
