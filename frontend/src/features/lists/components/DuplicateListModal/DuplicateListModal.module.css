@@ -1,0 +1,120 @@
+.modalContent {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 1.5rem;
+}
+
+.title {
+  color: var(--text-primary);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+}
+
+.body {
+  padding: 1.5rem;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.input {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  height: 48px;
+  border-radius: var(--radius-md);
+}
+
+.input:focus {
+  background-color: var(--bg-elevated);
+  border-color: var(--gold);
+  color: var(--text-primary);
+  box-shadow: 0 0 0 2px rgba(232, 177, 0, 0.2);
+}
+
+.typeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.typeOption {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+}
+
+.typeOption:hover {
+  background-color: var(--bg-elevated);
+}
+
+.typeOption.active {
+  border-color: var(--gold);
+  background-color: rgba(232, 177, 0, 0.05);
+  color: var(--text-primary);
+}
+
+.typeText {
+  display: flex;
+  flex-direction: column;
+}
+
+.typeText strong {
+  font-size: 1rem;
+}
+
+.typeText span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.cancelBtn, .confirmBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.confirmBtn {
+  background: var(--gold);
+  border: none;
+  color: var(--bg-surface);
+}
+
+.confirmBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}

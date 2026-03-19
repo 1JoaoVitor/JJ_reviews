@@ -31,7 +31,27 @@ export async function fetchCollaborativeLists(userId: string): Promise<RawSupaba
 export function subscribeListsChanges(userId: string, onChange: () => void): () => void {
    const listsChannel = supabase
       .channel("custom-all-lists-changes")
+      .on(
+         "postgres_changes",
+         { event: "INSERT", schema: "public", table: "lists", filter: `owner_id=eq.${userId}` },
+         onChange
+      )
+      .on(
+         "postgres_changes",
+         { event: "UPDATE", schema: "public", table: "lists", filter: `owner_id=eq.${userId}` },
+         onChange
+      )
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "lists" }, onChange)
+      .on(
+         "postgres_changes",
+         { event: "INSERT", schema: "public", table: "list_collaborators", filter: `user_id=eq.${userId}` },
+         onChange
+      )
+      .on(
+         "postgres_changes",
+         { event: "UPDATE", schema: "public", table: "list_collaborators", filter: `user_id=eq.${userId}` },
+         onChange
+      )
       .on(
          "postgres_changes",
          { event: "DELETE", schema: "public", table: "list_collaborators", filter: `user_id=eq.${userId}` },

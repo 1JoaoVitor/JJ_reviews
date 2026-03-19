@@ -22,6 +22,7 @@ import {
    deleteFriendshipBetween,
    deleteIncomingFriendRequest,
    createFriendRequest,
+   fetchFriendshipsForTargets,
    fetchFriendshipBetween,
    notifyFriendAccepted,
    notifyFriendRequest,
@@ -110,5 +111,39 @@ describe("friendshipService", () => {
    it("throws when deleting friendship fails", async () => {
       matchMock.mockResolvedValue({ error: new Error("delete-both-failed") });
       await expect(deleteFriendshipBetween("u1", "u2")).rejects.toThrow("delete-both-failed");
+   });
+
+   it("returns empty array when target list is empty", async () => {
+      const result = await fetchFriendshipsForTargets("u1", []);
+      expect(result).toEqual([]);
+      expect(fromMock).not.toHaveBeenCalled();
+   });
+
+   it("fetches friendships in batch for target users", async () => {
+      const orBatchMock = vi.fn().mockResolvedValue({
+         data: [{ requester_id: "u1", receiver_id: "u2", status: "accepted" }],
+         error: null,
+      });
+
+      fromMock.mockReturnValueOnce({
+         select: vi.fn().mockReturnValue({ or: orBatchMock }),
+      });
+
+      const result = await fetchFriendshipsForTargets("u1", ["u2", "u3"]);
+
+      expect(result).toEqual([{ requester_id: "u1", receiver_id: "u2", status: "accepted" }]);
+      expect(orBatchMock).toHaveBeenCalledTimes(1);
+   });
+
+   it("throws when batch friendship query fails", async () => {
+      const orBatchMock = vi.fn().mockResolvedValue({ data: null, error: new Error("batch-failed") });
+
+      fromMock.mockReturnValueOnce({
+         select: vi.fn().mockReturnValue({ or: orBatchMock }),
+      });
+
+      await expect(fetchFriendshipsForTargets("u1", ["u2"]))
+         .rejects
+         .toThrow("batch-failed");
    });
 });

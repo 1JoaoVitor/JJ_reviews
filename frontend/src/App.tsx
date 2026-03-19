@@ -219,6 +219,7 @@ function MainApp() {
                      onBack={() => modals.setSelectedList(null)}
                      onListDeleted={() => { modals.setSelectedList(null); fetchLists(); }}
                      onListUpdated={(updatedList) => { modals.setSelectedList(updatedList); fetchLists(); }}
+                     onListDuplicated={() => { fetchLists(); }}
                      onUpdateList={updateList}
                      onRemoveMovie={removeMovieFromList}
                      onAddMovieClick={() => modals.openAddMovie(null, modals.selectedList?.id)}
