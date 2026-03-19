@@ -10,7 +10,6 @@ export function useAppModals() {
    const [showAddModal, setShowAddModal] = useState(false);
    const [showShareModal, setShowShareModal] = useState(false);
    const [showLoginModal, setShowLoginModal] = useState(false);
-   const [showProfileModal, setShowProfileModal] = useState(false);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
    const [showFriendsModal, setShowFriendsModal] = useState(false);
    const [showRoulette, setShowRoulette] = useState(false);
@@ -22,22 +21,6 @@ export function useAppModals() {
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [selectedList, setSelectedList] = useState<CustomList | null>(null);
    const [preselectedListId, setPreselectedListId] = useState<string>("");
-
-   // ─── Lógica da Batalha  ───
-   const isBattleMode = searchParams.get("modo") === "batalha";
-
-   const setIsBattleMode = (active: boolean) => {
-      if (active) {
-         setSearchParams(prev => {
-            prev.set("modo", "batalha");
-            return prev;
-         });
-      } else {
-         const newParams = new URLSearchParams(searchParams);
-         newParams.delete("modo");
-         setSearchParams(newParams, { replace: true });
-      }
-   };
 
    // ─── Helpers de Abertura/Fechamento ───
    const openMovie = useCallback((movie: MovieData) => {
@@ -69,7 +52,6 @@ export function useAppModals() {
       showAddModal, setShowAddModal,
       showShareModal, setShowShareModal,
       showLoginModal, setShowLoginModal,
-      showProfileModal, setShowProfileModal,
       showLogoutConfirm, setShowLogoutConfirm,
       showFriendsModal, setShowFriendsModal,
       showRoulette, setShowRoulette,
@@ -81,9 +63,6 @@ export function useAppModals() {
       movieToEdit, setMovieToEdit,
       selectedList, setSelectedList,
       preselectedListId, setPreselectedListId,
-
-      // Battle & Modo
-      isBattleMode, setIsBattleMode,
 
       // Actions
       openMovie, closeMovie, openAddMovie, openShare

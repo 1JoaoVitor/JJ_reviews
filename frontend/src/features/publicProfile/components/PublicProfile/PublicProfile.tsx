@@ -1,5 +1,5 @@
 import { useState, useEffect} from "react";
-import { useParams, useNavigate, useSearchParams} from "react-router-dom";
+import { useParams, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
 import { ArrowLeft, UserPlus, UserCheck, Clock, X} from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
@@ -9,8 +9,6 @@ import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal } from "@/features/auth";
-import { ProfileModal} from "@/features/profile";
-import { MovieBattle } from "@/features/battle";
 import type { MovieData, CustomList } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
@@ -23,12 +21,10 @@ import { toast } from "react-hot-toast";
 
 
 export function PublicProfile() {
-   const navigate = useNavigate();
-
    const { username: profileUsername } = useParams<{ username: string }>();
    
    const { movies, loading, error, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
-   const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout, updateUsername } = useAuth();
+   const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout } = useAuth();
    const filters = useMovieFilters(movies);
 
    const { lists, loading: listsLoading } = useLists(profileId || undefined);
@@ -39,8 +35,6 @@ export function PublicProfile() {
    const [searchParams, setSearchParams] = useSearchParams();
 
    const [showLoginModal, setShowLoginModal] = useState(false);
-   const [showProfileModal, setShowProfileModal] = useState(false);
-   const [isBattleMode, setIsBattleMode] = useState(false);
 
    const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel, rejectRequest } = 
       useFriendship(session?.user.id, profileId ?? undefined);
@@ -118,17 +112,6 @@ export function PublicProfile() {
       );
    }
 
-   if (isBattleMode) {
-      return (
-         <div className={styles.profilePage}>
-            <MovieBattle
-               allMovies={movies}
-               onExit={() => setIsBattleMode(false)}
-            />
-         </div>
-      );
-   }
-
    return (
       <div className={styles.profilePage}>
          <AppNavbar
@@ -143,13 +126,11 @@ export function PublicProfile() {
             availableGenres={filters.availableGenres}
             selectedGenre={filters.selectedGenre}
             setSelectedGenre={filters.setSelectedGenre}
-            onStartBattle={() => setIsBattleMode(true)}
             onLoginClick={() => setShowLoginModal(true)}
             session={session}
             onLogout={() => setShowLogoutConfirm(true)}
             username={loggedInUsername}
             avatarUrl={loggedInAvatar}
-            onProfileClick={() => setShowProfileModal(true)}
             onFriendsClick={() => setShowFriendsModal(true)}
          />
 
@@ -446,19 +427,6 @@ export function PublicProfile() {
             onHide={() => setShowLoginModal(false)}
          />
 
-         <ProfileModal
-            show={showProfileModal}
-            onHide={() => setShowProfileModal(false)}
-            session={session}
-            currentUsername={loggedInUsername}
-            onUpdate={updateUsername}
-            onLogout={() => {
-               setShowProfileModal(false);
-               setShowLogoutConfirm(true);
-            }}
-            forceLogout={logout}
-         />
-
          <FriendsModal 
             show={showFriendsModal} 
             onHide={() => setShowFriendsModal(false)} 
@@ -468,16 +436,10 @@ export function PublicProfile() {
          <BottomNav
             session={session}
             avatarUrl={loggedInAvatar}
-            onHomeClick={() => {
-               navigate("/");
-               window.scrollTo({ top: 0, behavior: "smooth" });
-            }}
-            onGamesClick={() => setIsBattleMode(true)} 
             onAddClick={() => {
                setMovieToEdit(null);
                setShowAddModal(true);
             }}
-            onProfileClick={() => setShowProfileModal(true)}
             onLoginClick={() => setShowLoginModal(true)}
             onFriendsClick={() => setShowFriendsModal(true)}
          />

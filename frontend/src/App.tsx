@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Container } from "react-bootstrap";
-import { Routes, Route, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus} from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -8,7 +8,6 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 // ─── Features ───
 import { useAuth, LoginModal, ResetPassword } from "@/features/auth";
 import {FriendsModal} from "@/features/friends";
-import {ProfileModal} from "@/features/profile";
 import {
    MovieCardSkeleton,
    MovieModal,
@@ -35,6 +34,7 @@ import { Footer } from "@/components/layout/Footer/Footer";
 import { InstallButton } from "@/components/installButton/InstallButton"; 
 import { LoadingOverlay } from "@/components/ui/LoadingOverlay/LoadingOverlay";
 import { LandingPage } from "@/components/landing/LandingPage";
+import { ProfilePage } from "@/features/profile";
 
 import styles from "./App.module.css";
 
@@ -46,9 +46,10 @@ export default function App() {
    return (
       <Routes>
          <Route path="/" element={<MainApp />} />
+         <Route path="/batalha" element={<MainApp />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
-
+         <Route path="/perfil" element={<ProfilePage />} />
          <Route path="/support" element={<SupportPage />} />
       </Routes>
    );
@@ -56,9 +57,11 @@ export default function App() {
 
 function MainApp() {
    const navigate = useNavigate();
+   const location = useLocation();
+   const isBattlePage = location.pathname === "/batalha";
    
    // Core Hooks
-   const { session, username, avatarUrl, logout, updateUsername, loading: authLoading } = useAuth();
+   const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
    const { lists, loading: listsLoading, createList, fetchLists, updateList, removeMovieFromList, addMovieToList } = useLists(session?.user.id);
    const filters = useMovieFilters(movies);
@@ -90,10 +93,10 @@ function MainApp() {
    }, []);
 
    // ─── Render da Batalha ───
-   if (modals.isBattleMode) {
+   if (isBattlePage) {
       return (
          <div className={styles.page}>
-            <MovieBattle allMovies={movies} onExit={() => modals.setIsBattleMode(false)} />
+            <MovieBattle allMovies={movies} onExit={() => navigate("/")} />
          </div>
       );
    }
@@ -124,13 +127,11 @@ function MainApp() {
             availableGenres={filters.availableGenres}
             selectedGenre={filters.selectedGenre}
             setSelectedGenre={filters.setSelectedGenre}
-            onStartBattle={() => modals.setIsBattleMode(true)}
             onLoginClick={() => modals.setShowLoginModal(true)}
             session={session}
             onLogout={() => modals.setShowLogoutConfirm(true)}
             username={username}
             avatarUrl={avatarUrl}
-            onProfileClick={() => modals.setShowProfileModal(true)}
             showFilters={!!session} 
             showBattle={!!session}
             onFriendsClick={() => modals.setShowFriendsModal(true)}
@@ -285,15 +286,6 @@ function MainApp() {
 
          <LoginModal show={modals.showLoginModal} onHide={() => modals.setShowLoginModal(false)} />
 
-         <ProfileModal
-            show={modals.showProfileModal}
-            onHide={() => modals.setShowProfileModal(false)}
-            session={session}
-            currentUsername={username}
-            onUpdate={updateUsername}
-            onLogout={() => { modals.setShowProfileModal(false); modals.setShowLogoutConfirm(true); }}
-            forceLogout={logout}
-         />
 
          {sharingMovie && <ShareCard ref={shareRef} movie={sharingMovie} />}
 
@@ -322,10 +314,7 @@ function MainApp() {
          <BottomNav
             session={session}
             avatarUrl={avatarUrl}
-            onHomeClick={() => { navigate("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-            onGamesClick={() => modals.setIsBattleMode(true)} 
             onAddClick={() => modals.openAddMovie(null, "")}
-            onProfileClick={() => modals.setShowProfileModal(true)}
             onLoginClick={() => modals.setShowLoginModal(true)}
             onFriendsClick={() => modals.setShowFriendsModal(true)}
          />
