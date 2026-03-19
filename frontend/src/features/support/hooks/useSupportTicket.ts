@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendSupportEmail } from "../logic/sendSupportEmail";
+import { sendSupportEmail } from "../services/sendSupportEmailService";
 import { useAuth } from "@/features/auth"; 
 
 export function useSupportTicket() {

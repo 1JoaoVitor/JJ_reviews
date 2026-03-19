@@ -1,1 +1,1 @@
-export { ProfileModal } from "./components/ProfileModal/ProfileModal";
+export { ProfilePage } from "./components/ProfilePage/ProfilePage";
