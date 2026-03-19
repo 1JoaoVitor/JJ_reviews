@@ -21,7 +21,7 @@ import {
 } from "../services/listsService";
 
 
-export function useLists(userId?: string) {
+export function useLists(userId?: string, currentUserId?: string) {
    const [lists, setLists] = useState<CustomList[]>([]);
    const [loading, setLoading] = useState(true);
 
@@ -29,8 +29,8 @@ export function useLists(userId?: string) {
       if (!userId) return;
       setLoading(true);
       try {
-         const myLists = await fetchOwnedLists(userId);
-         const sharedLists = await fetchCollaborativeLists(userId);
+         const myLists = await fetchOwnedLists(userId, currentUserId);
+         const sharedLists = await fetchCollaborativeLists(userId, currentUserId);
 
          const merged = mergeLists(myLists as unknown as RawSupabaseList[], sharedLists as unknown as RawSupabaseList[]);
          const unique = deduplicateLists(merged);
@@ -44,7 +44,7 @@ export function useLists(userId?: string) {
       } finally {
          setLoading(false);
       }
-   }, [userId]);
+   }, [userId, currentUserId]);
    
    useEffect(() => {
       if (userId) {

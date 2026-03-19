@@ -63,7 +63,7 @@ function MainApp() {
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
    const { movies, loading: moviesLoading, fetchMovies } = useMovies(session);
-   const { lists, loading: listsLoading, createList, fetchLists, updateList, removeMovieFromList, addMovieToList } = useLists(session?.user.id);
+   const { lists, loading: listsLoading, createList, fetchLists, updateList, removeMovieFromList, addMovieToList } = useLists(session?.user.id, session?.user.id);
    const filters = useMovieFilters(movies);
    const { shareRef, sharingMovie, isSharing } = useShare();
 

@@ -2,30 +2,69 @@ import { supabase } from "@/lib/supabase";
 import type { CustomList } from "@/types";
 import type { RawSupabaseList } from "../logic/listOperations";
 
-export async function fetchOwnedLists(userId: string): Promise<RawSupabaseList[]> {
+export async function fetchOwnedLists(userId: string, currentUserId?: string): Promise<RawSupabaseList[]> {
    const { data, error } = await supabase
       .from("lists")
-      .select("*, list_movies(count)")
+      .select("*, list_movies(count), list_likes(count)")
       .eq("owner_id", userId);
 
    if (error) throw error;
-   return (data || []) as RawSupabaseList[];
+   
+   const lists = (data || []) as RawSupabaseList[];
+   
+   // If currentUserId is provided, check which lists the user has liked
+   if (currentUserId) {
+      const { data: userLikes, error: likesError } = await supabase
+         .from("list_likes")
+         .select("list_id")
+         .eq("user_id", currentUserId)
+         .in("list_id", lists.map(l => l.id));
+      
+      if (!likesError && userLikes) {
+         const likedListIds = new Set(userLikes.map(l => l.list_id));
+         return lists.map(list => ({
+            ...list,
+            is_liked: likedListIds.has(list.id),
+         }));
+      }
+   }
+   
+   return lists;
 }
 
-export async function fetchCollaborativeLists(userId: string): Promise<RawSupabaseList[]> {
+export async function fetchCollaborativeLists(userId: string, currentUserId?: string): Promise<RawSupabaseList[]> {
    const { data, error } = await supabase
       .from("list_collaborators")
-      .select("list_id, lists(*, list_movies(count))")
+      .select("list_id, lists(*, list_movies(count), list_likes(count))")
       .eq("user_id", userId)
       .in("status", ["accepted", "pending"]);
 
    if (error) throw error;
 
    const collabData = data || [];
-   return collabData.flatMap((item: { lists?: RawSupabaseList | RawSupabaseList[] | null }) => {
+   const lists = collabData.flatMap((item: { lists?: RawSupabaseList | RawSupabaseList[] | null }) => {
       if (!item.lists) return [];
       return Array.isArray(item.lists) ? item.lists : [item.lists];
    });
+   
+   // If currentUserId is provided, check which lists the user has liked
+   if (currentUserId) {
+      const { data: userLikes, error: likesError } = await supabase
+         .from("list_likes")
+         .select("list_id")
+         .eq("user_id", currentUserId)
+         .in("list_id", lists.map(l => l.id));
+      
+      if (!likesError && userLikes) {
+         const likedListIds = new Set(userLikes.map(l => l.list_id));
+         return lists.map(list => ({
+            ...list,
+            is_liked: likedListIds.has(list.id),
+         }));
+      }
+   }
+   
+   return lists;
 }
 
 export function subscribeListsChanges(userId: string, onChange: () => void): () => void {
