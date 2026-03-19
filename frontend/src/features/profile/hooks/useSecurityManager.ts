@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
+import { validatePasswordChange } from "../logic/profileInput";
 
 export function useSecurityManager(session: Session | null, onLogoutSuccess: () => void) {
    const [currentPassword, setCurrentPassword] = useState("");
@@ -14,9 +15,11 @@ export function useSecurityManager(session: Session | null, onLogoutSuccess: () 
 
    const handleSavePassword = async (e: React.FormEvent, onSuccess: () => void) => {
       e.preventDefault();
-      if (!currentPassword) return toast.error("Digite a sua senha atual para continuar.");
-      if (newPassword !== confirmPassword) return toast.error("As novas senhas não coincidem!");
-      if (newPassword.length < 6) return toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+
+      const passwordValidation = validatePasswordChange(currentPassword, newPassword, confirmPassword);
+      if (!passwordValidation.valid) {
+         return toast.error(passwordValidation.error || "Dados de senha inválidos.");
+      }
 
       setSavingPassword(true);
       try {
