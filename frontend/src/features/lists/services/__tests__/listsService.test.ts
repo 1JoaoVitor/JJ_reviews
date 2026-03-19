@@ -691,7 +691,7 @@ describe("listsService", () => {
 
    it("subscribes to list details changes with null current user", () => {
       const onChange = vi.fn();
-      const unsubscribe = subscribeListDetailsChanges("l1", null, onChange);
+      const unsubscribe = subscribeListDetailsChanges("l1", null as unknown as string, onChange);
 
       expect(channelMock).toHaveBeenCalledWith("list_updates_l1");
       expect(onMock).toHaveBeenCalledTimes(2); // list_movies, list_reviews (no reviews when no currentUserId)
