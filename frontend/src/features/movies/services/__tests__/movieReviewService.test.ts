@@ -34,6 +34,11 @@ describe("movieReviewService", () => {
       expect(fromMock).toHaveBeenCalledWith("reviews");
    });
 
+   it("throws when deleting review by id fails", async () => {
+      eqMock.mockResolvedValue({ error: new Error("delete-review-failed") });
+      await expect(deleteReviewById("review-1")).rejects.toThrow("delete-review-failed");
+   });
+
    it("removes movie from private lists", async () => {
       inMock.mockResolvedValue({ error: null });
       await expect(removeMovieFromPrivateLists(10, ["l1", "l2"]))
@@ -44,5 +49,10 @@ describe("movieReviewService", () => {
    it("skips delete when private list ids are empty", async () => {
       await expect(removeMovieFromPrivateLists(10, [])).resolves.toBeUndefined();
       expect(fromMock).not.toHaveBeenCalled();
+   });
+
+   it("throws when removing movie from private lists fails", async () => {
+      inMock.mockResolvedValue({ error: new Error("remove-private-failed") });
+      await expect(removeMovieFromPrivateLists(10, ["l1"])).rejects.toThrow("remove-private-failed");
    });
 });

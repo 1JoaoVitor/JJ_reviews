@@ -2,6 +2,12 @@
 
 Documento completo da arquitetura do projeto frontend. Explica como tudo está organizado, o que cada peça faz, e como manter a qualidade ao adicionar features.
 
+## Playbook de Novas Features (FC/IS)
+
+Para garantir consistência na criação de novas funcionalidades, o processo oficial está documentado em `FEATURE_PLAYBOOK.md`.
+
+Use esse playbook como checklist de PR e definição de pronto para qualquer feature nova.
+
 ---
 
 ## Stack Tecnológico
