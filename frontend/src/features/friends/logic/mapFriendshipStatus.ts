@@ -1,4 +1,8 @@
-import type { Friendship } from "@/types";
+interface FriendshipLike {
+   requester_id: string;
+   receiver_id: string;
+   status: string;
+}
 
 export type DerivedFriendshipStatus = 
    | "self"             // É o próprio perfil
@@ -13,7 +17,7 @@ export type DerivedFriendshipStatus =
 export function mapFriendshipStatus(
    currentUserId: string | undefined,
    profileId: string | undefined,
-   friendship: Friendship | null
+   friendship: FriendshipLike | null
 ): DerivedFriendshipStatus {
    
    if (!currentUserId || !profileId) return "none";
