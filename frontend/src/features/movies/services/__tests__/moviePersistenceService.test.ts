@@ -43,6 +43,8 @@ import {
    getExistingProfileReview,
    hasUserReview,
    syncReviewToListMembers,
+   upsertPartialSharedListReview,
+   upsertPersonalReview,
    upsertFullSharedListReview,
 } from "../moviePersistenceService";
 
@@ -70,6 +72,12 @@ describe("moviePersistenceService", () => {
       authGetUserMock.mockResolvedValue({ data: { user: null }, error: null });
       const user = await getAuthenticatedUser();
       expect(user).toBeNull();
+   });
+
+    it("returns authenticated user", async () => {
+      authGetUserMock.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
+      const user = await getAuthenticatedUser();
+      expect(user).toEqual({ id: "u1" });
    });
 
    it("checks if user review exists", async () => {
@@ -111,5 +119,85 @@ describe("moviePersistenceService", () => {
             runtime: 120,
          })
       ).resolves.toBeUndefined();
+   });
+
+   it("upserts full shared list review by inserting when record does not exist", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      insertMock.mockResolvedValue({ error: null });
+
+      await expect(
+         upsertFullSharedListReview("l1", 50, { rating: 8, review: "ok", recommended: "Vale a pena assistir" })
+      ).resolves.toBeUndefined();
+
+      expect(insertMock).toHaveBeenCalled();
+   });
+
+   it("upserts partial shared list review by inserting when record does not exist", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      insertMock.mockResolvedValue({ error: null });
+
+      await expect(
+         upsertPartialSharedListReview("l1", 50, "u1", {
+            rating: 7,
+            review: "bom",
+            recommended: "Vale a pena assistir",
+            location: "Casa",
+            runtime: 130,
+         })
+      ).resolves.toBeUndefined();
+
+      expect(insertMock).toHaveBeenCalled();
+   });
+
+   it("upserts personal review by updating when record exists", async () => {
+      maybeSingleMock.mockResolvedValue({ data: { id: "r1" }, error: null });
+      const updateEqMock = vi.fn().mockResolvedValue({ error: null });
+      updateMock.mockReturnValue({ eq: updateEqMock });
+
+      await expect(
+         upsertPersonalReview("u1", 77, {
+            rating: 9,
+            review: "excelente",
+            recommended: "Assista com certeza",
+            runtime: 120,
+            location: "Cinema",
+            status: "watched",
+            attachment_url: null,
+         })
+      ).resolves.toBeUndefined();
+   });
+
+   it("upserts personal review by inserting when record does not exist", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      insertMock.mockResolvedValue({ error: null });
+
+      await expect(
+         upsertPersonalReview("u1", 77, {
+            rating: 9,
+            review: "excelente",
+            recommended: "Assista com certeza",
+            runtime: 120,
+            location: "Cinema",
+            status: "watched",
+            attachment_url: null,
+         })
+      ).resolves.toBeUndefined();
+   });
+
+   it("throws when sync rpc returns error", async () => {
+      rpcMock.mockResolvedValue({ error: new Error("sync-failed") });
+      await expect(
+         syncReviewToListMembers({
+            listId: "l1",
+            tmdbId: 99,
+            rating: 9,
+            review: "Bom",
+            recommended: "Assista com certeza",
+            status: "watched",
+            addedBy: "u1",
+            location: "Casa",
+            runtime: 120,
+         })
+      ).rejects.toThrow("sync-failed");
    });
 });
