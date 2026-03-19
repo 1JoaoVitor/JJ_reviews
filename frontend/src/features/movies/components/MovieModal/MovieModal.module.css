@@ -259,12 +259,15 @@
    .footer {
       position: sticky;
       bottom: 0;
-      z-index: 3;
-      padding-bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 2.75rem);
+      z-index: 1060;
+      padding-bottom: max(
+         calc(env(safe-area-inset-bottom) + 1rem),
+         calc(env(safe-area-inset-bottom) + 4.5rem)
+      );
    }
 
    .body {
-      padding-bottom: 1.5rem;
+      padding-bottom: 2rem;
    }
 }
 
