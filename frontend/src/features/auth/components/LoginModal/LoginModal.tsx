@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Modal, Form, Spinner } from "react-bootstrap";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
 import styles from "./LoginModal.module.css";
 import { useModalBack } from "@/hooks/useModalBack";
+import {
+   getEmailByUsername,
+   isUsernameTaken,
+   sendResetPasswordLink,
+   signInWithEmailPassword,
+   signUpWithUsername,
+} from "../../services/authService";
 
 interface LoginModalProps {
    show: boolean;
@@ -76,25 +82,14 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                return;
             }
 
-            const { data: existingUser } = await supabase
-               .from("profiles")
-               .select("username")
-               .ilike("username", username)
-               .maybeSingle();
-
-            if (existingUser) {
+            const usernameTaken = await isUsernameTaken(username);
+            if (usernameTaken) {
                toast.error("Este nome de usuário já está em uso.");
                setLoading(false);
                return;
             }
 
-            const { error } = await supabase.auth.signUp({
-               email,
-               password,
-               options: { data: { username } }
-            });
-
-            if (error) throw error;
+            await signUpWithUsername(email, password, username);
             toast.success("Cheque o seu email para confirmar a criação da conta! Bem-vindo ao JJ Reviews!");
             handleHide();
 
@@ -102,11 +97,8 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
             let finalEmail = loginId.trim();
 
             if (!finalEmail.includes("@")) {
-               const { data: emailData, error: rpcError } = await supabase.rpc('get_email_by_username', { 
-                  p_username: finalEmail.toLowerCase() 
-               });
-
-               if (rpcError || !emailData) {
+               const emailData = await getEmailByUsername(finalEmail);
+               if (!emailData) {
                   toast.error("Usuário não encontrado. Verifique o nome ou use o seu email.");
                   setLoading(false);
                   return;
@@ -114,8 +106,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                finalEmail = emailData; // Substitui o username pelo email verdadeiro para fazer login
             }
 
-            const { error } = await supabase.auth.signInWithPassword({ email: finalEmail, password });
-            if (error) throw error;
+            await signInWithEmailPassword(finalEmail, password);
             toast.success("Login efetuado com sucesso!");
             handleHide();
 
@@ -125,10 +116,7 @@ export function LoginModal({ show, onHide }: LoginModalProps) {
                setLoading(false);
                return;
             }
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-               redirectTo: `${window.location.origin}/reset-password`,
-            });
-            if (error) throw error;
+            await sendResetPasswordLink(email, `${window.location.origin}/reset-password`);
             toast.success("Enviámos um link de recuperação para o seu email!");
             setMode("login");
          }
