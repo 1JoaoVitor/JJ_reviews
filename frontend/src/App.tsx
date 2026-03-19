@@ -22,6 +22,7 @@ import { MovieBattle } from "@/features/battle";
 import { RouletteModal } from "@/features/roulette";
 import { ListsView } from "@/features/lists"; 
 import { ShareCard, ShareModal, useShare } from "@/features/share";
+import { ImportPage } from "@/features/import";
 import { PublicProfile } from "@/features/publicProfile";
 import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
@@ -51,6 +52,7 @@ export default function App() {
          <Route path="/reset-password" element={<ResetPassword />} />
          <Route path="/perfil" element={<ProfilePage />} />
          <Route path="/support" element={<SupportPage />} />
+         <Route path="/import" element={<ImportPage />} />
       </Routes>
    );
 }
