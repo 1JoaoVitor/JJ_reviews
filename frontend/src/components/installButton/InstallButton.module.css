@@ -18,7 +18,6 @@
    border-radius: var(--radius-pill); 
    font-weight: 600;
    font-size: 0.9rem;
-   text-decoration: none;
    cursor: pointer;
    box-shadow: var(--shadow-md); 
    transition: all var(--transition-fast);
