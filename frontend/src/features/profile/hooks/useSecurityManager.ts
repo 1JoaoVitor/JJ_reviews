@@ -1,8 +1,12 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "@/lib/supabase";
 import type { Session } from "@supabase/supabase-js";
 import { validatePasswordChange } from "../logic/profileInput";
+import {
+   deleteCurrentUserAccount,
+   updateCurrentUserPassword,
+   verifyCurrentPassword,
+} from "../services/securityService";
 
 export function useSecurityManager(session: Session | null, onLogoutSuccess: () => void) {
    const [currentPassword, setCurrentPassword] = useState("");
@@ -23,15 +27,8 @@ export function useSecurityManager(session: Session | null, onLogoutSuccess: () 
 
       setSavingPassword(true);
       try {
-         const { error: verifyError } = await supabase.auth.signInWithPassword({
-            email: session?.user.email || '',
-            password: currentPassword
-         });
-
-         if (verifyError) throw new Error("A senha atual está incorreta.");
-
-         const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-         if (updateError) throw updateError;
+         await verifyCurrentPassword(session?.user.email || "", currentPassword);
+         await updateCurrentUserPassword(newPassword);
          
          toast.success("Senha atualizada com sucesso!");
          setCurrentPassword("");
@@ -48,8 +45,7 @@ export function useSecurityManager(session: Session | null, onLogoutSuccess: () 
    const handleDeleteAccount = async () => {
       setIsDeleting(true);
       try {
-         const { error } = await supabase.rpc('delete_user');
-         if (error) throw error;
+         await deleteCurrentUserAccount();
          toast.success("Conta excluída com sucesso.");
          setShowDeleteConfirm(false);
          onLogoutSuccess(); // Desloga e redireciona

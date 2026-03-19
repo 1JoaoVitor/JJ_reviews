@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import type { Area } from "react-easy-crop";
-import { supabase } from "@/lib/supabase";
 import getCroppedImg from "@/utils/cropImage";
 import type { Session } from "@supabase/supabase-js";
 import { sanitizeUsername, validateUsername } from "../logic/profileInput";
+import {
+   fetchUserProfile,
+   updateUserProfileName,
+   uploadUserAvatar,
+} from "../services/profileService";
 
 type OnProfileChanged = (newUsername: string) => void | Promise<void>;
 
@@ -25,18 +29,10 @@ export function useProfileManager(session: Session | null, onProfileChanged?: On
       const fetchProfileData = async () => {
          if (!session?.user.id) return;
          try {
-            const { data, error } = await supabase
-               .from("profiles")
-               .select("avatar_url, username")
-               .eq("id", session.user.id)
-               .single();
-
-            if (error) throw error;
-            if (data) {
-               setAvatarUrl(data.avatar_url);
-               setUsername(data.username || "");
-               setCurrentUsernameState(data.username || "");
-            }
+            const data = await fetchUserProfile(session.user.id);
+            setAvatarUrl(data.avatarUrl);
+            setUsername(data.username);
+            setCurrentUsernameState(data.username);
          } catch (err) {
             console.error("Erro ao carregar perfil:", err);
          }
@@ -62,20 +58,7 @@ export function useProfileManager(session: Session | null, onProfileChanged?: On
          const croppedImageBlob = await getCroppedImg(imageSrc, croppedAreaPixels);
          if (!croppedImageBlob) throw new Error("Erro ao processar imagem.");
 
-         const fileName = `${session.user.id}-${Math.random()}.jpg`;
-         const { error: uploadError } = await supabase.storage
-            .from("avatars")
-            .upload(fileName, croppedImageBlob, { upsert: true, contentType: "image/jpeg" });
-
-         if (uploadError) throw uploadError;
-
-         const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(fileName);
-         const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ avatar_url: publicUrl })
-            .eq("id", session.user.id);
-
-         if (updateError) throw updateError;
+         const publicUrl = await uploadUserAvatar(session.user.id, croppedImageBlob);
 
          setAvatarUrl(publicUrl);
          setImageSrc(null);
@@ -102,18 +85,18 @@ export function useProfileManager(session: Session | null, onProfileChanged?: On
 
       setLoading(true);
       try {
-         const { error } = await supabase.from("profiles").update({ username }).eq("id", session.user.id);
-         if (error) {
-            if (error.code === "23505") throw new Error("Este nome de usuário já está em uso.");
-            throw error;
-         }
+         await updateUserProfileName(session.user.id, username);
          toast.success("Perfil atualizado com sucesso!");
          setCurrentUsernameState(username);
          if (onProfileChanged) {
             await onProfileChanged(username);
          }
       } catch (err) {
-         toast.error(err instanceof Error ? err.message : "Erro ao salvar perfil.");
+         if (typeof err === "object" && err && "code" in err && (err as { code?: string }).code === "23505") {
+            toast.error("Este nome de usuário já está em uso.");
+         } else {
+            toast.error(err instanceof Error ? err.message : "Erro ao salvar perfil.");
+         }
       } finally {
          setLoading(false);
       }
