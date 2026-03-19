@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { sendSupportEmail } from "../sendSupportEmailService";
 
 describe("sendSupportEmailService", () => {
-   const originalFetch = global.fetch;
+   const originalFetch = globalThis.fetch;
 
    beforeEach(() => {
       vi.restoreAllMocks();
    });
 
    afterEach(() => {
-      global.fetch = originalFetch;
+      globalThis.fetch = originalFetch;
    });
 
    it("returns validation error for empty message", async () => {
@@ -25,7 +25,7 @@ describe("sendSupportEmailService", () => {
          ok: true,
          json: async () => ({ success: true }),
       });
-      global.fetch = fetchMock as unknown as typeof fetch;
+      globalThis.fetch = fetchMock as unknown as typeof fetch;
 
       const result = await sendSupportEmail("abc", "Erro no login", "bug", "user@mail.com", "u-1");
 
@@ -34,7 +34,7 @@ describe("sendSupportEmailService", () => {
    });
 
    it("returns mapped error on api rejection", async () => {
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
          ok: false,
          json: async () => ({ success: false, message: "bad request" }),
       }) as unknown as typeof fetch;
@@ -48,7 +48,7 @@ describe("sendSupportEmailService", () => {
    });
 
    it("returns mapped error on thrown exception", async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error("network")) as unknown as typeof fetch;
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error("network")) as unknown as typeof fetch;
 
       const result = await sendSupportEmail("abc", "Teste", "other");
 

@@ -4,6 +4,7 @@ import type { Area } from "react-easy-crop";
 import { supabase } from "@/lib/supabase";
 import getCroppedImg from "@/utils/cropImage";
 import type { Session } from "@supabase/supabase-js";
+import { sanitizeUsername, validateUsername } from "../logic/profileInput";
 
 type OnProfileChanged = (newUsername: string) => void | Promise<void>;
 
@@ -87,13 +88,17 @@ export function useProfileManager(session: Session | null, onProfileChanged?: On
    };
 
    const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+      setUsername(sanitizeUsername(e.target.value));
    };
 
    const handleSaveUsername = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!session?.user.id) return;
-      if (username.length < 3) return toast.error("O nome de usuário deve ter pelo menos 3 caracteres.");
+
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.valid) {
+         return toast.error(usernameValidation.error || "Nome de usuário inválido.");
+      }
 
       setLoading(true);
       try {

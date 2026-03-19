@@ -57,7 +57,7 @@ export function MovieModal({
             </Modal.Title>
          </Modal.Header>
 
-         <Modal.Body className="pt-2">
+         <Modal.Body className={`pt-2 ${styles.body}`}>
             {/* Admin bar */}
             {isAdmin && (
                <div className={styles.adminBar}>
