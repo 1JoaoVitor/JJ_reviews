@@ -9,7 +9,7 @@ import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { Footer } from "@/components/layout/Footer/Footer";
 import { useAuth, LoginModal } from "@/features/auth";
-import type { MovieData, CustomList } from "@/types";
+import type { MovieData } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
@@ -28,12 +28,12 @@ export function PublicProfile() {
    const filters = useMovieFilters(movies);
 
    const { lists, loading: listsLoading } = useLists(profileId || undefined);
-   const [selectedList, setSelectedList] = useState<CustomList | null>(null);
 
    const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
 
    const [searchParams, setSearchParams] = useSearchParams();
    const listIdInUrl = searchParams.get("listId");
+   const selectedList = listIdInUrl ? lists.find((item) => item.id === listIdInUrl) || null : null;
 
    const [showLoginModal, setShowLoginModal] = useState(false);
 
@@ -103,14 +103,6 @@ export function PublicProfile() {
          toast.error(error);
       }
    }, [error]);
-
-   useEffect(() => {
-      if (!listIdInUrl || listsLoading || lists.length === 0) return;
-      const listToOpen = lists.find((item) => item.id === listIdInUrl);
-      if (listToOpen) {
-         setSelectedList(listToOpen);
-      }
-   }, [listIdInUrl, lists, listsLoading]);
 
    if (loading) {
       return (
@@ -321,7 +313,12 @@ export function PublicProfile() {
                      list={selectedList}
                      allMovies={movies}
                      currentUserId={session?.user.id}
-                     onBack={() => setSelectedList(null)}
+                     onBack={() => {
+                        setSearchParams((prev) => {
+                           prev.delete("listId");
+                           return prev;
+                        });
+                     }}
                      // Como é o perfil de outra pessoa, passa funções vazias para as ações destrutivas
                      onListDeleted={() => {}}
                      onListUpdated={() => {}}
@@ -349,7 +346,12 @@ export function PublicProfile() {
                               <div key={list.id} className="col-12 col-md-6 col-lg-4">
                                  <div 
                                     className={`p-4 rounded h-100 ${styles.listCard}`}
-                                    onClick={() => setSelectedList(list)}
+                                    onClick={() => {
+                                       setSearchParams((prev) => {
+                                          prev.set("listId", list.id);
+                                          return prev;
+                                       });
+                                    }}
                                  >
                                     <h5 className={styles.listCardTitle}>{list.name}</h5>
                                     <p className="text-muted small mb-0 text-truncate">{list.description || "Sem descrição"}</p>
