@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Form, Spinner } from "react-bootstrap";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { User, Link2, Shield, Lock, LogOut, AlertTriangle, MessageSquare, ArrowLeft } from "lucide-react";
+import { User, Link2, Shield, Lock, LogOut, AlertTriangle, MessageSquare, ArrowLeft, FileUp } from "lucide-react";
 import Cropper from "react-easy-crop";
 
 import { useAuth } from "@/features/auth";
@@ -117,6 +117,23 @@ export function ProfilePage() {
                               <button type="button" className={styles.supportBtn} onClick={() => navigate("/support")}>
                                  <MessageSquare size={18} /> Suporte e Feedback
                               </button>
+                           </div>
+
+                           <div className={styles.dataToolsCard}>
+                              <h3 className={styles.dataToolsTitle}>Dados da conta</h3>
+                              <p className={styles.dataToolsText}>Importe ou exporte seus dados pessoais de filmes e listas.</p>
+                              <div className={styles.dataToolsActions}>
+                                 <button type="button" className={styles.dataBtnPrimary} onClick={() => navigate("/import")}>
+                                    <FileUp size={18} /> Importar dados
+                                 </button>
+                                 {/* <button
+                                    type="button"
+                                    className={styles.dataBtnGhost}
+                                    onClick={() => toast("Exportacao em breve")}
+                                 >
+                                    <FileDown size={18} /> Exportar dados
+                                 </button> */}
+                              </div>
                            </div>
                         </Form>
                      </>

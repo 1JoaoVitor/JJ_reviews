@@ -32,6 +32,10 @@ export async function extractAndDetectZip(file: File): Promise<DetectedFileSet> 
         continue;
       }
 
+      if (shouldIgnoreOptionalLetterboxdEntry(fileName)) {
+        continue;
+      }
+
       try {
         const content = await zipFile.async("text");
 
@@ -82,6 +86,16 @@ export async function extractAndDetectZip(file: File): Promise<DetectedFileSet> 
  */
 function detectFileType(fileName: string, content: string): DetectedFile {
   const lowerName = fileName.toLowerCase();
+    if (!lowerName.endsWith(".csv")) {
+      return {
+        name: fileName,
+        type: "unknown",
+        content,
+        size: content.length,
+        isValid: true,
+      };
+    }
+
   const firstLine = content.split("\n")[0];
   const headerLine = content.split("\n").find((line) => {
     const trimmed = line.trim();
@@ -196,6 +210,23 @@ function detectFileType(fileName: string, content: string): DetectedFile {
     isValid: false,
     validationIssue: "Could not determine file type",
   };
+}
+
+function shouldIgnoreOptionalLetterboxdEntry(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  const normalized = lower.replace(/\\/g, "/");
+  const baseName = normalized.split("/").pop() || "";
+
+  if (
+    normalized.startsWith("deleted/") ||
+    normalized.startsWith("likes/") ||
+    normalized.startsWith("orphaned/")
+  ) {
+    return true;
+  }
+
+  const optionalCsv = new Set(["comments.csv", "diary.csv"]);
+  return optionalCsv.has(baseName);
 }
 
 /* ─── HEADER VALIDATORS ─── */

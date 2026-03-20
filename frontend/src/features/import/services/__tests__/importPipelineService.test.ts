@@ -191,7 +191,7 @@ describe("importPipelineService", () => {
 
     vi.mocked(parseImportCsvContent)
       .mockResolvedValueOnce({ username: "john", dateJoined: "2024-01-01" })
-      .mockResolvedValueOnce([{ date: "2024-01-01", name: "The Matrix", year: 1999, review: "Great" }])
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "The Matrix", year: 1999 }])
       .mockResolvedValueOnce([{ date: "2024-01-01", name: "Inception", year: 2010 }]);
 
     vi.mocked(validateImportFiles).mockResolvedValue({
@@ -224,7 +224,7 @@ describe("importPipelineService", () => {
     expect(result.parsedData.watchlist).toHaveLength(1);
     expect(result.validation.warnings.length).toBeGreaterThan(0);
     expect(result.validation.issues.some((i) => i.fileName === "broken-list.csv")).toBe(true);
-    expect(result.validation.issues.some((i) => i.fileName === "unknown.bin")).toBe(true);
+    expect(result.validation.issues.some((i) => i.fileName === "unknown.bin")).toBe(false);
   });
 
   it("should keep profile undefined when profile parser returns null", async () => {
@@ -276,5 +276,49 @@ describe("importPipelineService", () => {
         lists: [],
       })
     );
+  });
+
+  it("should warn when zip has no recognizable import files", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "random.txt", type: "unknown", content: "x", size: 1, isValid: true },
+        { name: "notes.bin", type: "unknown", content: "y", size: 1, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 0,
+        ratingFiles: 0,
+        reviewFiles: 0,
+        watchedFiles: 0,
+        watchlistFiles: 0,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "random.zip",
+      status: "error",
+      movies: [],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "random.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(result.validation.warnings).toContain("Nenhum arquivo de importação reconhecido no ZIP. Envie o ZIP exportado diretamente do aplicativo.");
   });
 });

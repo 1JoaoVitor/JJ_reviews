@@ -312,6 +312,21 @@ testuser,2024-01-01,John`;
       expect(list.movies[1].name).toBe("Inception");
     });
 
+    it("should parse Letterboxd list export v7 with metadata block and movie block", async () => {
+      const csv = `Letterboxd list export v7
+Date,Name,Tags,URL,Description
+2026-03-20,Example-list,,https://boxd.it/TjRfi,
+
+Position,Name,Year,URL,Description
+1,The Secret Agent,2025,https://boxd.it/KkUE,`;
+
+      const list = (await parseImportCsvContent(csv, "list")) as ListData;
+      expect(list.name).toBe("Example-list");
+      expect(list.movies).toHaveLength(1);
+      expect(list.movies[0].name).toBe("The Secret Agent");
+      expect(list.movies[0].year).toBe(2025);
+    });
+
     it("should handle quoted fields in Letterboxd CSV", async () => {
       const csv = `Name,Year,Rating
 "The Matrix, Reloaded",2003,4`;

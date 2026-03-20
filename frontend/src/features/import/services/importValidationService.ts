@@ -299,18 +299,39 @@ function parseListCsv(rows: Record<string, string>[]): ListData | null {
         max: 2100,
       });
 
-      if (!name || !year) return [];
+      // Letterboxd list exports sometimes get parsed with metadata headers (Date, Name, Tags, URL, Description).
+      // In that case, Date contains the movie position and Tags contains the movie year.
+      const { value: dateAsPosition } = getNumericField(row, "Date");
+      const { value: tagsAsYear } = getNumericField(row, "Tags", {
+        min: 1800,
+        max: 2100,
+      });
+
+      const resolvedPosition = position ?? dateAsPosition ?? 0;
+      const resolvedYear = year ?? tagsAsYear;
+
+      // Skip embedded movie header row (e.g. Date=Position, Name=Name, Tags=Year)
+      const dateToken = (getField(row, "Date").value || "").toLowerCase();
+      const nameToken = (name || "").toLowerCase();
+      if (dateToken === "position" && nameToken === "name") {
+        return [];
+      }
+
+      if (!name || !resolvedYear) return [];
 
       const { value: description } = getField(row, "Description");
       const { value: tags } = getField(row, "Tags");
-      const { value: letterboxdUri } = getField(row, "URL");
+      const { value: url } = getField(row, "URL");
+      const { value: letterboxdUriField } = getField(row, "Letterboxd URI");
+      const letterboxdUri = url || letterboxdUriField;
+      const movieTags = year !== null && tags ? tags.split(",").map((t) => t.trim()) : undefined;
 
       return [{
-        position: position || 0,
+        position: resolvedPosition,
         name,
-        year,
+        year: resolvedYear,
         description: description || undefined,
-        tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
+        tags: movieTags,
         letterboxdUri: letterboxdUri || undefined,
       }];
     })
