@@ -42,14 +42,32 @@ function fileTypeToSection(fileType: "profile" | "ratings" | "reviews" | "watche
 }
 
 function mapDetectionIssues(detected: DetectedFileSet): ValidationIssue[] {
-  return detected.files
-    .filter((file) => !file.isValid)
+  const detectionIssues: ValidationIssue[] = detected.files
+    .filter((file) => !file.isValid && file.type !== "unknown")
     .map((file) => ({
       severity: IssueSeverity.WARNING,
       section: fileTypeToSection(file.type),
       fileName: file.name,
       message: file.validationIssue || "Invalid file detected in ZIP",
     }));
+
+  const recognizedFiles =
+    detected.summary.profileFiles +
+    detected.summary.ratingFiles +
+    detected.summary.reviewFiles +
+    detected.summary.watchedFiles +
+    detected.summary.watchlistFiles +
+    detected.summary.listFiles;
+
+  if (recognizedFiles === 0) {
+    detectionIssues.push({
+      severity: IssueSeverity.WARNING,
+      section: "lists",
+      message: "Nenhum arquivo de importação reconhecido no ZIP. Envie o ZIP exportado diretamente do aplicativo.",
+    });
+  }
+
+  return detectionIssues;
 }
 
 export async function processImportZip(
