@@ -27,9 +27,9 @@ export function PublicProfile() {
    const { session, username: loggedInUsername, avatarUrl: loggedInAvatar, logout } = useAuth();
    const filters = useMovieFilters(movies);
 
-   const { lists, loading: listsLoading } = useLists(profileId || undefined);
+   const { lists, loading: listsLoading } = useLists(profileId || undefined, session?.user.id);
 
-   const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id);
+   const { lists: myLists, addMovieToList, createList } = useLists(session?.user.id, session?.user.id);
 
    const [searchParams, setSearchParams] = useSearchParams();
    const listIdInUrl = searchParams.get("listId");
