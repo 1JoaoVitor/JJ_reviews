@@ -66,6 +66,19 @@ describe("listOperations (Functional Core)", () => {
          expect(result[0]).not.toHaveProperty("list_movies");
       });
 
+      it("deve extrair likes_count da estrutura list_likes", () => {
+         const lists: RawSupabaseList[] = [
+            {
+               ...makeRawList("1", "Com Likes", "2023", 1),
+               list_likes: [{ count: 7 }],
+            },
+         ];
+
+         const result = mapListCounts(lists);
+
+         expect(result[0].likes_count).toBe(7);
+      });
+
       it("Sad Path: deve mapear o movie_count para 0 se o list_movies vier nulo, vazio ou sem count", () => {
          const corruptedLists = [
             { id: "1", list_movies: null },
@@ -81,6 +94,23 @@ describe("listOperations (Functional Core)", () => {
          expect(result[1].movie_count).toBe(0);
          expect(result[2].movie_count).toBe(0);
          expect(result[3].movie_count).toBe(0);
+      });
+
+      it("Sad Path: deve mapear likes_count para 0 em estruturas invalidas de list_likes", () => {
+         const corruptedLists = [
+            { id: "1", list_likes: null },
+            { id: "2", list_likes: [] },
+            { id: "3", list_likes: [{ wrong: 10 }] },
+            { id: "4", list_likes: "invalid" },
+         ];
+
+         // @ts-expect-error: Injetando estrutura corrompida propositalmente
+         const result = mapListCounts(corruptedLists);
+
+         expect(result[0].likes_count).toBe(0);
+         expect(result[1].likes_count).toBe(0);
+         expect(result[2].likes_count).toBe(0);
+         expect(result[3].likes_count).toBe(0);
       });
    });
 
