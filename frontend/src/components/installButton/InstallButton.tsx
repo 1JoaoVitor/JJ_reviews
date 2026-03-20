@@ -4,13 +4,17 @@ import styles from "./InstallButton.module.css";
 
 export function InstallButton() {
    const isNativeApp = Capacitor.isNativePlatform();
+   const apkUrl = import.meta.env.VITE_ANDROID_APK_URL as string | undefined;
 
    if (isNativeApp) return null;
 
    const handleDownload = () => {
-      // Abrir página de download intermediária
-      // Isso fornece melhor controle sobre os headers e o download
-      window.location.href = '/download.html';
+      if (!apkUrl) {
+         alert("Link do APK não configurado.");
+         return;
+      }
+
+      window.open(apkUrl, "_blank", "noopener,noreferrer");
    };
 
    return (
