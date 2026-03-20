@@ -7,18 +7,26 @@ export function InstallButton() {
 
    if (isNativeApp) return null;
 
+   const handleDownload = () => {
+      const link = document.createElement('a');
+      link.href = '/jj-reviews.apk';
+      link.download = 'jj-reviews.apk';
+      link.setAttribute('type', 'application/vnd.android.package-archive');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+   };
+
    return (
       <div className={styles.installWrapper}>
-         <a 
-            href="/jj-reviews.apk"
-            download="jj-reviews.apk"
-            target="_blank" 
-            rel="noopener noreferrer"
+         <button 
+            onClick={handleDownload}
             className={styles.installBtn}
+            title="Baixar aplicativo Android"
          >
             <Download size={18} />
             Baixe o app
-         </a>
+         </button>
       </div>
    );
 }

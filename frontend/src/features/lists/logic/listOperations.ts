@@ -2,6 +2,7 @@ import type { CustomList } from "@/types";
 
 export interface RawSupabaseList extends Omit<CustomList, "movie_count"> {
    list_movies?: { count?: number }[] | null | unknown;
+   list_likes?: { count?: number }[] | null | unknown;
    [key: string]: unknown;
 }
 
@@ -25,17 +26,25 @@ export function deduplicateLists(lists: RawSupabaseList[]): RawSupabaseList[] {
 
 export function mapListCounts(lists: RawSupabaseList[]): CustomList[] {
    return lists.map((list) => {
-      let count = 0;
+      let movieCount = 0;
       if (Array.isArray(list.list_movies) && list.list_movies.length > 0) {
          const firstItem = list.list_movies[0];
          if (firstItem && typeof firstItem === "object" && "count" in firstItem) {
-            count = Number(firstItem.count) || 0;
+            movieCount = Number(firstItem.count) || 0;
+         }
+      }
+      
+      let likesCount = 0;
+      if (Array.isArray(list.list_likes) && list.list_likes.length > 0) {
+         const firstItem = list.list_likes[0];
+         if (firstItem && typeof firstItem === "object" && "count" in firstItem) {
+            likesCount = Number(firstItem.count) || 0;
          }
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { list_movies, ...cleanList } = list;
-      return { ...cleanList, movie_count: count } as CustomList;
+      const { list_movies, list_likes, ...cleanList } = list;
+      return { ...cleanList, movie_count: movieCount, likes_count: likesCount } as CustomList;
    });
 }
 
