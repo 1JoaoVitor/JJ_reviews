@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { MockedFunction } from "vitest";
 import {
   searchMovieInTmdb,
@@ -18,6 +18,11 @@ describe("movieMatcher", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clearMatchCache();
+    vi.stubEnv("VITE_TMDB_API_KEY", "test-tmdb-key");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   describe("searchMovieInTmdb", () => {
@@ -142,7 +147,6 @@ describe("movieMatcher", () => {
       expect(result.matched).toBe(false);
       expect(result.confidence).toBe(0);
 
-      vi.unstubAllEnvs();
     });
 
     it("should include format in query string", async () => {
