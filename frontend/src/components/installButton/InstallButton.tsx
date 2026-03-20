@@ -7,35 +7,10 @@ export function InstallButton() {
 
    if (isNativeApp) return null;
 
-   const handleDownload = async () => {
-      try {
-         // Fazer fetch do arquivo como blob para melhor compatibilidade mobile
-         const response = await fetch('/jj-reviews.apk');
-         
-         if (!response.ok) {
-            throw new Error('Falha ao baixar arquivo');
-         }
-         
-         const blob = await response.blob();
-         
-         // Criar URL do blob e simular download
-         const url = window.URL.createObjectURL(blob);
-         const link = document.createElement('a');
-         link.href = url;
-         link.download = 'jj-reviews.apk';
-         
-         // Adicionar ao DOM, clicar e remover
-         document.body.appendChild(link);
-         link.click();
-         document.body.removeChild(link);
-         
-         // Limpar URL do blob
-         window.URL.revokeObjectURL(url);
-      } catch (error) {
-         console.error('Erro ao baixar APK:', error);
-         // Fallback: tentar download direto via location
-         window.location.href = '/jj-reviews.apk';
-      }
+   const handleDownload = () => {
+      // Abrir página de download intermediária
+      // Isso fornece melhor controle sobre os headers e o download
+      window.location.href = '/download.html';
    };
 
    return (
