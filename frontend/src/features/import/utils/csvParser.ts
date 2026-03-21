@@ -25,7 +25,7 @@ export function parseCsv(
 ): CsvParseResult<Record<string, string>> {
   const { skipEmptyRows = true } = options;
 
-  const lines = content.split("\n").map((line) => line.trim());
+  const lines = splitCsvRows(content).map((line) => line.replace(/\r$/, ""));
   const errors: string[] = [];
 
   if (lines.length === 0) {
@@ -37,7 +37,7 @@ export function parseCsv(
   let headers: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
+    const line = lines[i].trim();
     if (!line || line.startsWith("Letterboxd")) continue;
 
     headers = parseCSVLine(line);
@@ -55,15 +55,15 @@ export function parseCsv(
   const rows: Record<string, string>[] = [];
 
   for (let i = headerLineIndex + 1; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const line = lines[i];
 
     // Skip empty rows if option is set
-    if (skipEmptyRows && !line) continue;
+    if (skipEmptyRows && !line.trim()) continue;
 
     const values = parseCSVLine(line);
 
     // Handle row with fewer columns than headers
-    if (values.length === 0 && !line) continue;
+    if (values.length === 0 && !line.trim()) continue;
 
     if (values.length > 0) {
       const row: Record<string, string> = {};
@@ -75,12 +75,54 @@ export function parseCsv(
       });
 
       rows.push(row);
-    } else if (line) {
+    } else if (line.trim()) {
       errors.push(`Line ${i + 1}: Could not parse row`);
     }
   }
 
   return { headers, rows, errors };
+}
+
+function splitCsvRows(content: string): string[] {
+  const rows: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+    const nextChar = content[i + 1];
+
+    if (char === '"') {
+      current += char;
+
+      if (inQuotes && nextChar === '"') {
+        current += nextChar;
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+
+      continue;
+    }
+
+    if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && nextChar === "\n") {
+        i++;
+      }
+
+      rows.push(current);
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  if (current.length > 0 || content.endsWith("\n") || content.endsWith("\r")) {
+    rows.push(current);
+  }
+
+  return rows;
 }
 
 /**

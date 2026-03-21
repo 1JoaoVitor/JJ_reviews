@@ -140,8 +140,10 @@ export async function batchMatchMovies(
   for (let i = 0; i < movies.length; i += batchSize) {
     const batch = movies.slice(i, i + batchSize);
 
-    // Build requests
-    const requests = batch.map((movie) => {
+    // Build requests and keep alignment with original batch indexes
+    const pendingRequests: Array<{ movie: { title: string; year: number }; promise: Promise<TmdbMatchResult> }> = [];
+
+    batch.forEach((movie) => {
       const cacheKey = `${movie.title.toLowerCase()}|${movie.year || ""}`;
 
       // Check cache first
@@ -149,20 +151,28 @@ export async function batchMatchMovies(
         cacheHits++;
         const cachedResult = matchCache.get(cacheKey)!;
         results.set(cacheKey, cachedResult);
-        return null; // Skip API call
+        if (cachedResult.matched) {
+          successful++;
+        } else {
+          failed++;
+        }
+        return;
       }
 
-      return searchMovieInTmdb(movie.title, movie.year, apiKey);
+      pendingRequests.push({
+        movie,
+        promise: searchMovieInTmdb(movie.title, movie.year, apiKey),
+      });
     });
 
-    // Execute requests (filter out null cached results)
-    const validRequests = requests.filter((r) => r !== null) as Promise<TmdbMatchResult>[];
+    // Execute only uncached requests
+    const validRequests = pendingRequests.map((item) => item.promise);
 
     if (validRequests.length > 0) {
       const batchResults = await Promise.allSettled(validRequests);
 
       batchResults.forEach((result, index) => {
-        const originalMovie = batch[index];
+        const originalMovie = pendingRequests[index].movie;
         const cacheKey = `${originalMovie.title.toLowerCase()}|${originalMovie.year || ""}`;
 
         if (result.status === "fulfilled") {

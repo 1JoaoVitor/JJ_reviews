@@ -1,4 +1,9 @@
-import { addMovieToListRecord, createListRecord } from "@/features/lists/services/listsService";
+import {
+  addMovieToListRecord,
+  createListRecord,
+  fetchListMovieIds,
+  fetchOwnedLists,
+} from "@/features/lists/services/listsService";
 import { upsertPersonalReview } from "@/features/movies/services/moviePersistenceService";
 import type { ImportCompleteResult, ProcessedImportData, ProcessedMovie } from "../types/importTypes";
 
@@ -26,6 +31,10 @@ export async function persistImportedData(options: PersistImportOptions): Promis
     conflicts: 0,
     duration: 0,
   };
+
+  const normalizeListName = (value: string) => value.trim().toLocaleLowerCase();
+  const ownedLists = await fetchOwnedLists(userId);
+  const existingListsByName = new Map(ownedLists.map((list) => [normalizeListName(list.name), list.id]));
 
   for (const movie of processedData.movies) {
     if (!movie.tmdbId) {
@@ -62,18 +71,27 @@ export async function persistImportedData(options: PersistImportOptions): Promis
 
   for (const list of processedData.lists) {
     try {
-      const createdList = await createListRecord({
-        ownerId: userId,
-        name: list.name,
-        description: list.description || "",
-        type: list.type,
-        has_rating: false,
-        rating_type: null,
-        manual_rating: null,
-        auto_sync: false,
-      });
+      const normalizedName = normalizeListName(list.name);
+      let targetListId = existingListsByName.get(normalizedName);
 
-      stats.listsCreated += 1;
+      if (!targetListId) {
+        const createdList = await createListRecord({
+          ownerId: userId,
+          name: list.name,
+          description: list.description || "",
+          type: list.type,
+          has_rating: false,
+          rating_type: null,
+          manual_rating: null,
+          auto_sync: false,
+        });
+
+        targetListId = createdList.id;
+        existingListsByName.set(normalizedName, targetListId);
+        stats.listsCreated += 1;
+      }
+
+      const existingMovieIds = new Set<number>(await fetchListMovieIds(targetListId));
       const seenTmdbIds = new Set<number>();
 
       for (const movie of list.movies) {
@@ -82,15 +100,16 @@ export async function persistImportedData(options: PersistImportOptions): Promis
           continue;
         }
 
-        if (seenTmdbIds.has(movie.tmdbId)) {
+        if (seenTmdbIds.has(movie.tmdbId) || existingMovieIds.has(movie.tmdbId)) {
           stats.conflicts += 1;
           continue;
         }
 
         seenTmdbIds.add(movie.tmdbId);
+        existingMovieIds.add(movie.tmdbId);
 
         try {
-          await addMovieToListRecord(createdList.id, movie.tmdbId, userId);
+          await addMovieToListRecord(targetListId, movie.tmdbId, userId);
         } catch (error) {
           const message = error instanceof Error ? error.message : "Unknown list movie persistence error";
           errors.push(`List ${list.name} -> Movie ${movie.name} (${movie.year}): ${message}`);
