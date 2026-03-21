@@ -8,10 +8,12 @@ vi.mock("@/features/movies/services/moviePersistenceService", () => ({
 vi.mock("@/features/lists/services/listsService", () => ({
   createListRecord: vi.fn(),
   addMovieToListRecord: vi.fn(),
+  fetchOwnedLists: vi.fn(),
+  fetchListMovieIds: vi.fn(),
 }));
 
 const { upsertPersonalReview } = await import("@/features/movies/services/moviePersistenceService");
-const { createListRecord, addMovieToListRecord } = await import("@/features/lists/services/listsService");
+const { createListRecord, addMovieToListRecord, fetchOwnedLists, fetchListMovieIds } = await import("@/features/lists/services/listsService");
 
 describe("importPersistenceService", () => {
   beforeEach(() => {
@@ -26,6 +28,8 @@ describe("importPersistenceService", () => {
     });
 
     vi.mocked(addMovieToListRecord).mockResolvedValue();
+    vi.mocked(fetchOwnedLists).mockResolvedValue([]);
+    vi.mocked(fetchListMovieIds).mockResolvedValue([]);
     vi.mocked(upsertPersonalReview).mockResolvedValue();
   });
 
@@ -69,6 +73,45 @@ describe("importPersistenceService", () => {
     expect(result.stats.watchlistAdded).toBe(1);
     expect(result.stats.reviewsAdded).toBe(1);
     expect(result.stats.listsCreated).toBe(1);
+    expect(result.stats.conflicts).toBe(1);
+  });
+
+  it("reuses existing lists and avoids duplicate movies on repeated import", async () => {
+    vi.mocked(fetchOwnedLists).mockResolvedValue([
+      {
+        id: "existing-list",
+        owner_id: "user-1",
+        name: "Sci-Fi",
+      } as unknown as Awaited<ReturnType<typeof fetchOwnedLists>>[number],
+    ]);
+    vi.mocked(fetchListMovieIds).mockResolvedValue([603]);
+
+    const result = await persistImportedData({
+      userId: "user-1",
+      processedData: {
+        fileName: "letterboxd.zip",
+        status: "success",
+        movies: [{ name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" }],
+        lists: [
+          {
+            id: "tmp-list",
+            name: "Sci-Fi",
+            type: "private",
+            movies: [{ name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" }],
+          },
+        ],
+        stats: {
+          totalMovies: 1,
+          matchedMovies: 1,
+          unmatchedMovies: 0,
+          totalLists: 1,
+        },
+      },
+    });
+
+    expect(createListRecord).not.toHaveBeenCalled();
+    expect(addMovieToListRecord).not.toHaveBeenCalled();
+    expect(result.stats.listsCreated).toBe(0);
     expect(result.stats.conflicts).toBe(1);
   });
 

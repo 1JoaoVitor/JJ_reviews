@@ -61,6 +61,7 @@ export function ImportPage() {
   }, [result]);
 
   const hasWarnings = (result?.validation.warnings.length || 0) > 0;
+  const hasSavedImport = !!saveResult;
 
   const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -157,6 +158,9 @@ export function ImportPage() {
             <li>Avaliações (ratings, convertidas de 0-5 para 0-10)</li>
             <li>Dados básicos de perfil disponíveis no export</li>
           </ul>
+          <p className={styles.overwriteHint}>
+            Atenção: na importação, os dados de filmes (status watched/watchlist, nota e review) do mesmo filme podem sobrescrever o que já existe na sua conta.
+          </p>
         </div>
 
         <div className={styles.actions}>
@@ -275,9 +279,9 @@ export function ImportPage() {
                   className={styles.confirmBtn}
                   type="button"
                   onClick={onConfirmImport}
-                  disabled={isSaving || !hasImportableData}
+                  disabled={isSaving || !hasImportableData || hasSavedImport}
                 >
-                  {isSaving ? "Salvando..." : "Confirmar e salvar"}
+                  {isSaving ? "Salvando..." : hasSavedImport ? "Importação já confirmada" : "Confirmar e salvar"}
                 </button>
               </>
             )}
