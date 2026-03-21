@@ -259,6 +259,46 @@ describe("movieMatcher", () => {
       // Should make at least 2 calls for 100 movies with batch size 50
       expect(mockFetch.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
+
+    it("keeps correct movie mapping when batch mixes cache hits and new requests", async () => {
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            results: [{ id: 1, title: "Zootopia", release_date: "2016-03-04" }],
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            results: [{ id: 2, title: "Dune", release_date: "2021-10-22" }],
+          }),
+        } as Response)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            results: [{ id: 3, title: "Arrival", release_date: "2016-11-11" }],
+          }),
+        } as Response);
+
+      // Prime cache with Zootopia
+      await batchMatchMovies({
+        movies: [{ title: "Zootopia", year: 2016 }],
+      });
+
+      const result = await batchMatchMovies({
+        movies: [
+          { title: "Zootopia", year: 2016 },
+          { title: "Dune", year: 2021 },
+          { title: "Arrival", year: 2016 },
+        ],
+      });
+
+      expect(result.cacheHits).toBeGreaterThanOrEqual(1);
+      expect(result.results.get("zootopia|2016")?.tmdbId).toBe(1);
+      expect(result.results.get("dune|2021")?.tmdbId).toBe(2);
+      expect(result.results.get("arrival|2016")?.tmdbId).toBe(3);
+    });
   });
 
   describe("getCacheStats", () => {

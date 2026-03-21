@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/features/auth";
+import { LoadingOverlay } from "@/components/ui/LoadingOverlay/LoadingOverlay";
 import { persistImportedData } from "../../services/importPersistenceService";
 import { RatingScale } from "../../types/importTypes";
 import { useImportPipeline } from "../../hooks/useImportPipeline";
@@ -61,6 +62,46 @@ export function ImportPage() {
   }, [result]);
 
   const hasWarnings = (result?.validation.warnings.length || 0) > 0;
+  const hasSavedImport = !!saveResult;
+  const canCancelImport = !!selectedFile || !!result || !!saveError || !!saveResult || isProcessing || isSaving;
+  const isPartialImport = result?.processedData?.status === "partial";
+  const problematicMovies = useMemo(
+    () => (result?.processedData?.movies || []).filter((movie) => !movie.tmdbId),
+    [result]
+  );
+  const partialIssues = useMemo(
+    () => [...(result?.validation.errors || []), ...(result?.validation.warnings || [])].slice(0, 8),
+    [result]
+  );
+
+  const onExportPartialReport = () => {
+    if (!result) {
+      return;
+    }
+
+    const lines: string[] = ["tipo,item,detalhe"];
+
+    for (const movie of problematicMovies) {
+      const item = `${movie.name} (${movie.year})`;
+      const detail = movie.matchWarning || "Sem correspondência automática";
+      lines.push(`filme,"${item.replace(/"/g, '""')}","${detail.replace(/"/g, '""')}"`);
+    }
+
+    for (const issue of partialIssues) {
+      lines.push(`validacao,"Importação parcial","${issue.replace(/"/g, '""')}"`);
+    }
+
+    const csvContent = `\uFEFF${lines.join("\n")}`;
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `import-parcial-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const onFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
@@ -81,6 +122,13 @@ export function ImportPage() {
       ratingScale: RatingScale.SCALE_0_TO_10,
       skipUnmatchedMovies,
     });
+  };
+
+  const onCancelImport = () => {
+    setSelectedFile(null);
+    setSaveError(null);
+    setSaveResult(null);
+    reset();
   };
 
   const onConfirmImport = async () => {
@@ -157,6 +205,9 @@ export function ImportPage() {
             <li>Avaliações (ratings, convertidas de 0-5 para 0-10)</li>
             <li>Dados básicos de perfil disponíveis no export</li>
           </ul>
+          <p className={styles.overwriteHint}>
+            Atenção: na importação, os dados de filmes (status watched/watchlist, nota e review) do mesmo filme podem sobrescrever o que já existe na sua conta.
+          </p>
         </div>
 
         <div className={styles.actions}>
@@ -193,6 +244,17 @@ export function ImportPage() {
           >
             {isProcessing ? "Processando..." : "Processar importação"}
           </button>
+
+          {canCancelImport && (
+            <button
+              className={styles.cancelBtn}
+              type="button"
+              onClick={onCancelImport}
+              disabled={isProcessing || isSaving}
+            >
+              Cancelar importação
+            </button>
+          )}
         </div>
 
         <div className={styles.settingsCard}>
@@ -250,6 +312,45 @@ export function ImportPage() {
               <p className={styles.error}>Validacao bloqueou o processamento final.</p>
             )}
 
+            {isPartialImport && (
+              <div className={styles.partialCard}>
+                <strong>Importação parcial detectada</strong>
+                <p className={styles.partialText}>
+                  Parte dos dados não será importada corretamente. Revise os itens abaixo antes de confirmar.
+                </p>
+
+                {problematicMovies.length > 0 && (
+                  <>
+                    <strong className={styles.partialSubtitle}>Filmes com problema de correspondência</strong>
+                    <ul className={styles.list}>
+                      {problematicMovies.slice(0, 12).map((movie) => (
+                        <li key={`${movie.name}-${movie.year}`}>
+                          {movie.name} ({movie.year}) - {movie.matchWarning || "Sem correspondência automática"}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {partialIssues.length > 0 && (
+                  <>
+                    <strong className={styles.partialSubtitle}>Avisos e erros da validação</strong>
+                    <ul className={styles.list}>
+                      {partialIssues.map((issue, index) => (
+                        <li key={`${issue}-${index}`}>{issue}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+
+                {(problematicMovies.length > 0 || partialIssues.length > 0) && (
+                  <button type="button" className={styles.partialExportBtn} onClick={onExportPartialReport}>
+                    Baixar relatório CSV dos problemas
+                  </button>
+                )}
+              </div>
+            )}
+
             {result.validation.canProceed && result.processedData && (
               <>
                 {result.processedData.lists.length > 0 && hasImportableData && (
@@ -275,9 +376,9 @@ export function ImportPage() {
                   className={styles.confirmBtn}
                   type="button"
                   onClick={onConfirmImport}
-                  disabled={isSaving || !hasImportableData}
+                  disabled={isSaving || !hasImportableData || hasSavedImport}
                 >
-                  {isSaving ? "Salvando..." : "Confirmar e salvar"}
+                  {isSaving ? "Salvando..." : hasSavedImport ? "Importação já confirmada" : "Confirmar e salvar"}
                 </button>
               </>
             )}
@@ -302,6 +403,8 @@ export function ImportPage() {
           </div>
         )}
       </div>
+
+      {isSaving && <LoadingOverlay message="Salvando importação... Não feche a página." />}
     </section>
   );
 }
