@@ -6,6 +6,12 @@ import toast from "react-hot-toast";
 
 import type { MovieData } from "@/types";
 import styles from "./MovieBattle.module.css";
+import {
+   finishGameSession,
+   persistBattleMatch,
+   startGameSession,
+   updateGameSessionProgress,
+} from "@/features/games/services/gamePersistenceService";
 
 import { 
    type SelectionCriteria, 
@@ -18,6 +24,7 @@ import {
 interface MovieBattleProps {
    allMovies: MovieData[];
    onExit: () => void;
+   userId?: string;
    presetMode?: {
       criteria: SelectionCriteria;
       quantity: number;
@@ -28,7 +35,7 @@ interface MovieBattleProps {
 
 type BattleStage = "setup" | "battle" | "winner";
 
-export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps) {
+export function MovieBattle({ allMovies, onExit, userId, presetMode }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
    const [quantity, setQuantity] = useState(8);
    const [criteria, setCriteria] = useState<SelectionCriteria>("random");
@@ -38,10 +45,100 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
    const [pairIndex, setPairIndex] = useState(0);
    const [champion, setChampion] = useState<MovieData | null>(null);
    const [totalBracketSize, setTotalBracketSize] = useState(0);
+   const [sessionId, setSessionId] = useState<string | null>(null);
+   const [hasRestoredState, setHasRestoredState] = useState(false);
+
+   const progressStorageKey = useMemo(() => {
+      const presetKey = presetMode?.hideSetup ? "daily16" : "custom";
+      const labelKey = (presetMode?.label || "default")
+         .toLowerCase()
+         .replace(/\s+/g, "-")
+         .replace(/[^a-z0-9-]/g, "");
+      return `battle-progress:${presetKey}:${labelKey}`;
+   }, [presetMode?.hideSetup, presetMode?.label]);
 
    const availableMovies = useMemo(() => 
       filterMoviesByCriteria(allMovies, criteria), 
    [allMovies, criteria]);
+
+   useEffect(() => {
+      if (hasRestoredState) {
+         return;
+      }
+
+      try {
+         const raw = window.sessionStorage.getItem(progressStorageKey);
+         if (!raw) {
+            setHasRestoredState(true);
+            return;
+         }
+
+         const persisted = JSON.parse(raw) as {
+            stage: BattleStage;
+            quantity: number;
+            criteria: SelectionCriteria;
+            currentRoundMovies: MovieData[];
+            nextRoundMovies: MovieData[];
+            pairIndex: number;
+            champion: MovieData | null;
+            totalBracketSize: number;
+            sessionId: string | null;
+         };
+
+         if (persisted && persisted.stage) {
+            setStage(persisted.stage);
+            setQuantity(typeof persisted.quantity === "number" ? persisted.quantity : 8);
+            setCriteria(persisted.criteria || "random");
+            setCurrentRoundMovies(Array.isArray(persisted.currentRoundMovies) ? persisted.currentRoundMovies : []);
+            setNextRoundMovies(Array.isArray(persisted.nextRoundMovies) ? persisted.nextRoundMovies : []);
+            setPairIndex(typeof persisted.pairIndex === "number" ? persisted.pairIndex : 0);
+            setChampion(persisted.champion || null);
+            setTotalBracketSize(typeof persisted.totalBracketSize === "number" ? persisted.totalBracketSize : 0);
+            setSessionId(persisted.sessionId || null);
+         }
+      } catch {
+         window.sessionStorage.removeItem(progressStorageKey);
+      } finally {
+         setHasRestoredState(true);
+      }
+   }, [progressStorageKey, hasRestoredState]);
+
+   useEffect(() => {
+      if (!hasRestoredState) {
+         return;
+      }
+
+      try {
+         window.sessionStorage.setItem(
+            progressStorageKey,
+            JSON.stringify({
+               stage,
+               quantity,
+               criteria,
+               currentRoundMovies,
+               nextRoundMovies,
+               pairIndex,
+               champion,
+               totalBracketSize,
+               sessionId,
+            })
+         );
+      } catch {
+         // Ignore sessionStorage quota/serialization failures.
+      }
+   }, [
+      progressStorageKey,
+      hasRestoredState,
+      stage,
+      quantity,
+      criteria,
+      currentRoundMovies,
+      nextRoundMovies,
+      pairIndex,
+      champion,
+      totalBracketSize,
+      sessionId,
+   ]);
 
    const handleCriteriaChange = (newCriteria: SelectionCriteria) => {
       const newList = filterMoviesByCriteria(allMovies, newCriteria);
@@ -61,7 +158,7 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
       });
    };
 
-   const handleStart = (forcedCriteria?: SelectionCriteria, forcedQuantity?: number) => {
+   const handleStart = async (forcedCriteria?: SelectionCriteria, forcedQuantity?: number) => {
       try {
          const startCriteria = forcedCriteria || criteria;
          const startQuantity = forcedQuantity ?? quantity;
@@ -74,38 +171,97 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
          setNextRoundMovies(byes);
          setTotalBracketSize(bracketSize);
          setPairIndex(0);
+         setChampion(null);
          setStage("battle");
+
+         if (userId) {
+            const createdSessionId = await startGameSession({
+               userId,
+               gameType: "battle",
+               sourceMode: presetMode?.hideSetup ? "daily_16" : "custom",
+               dateKey: new Date().toISOString().slice(0, 10),
+               metadata: {
+                  criteria: startCriteria,
+                  quantity: startQuantity,
+                  availableMovies: sourcePool.length,
+                  presetLabel: presetMode?.label,
+               },
+            });
+            setSessionId(createdSessionId);
+         }
       } catch (error) {
          if (error instanceof Error) toast.error(error.message);
       }
    };
 
-   useEffect(() => {
-      if (!presetMode?.hideSetup || stage !== "setup") {
-         return;
-      }
+   const handleVote = async (winner: MovieData) => {
+      const movieA = currentRoundMovies[pairIndex];
+      const movieB = currentRoundMovies[pairIndex + 1];
+      const currentMatchNum = pairIndex / 2 + 1;
 
-      handleStart(presetMode.criteria, presetMode.quantity);
-   }, [presetMode, stage]);
-
-   const handleVote = (winner: MovieData) => {
       const newNextRound = [...nextRoundMovies, winner];
       setNextRoundMovies(newNextRound);
+
+      if (sessionId && userId && movieA && movieB) {
+         await persistBattleMatch({
+            sessionId,
+            userId,
+            roundSize: totalBracketSize,
+            matchIndex: currentMatchNum,
+            movieATmdbId: movieA.tmdb_id,
+            movieBTmdbId: movieB.tmdb_id,
+            winnerTmdbId: winner.tmdb_id,
+         });
+      }
 
       if (pairIndex + 2 >= currentRoundMovies.length) {
          if (newNextRound.length === 1) {
             setChampion(newNextRound[0]);
             setStage("winner");
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+            if (sessionId) {
+               await finishGameSession({
+                  sessionId,
+                  status: "won",
+                  attemptsCount: totalMatchesInRound,
+                  metadata: {
+                     championTmdbId: newNextRound[0]?.tmdb_id,
+                     championTitle: newNextRound[0]?.title,
+                  },
+               });
+            }
          } else {
             setCurrentRoundMovies(shuffleArray(newNextRound));
             setNextRoundMovies([]);
             setPairIndex(0);
             setTotalBracketSize((prev) => prev / 2);
+
+            if (sessionId) {
+               await updateGameSessionProgress(sessionId, 0, currentMatchNum);
+            }
          }
       } else {
          setPairIndex(pairIndex + 2);
+
+         if (sessionId) {
+            await updateGameSessionProgress(sessionId, 0, currentMatchNum);
+         }
       }
+   };
+
+   const handleExit = async () => {
+      window.sessionStorage.removeItem(progressStorageKey);
+
+      if (sessionId && stage === "battle") {
+         await finishGameSession({
+            sessionId,
+            status: "abandoned",
+            attemptsCount: pairIndex / 2,
+            metadata: { reason: "exit_button" },
+         });
+      }
+      onExit();
    };
 
    const getRoundTitle = () => {
@@ -119,6 +275,17 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
    };
 
    const movieA = currentRoundMovies[pairIndex];
+
+   const handleReplay = () => {
+      window.sessionStorage.removeItem(progressStorageKey);
+      setSessionId(null);
+      setStage("setup");
+      setCurrentRoundMovies([]);
+      setNextRoundMovies([]);
+      setPairIndex(0);
+      setChampion(null);
+      setTotalBracketSize(0);
+   };
    const movieB = currentRoundMovies[pairIndex + 1];
    const totalMatchesInRound = currentRoundMovies.length / 2;
    const currentMatchNum = pairIndex / 2 + 1;
@@ -131,80 +298,98 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
             <h4 className={styles.headerTitle}>
                <Gamepad2 size={20} /> Modo Batalha
             </h4>
-            <button className={styles.exitBtn} onClick={onExit}>
+            <button className={styles.exitBtn} onClick={() => void handleExit()}>
                Sair
             </button>
          </div>
 
          {/* Setup */}
-         {stage === "setup" && !presetMode?.hideSetup && (
+         {stage === "setup" && (
             <div className={styles.setupCard}>
-               <h2 className={styles.setupTitle}>Configurar Torneio</h2>
+               <h2 className={styles.setupTitle}>{presetMode?.hideSetup ? (presetMode.label || "Rodada diária") : "Configurar Torneio"}</h2>
 
-               <Form>
-                  <Row className="g-4">
-                     <Col md={6}>
-                        <div className={styles.sectionLabel}>Critério</div>
-                        <div className="d-flex flex-column gap-2">
-                           <Form.Check type="radio" label="Aleatório" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
-                           <Form.Check type="radio" label="Melhores Notas" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
-                           <Form.Check type="radio" label="Piores Notas" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
-                           <Form.Check type="radio" label="Mais Recentes" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
-                           <div className={styles.criteriaDivider} />
-                           <Form.Check type="radio" label="Indicados Oscar 2026" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
-                           <Form.Check type="radio" label="Nacionais" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
-                        </div>
-                        <div className={styles.availableCount}>
-                           Disponíveis: <strong>{availableMovies.length}</strong>
-                        </div>
-                     </Col>
-
-                     <Col md={6}>
-                        <div className={styles.sectionLabel}>Tamanho do Torneio</div>
-                        <div className="d-grid gap-2">
-                           <button
-                              type="button"
-                              className={`${styles.sizeBtn} ${quantity === -1 ? styles.sizeBtnActive : ""}`}
-                              onClick={() => setQuantity(-1)}
-                           >
-                              Todos os Filmes ({availableMovies.length})
-                           </button>
-                           {[4, 8, 16, 32, 64].map((qtd) => {
-                              const maxBracket = nextPowerOfTwo(availableMovies.length);
-                              const isDisabled = qtd > maxBracket;
-                              if (qtd > maxBracket * 2) return null;
-                              return (
-                                 <button
-                                    key={qtd}
-                                    type="button"
-                                    className={`${styles.sizeBtn} ${quantity === qtd ? styles.sizeBtnActive : ""} ${isDisabled ? styles.disabledButton : ""}`}
-                                    onClick={() => setQuantity(qtd)}
-                                    disabled={isDisabled}
-                                 >
-                                    {qtd} Filmes
-                                 </button>
-                              );
-                           })}
-                        </div>
-                        {quantity !== -1 && quantity > availableMovies.length && (
-                           <div className={styles.byesHint}>
-                              *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
-                           </div>
-                        )}
-                     </Col>
-                  </Row>
-
-                  <div className="text-center mt-5">
-                     <button
-                        className={styles.startBtn}
-                        onClick={handleStart}
-                        disabled={availableMovies.length < 2}
-                        type="button"
-                     >
-                        INICIAR COMBATE
-                     </button>
+               {presetMode?.hideSetup ? (
+                  <div className="text-center">
+                     <div className={styles.availableCount}>
+                        Disponíveis: <strong>{allMovies.length}</strong> filmes
+                     </div>
+                     <div className="text-center mt-4">
+                        <button
+                           className={styles.startBtn}
+                           onClick={() => void handleStart(presetMode.criteria, presetMode.quantity)}
+                           disabled={allMovies.length < 2}
+                           type="button"
+                        >
+                           INICIAR COMBATE
+                        </button>
+                     </div>
                   </div>
-               </Form>
+               ) : (
+                  <Form>
+                     <Row className="g-4">
+                        <Col md={6}>
+                           <div className={styles.sectionLabel}>Critério</div>
+                           <div className="d-flex flex-column gap-2">
+                              <Form.Check type="radio" label="Aleatório" checked={criteria === "random"} onChange={() => handleCriteriaChange("random")} />
+                              <Form.Check type="radio" label="Melhores Notas" checked={criteria === "top_rated"} onChange={() => handleCriteriaChange("top_rated")} />
+                              <Form.Check type="radio" label="Piores Notas" checked={criteria === "worst_rated"} onChange={() => handleCriteriaChange("worst_rated")} />
+                              <Form.Check type="radio" label="Mais Recentes" checked={criteria === "recent"} onChange={() => handleCriteriaChange("recent")} />
+                              <div className={styles.criteriaDivider} />
+                              <Form.Check type="radio" label="Indicados Oscar 2026" checked={criteria === "oscar"} onChange={() => handleCriteriaChange("oscar")} className="fw-bold" />
+                              <Form.Check type="radio" label="Nacionais" checked={criteria === "national"} onChange={() => handleCriteriaChange("national")} className="fw-bold" />
+                           </div>
+                           <div className={styles.availableCount}>
+                              Disponíveis: <strong>{availableMovies.length}</strong>
+                           </div>
+                        </Col>
+
+                        <Col md={6}>
+                           <div className={styles.sectionLabel}>Tamanho do Torneio</div>
+                           <div className="d-grid gap-2">
+                              <button
+                                 type="button"
+                                 className={`${styles.sizeBtn} ${quantity === -1 ? styles.sizeBtnActive : ""}`}
+                                 onClick={() => setQuantity(-1)}
+                              >
+                                 Todos os Filmes ({availableMovies.length})
+                              </button>
+                              {[4, 8, 16, 32, 64].map((qtd) => {
+                                 const maxBracket = nextPowerOfTwo(availableMovies.length);
+                                 const isDisabled = qtd > maxBracket;
+                                 if (qtd > maxBracket * 2) return null;
+                                 return (
+                                    <button
+                                       key={qtd}
+                                       type="button"
+                                       className={`${styles.sizeBtn} ${quantity === qtd ? styles.sizeBtnActive : ""} ${isDisabled ? styles.disabledButton : ""}`}
+                                       onClick={() => setQuantity(qtd)}
+                                       disabled={isDisabled}
+                                    >
+                                       {qtd} Filmes
+                                    </button>
+                                 );
+                              })}
+                           </div>
+                           {quantity !== -1 && quantity > availableMovies.length && (
+                              <div className={styles.byesHint}>
+                                 *Será completado com <strong>{quantity - availableMovies.length}</strong> folgas (byes).
+                              </div>
+                           )}
+                        </Col>
+                     </Row>
+
+                     <div className="text-center mt-5">
+                        <button
+                           className={styles.startBtn}
+                           onClick={() => void handleStart()}
+                           disabled={availableMovies.length < 2}
+                           type="button"
+                        >
+                           INICIAR COMBATE
+                        </button>
+                     </div>
+                  </Form>
+               )}
             </div>
          )}
 
@@ -258,7 +443,7 @@ export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps)
                <p className={styles.championInfo}>
                   {champion.release_date?.split("-")[0]} &middot; Dir. {champion.director}
                </p>
-               <button className={styles.replayBtn} onClick={() => setStage("setup")}>
+               <button className={styles.replayBtn} onClick={handleReplay}>
                   Jogar Novamente
                </button>
             </div>

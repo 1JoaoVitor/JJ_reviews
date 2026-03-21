@@ -102,6 +102,7 @@ function MainApp() {
                <GamesHub
                   movies={movies}
                   lists={lists}
+                  userId={session?.user.id || null}
                   initialGame="menu"
                />
             </Container>

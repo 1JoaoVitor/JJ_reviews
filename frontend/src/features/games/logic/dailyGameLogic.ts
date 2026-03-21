@@ -221,13 +221,14 @@ export function getCoverRevealState(livesLeft: number, isWon: boolean, maxLives 
   const clampedLives = Math.max(0, Math.min(maxLives, livesLeft));
   const livesLost = maxLives - clampedLives;
 
-  // Keep the grid smaller to maintain a chunkier pixelated look.
-  const gridSize = 8;
+  // Slightly denser grid while keeping the poster low-res for a pixelated look.
+  const gridSize = 10;
   const totalTiles = gridSize * gridSize;
-  const revealRatio = isWon ? 1 : livesLost / maxLives;
+  // Non-linear progression: early misses reveal less, later misses reveal more.
+  const revealRatio = isWon ? 1 : Math.pow(livesLost / maxLives, 1.45);
 
   const revealTiles = Math.round(totalTiles * revealRatio);
-  const blurPx = isWon ? 0 : Math.max(0, 24 * (clampedLives / maxLives));
+  const blurPx = isWon ? 0 : Math.max(0, 58 * (clampedLives / maxLives));
   const posterSize = isWon ? "w500" : clampedLives >= 5 ? "w92" : clampedLives >= 3 ? "w154" : clampedLives >= 1 ? "w342" : "w500";
 
   return { revealTiles, blurPx, posterSize, totalTiles, gridSize };
