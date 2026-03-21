@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core'; 
 import { Download } from "lucide-react"; 
+import toast from "react-hot-toast";
 import styles from "./InstallButton.module.css";
 
 export function InstallButton() {
@@ -15,6 +16,9 @@ export function InstallButton() {
       }
 
       window.open(apkUrl, "_blank", "noopener,noreferrer");
+      toast("Depois de instalar a atualização, feche e reabra o app para aplicar as mudanças.", {
+         duration: 5000,
+      });
    };
 
    return (

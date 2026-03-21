@@ -40,6 +40,15 @@ describe("csvParser", () => {
       expect(result.rows[0].Review).toContain('great');
     });
 
+    it("should preserve multiline review fields", () => {
+      const csv = 'Name,Year,Review\n"Inception",2010,"Linha 1\nLinha 2"';
+      const result = parseCsv(csv);
+
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].Review).toContain("Linha 1");
+      expect(result.rows[0].Review).toContain("Linha 2");
+    });
+
     it("should skip Letterboxd metadata rows", () => {
       const csv = `Letterboxd list export v7
 Name,Year,Rating

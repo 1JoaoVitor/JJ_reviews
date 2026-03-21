@@ -46,6 +46,9 @@ export function ProfilePage() {
       }
 
       window.open(apkUrl, "_blank", "noopener,noreferrer");
+      toast("Depois de instalar a atualização, feche e reabra o app para aplicar as mudanças.", {
+         duration: 5000,
+      });
    };
 
    return (
