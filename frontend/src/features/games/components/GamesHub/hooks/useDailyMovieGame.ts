@@ -31,8 +31,8 @@ import {
    clearDailyGameProgress,
    loadDailyGameProgress,
    saveDailyGameProgress,
-} from "../services";
-import { type DailyMode } from "../logic";
+} from "../services/dailyGameStorageService";
+import { type DailyMode } from "../logic/dailyMovieGameLogic";
 import { useDailyGuessSuggestions, type GuessSuggestion } from "./useDailyGuessSuggestions";
 
 interface UseDailyMovieGameParams {

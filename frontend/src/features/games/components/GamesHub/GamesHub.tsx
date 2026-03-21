@@ -10,8 +10,9 @@ import {
    GamesHubHeaderMenu,
    GamesHelpModal,
 } from "./components";
-import { useGamesHubScopes, type BattleSourceMode } from "./hooks";
-import { GAME_HELP_MAP, getTodayKey, type GameId } from "./logic";
+import { useGamesHubScopes, type BattleSourceMode } from "./hooks/useGamesHubScopes";
+import { GAME_HELP_MAP, type GameId } from "./logic/gameHelpContent";
+import { getTodayKey } from "./logic/dailyMovieGameLogic";
 import styles from "./GamesHub.module.css";
 
 interface GamesHubProps {

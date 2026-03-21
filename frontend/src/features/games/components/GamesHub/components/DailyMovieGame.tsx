@@ -9,7 +9,7 @@ import { DailyHintsPanel } from "./DailyHintsPanel";
 import { DailyRoundControls } from "./DailyRoundControls";
 import { DailySummaryPanel } from "./DailySummaryPanel";
 import { MAX_LIVES, type DailyMode } from "../logic/dailyMovieGameLogic";
-import { useDailyMovieGame } from "../hooks";
+import { useDailyMovieGame } from "../hooks/useDailyMovieGame";
 import styles from "../GamesHub.module.css";
 
 interface DailyMovieGameProps {

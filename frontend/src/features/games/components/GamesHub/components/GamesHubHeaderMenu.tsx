@@ -1,6 +1,6 @@
 import type { FC } from "react";
 import { Clapperboard, Gamepad2, HelpCircle } from "lucide-react";
-import type { GameId } from "../logic";
+import type { GameId } from "../logic/gameHelpContent";
 import { GameModeCard } from "./GameModeCard";
 import styles from "../GamesHub.module.css";
 
