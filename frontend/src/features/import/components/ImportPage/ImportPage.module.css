@@ -110,6 +110,13 @@
   gap: 0.25rem;
 }
 
+.overwriteHint {
+  margin-top: 0.65rem;
+  color: #b78000;
+  font-size: var(--font-sm);
+  line-height: 1.4;
+}
+
 .settingsTitle {
   font-size: 0.95rem;
 }

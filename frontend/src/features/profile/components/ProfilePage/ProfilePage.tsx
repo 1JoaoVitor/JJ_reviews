@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Form, Spinner } from "react-bootstrap";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { User, Link2, Shield, Lock, LogOut, AlertTriangle, MessageSquare, ArrowLeft, FileUp } from "lucide-react";
+import { User, Link2, Shield, Lock, LogOut, AlertTriangle, MessageSquare, ArrowLeft, FileUp, Download } from "lucide-react";
 import Cropper from "react-easy-crop";
 
 import { useAuth } from "@/features/auth";
@@ -16,6 +16,7 @@ type TabType = "profile" | "security";
 export function ProfilePage() {
    const navigate = useNavigate();
    const { session, logout, updateUsername, fetchProfile } = useAuth(); 
+   const apkUrl = import.meta.env.VITE_ANDROID_APK_URL as string | undefined;
    const [activeTab, setActiveTab] = useState<TabType>("profile");
 
    const handleLogoutAction = async () => {
@@ -36,6 +37,15 @@ export function ProfilePage() {
       const profileUrl = `${window.location.origin}/perfil/${profile.currentUsernameState}`;
       navigator.clipboard.writeText(profileUrl);
       toast.success("Link copiado, compartilhe com seus amigos!");
+   };
+
+   const handleDownloadApp = () => {
+      if (!apkUrl) {
+         toast.error("Link do APK não configurado.");
+         return;
+      }
+
+      window.open(apkUrl, "_blank", "noopener,noreferrer");
    };
 
    return (
@@ -125,6 +135,13 @@ export function ProfilePage() {
                               <div className={styles.dataToolsActions}>
                                  <button type="button" className={styles.dataBtnPrimary} onClick={() => navigate("/import")}>
                                     <FileUp size={18} /> Importar dados
+                                 </button>
+                                 <button
+                                    type="button"
+                                    className={styles.dataBtnGhost}
+                                    onClick={handleDownloadApp}
+                                 >
+                                    <Download size={18} /> Baixar/atualizar app Android
                                  </button>
                                  {/* <button
                                     type="button"
