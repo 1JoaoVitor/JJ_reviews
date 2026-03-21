@@ -96,6 +96,7 @@ describe("dailyGameLogic", () => {
 
   it("capa fica mais pixelada e borrada no inicio", () => {
     const early = getCoverRevealState(6, false, 6);
+    const oneMiss = getCoverRevealState(5, false, 6);
     const mid = getCoverRevealState(3, false, 6);
     const lowLives = getCoverRevealState(1, false, 6);
     const win = getCoverRevealState(6, true, 6);
@@ -103,8 +104,9 @@ describe("dailyGameLogic", () => {
     expect(early.blurPx).toBeGreaterThan(mid.blurPx);
     expect(mid.blurPx).toBeGreaterThan(lowLives.blurPx);
     expect(early.posterSize).toBe("w92");
-    expect(early.gridSize).toBe(8);
-    expect(early.totalTiles).toBe(64);
+    expect(early.gridSize).toBe(10);
+    expect(early.totalTiles).toBe(100);
+    expect(oneMiss.revealTiles - early.revealTiles).toBeLessThan(lowLives.revealTiles - mid.revealTiles);
     expect(lowLives.revealTiles).toBeGreaterThan(mid.revealTiles);
     expect(win.posterSize).toBe("w500");
     expect(win.blurPx).toBe(0);
