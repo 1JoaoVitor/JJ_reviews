@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Container } from "react-bootstrap";
-import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus} from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -18,7 +18,7 @@ import {
    useDeleteMovie,
 } from "@/features/movies";
 import { Dashboard } from "@/features/dashboard";
-import { MovieBattle } from "@/features/battle";
+import { GamesHub } from "@/features/games";
 import { RouletteModal } from "@/features/roulette";
 import { ListsView } from "@/features/lists"; 
 import { ShareCard, ShareModal, useShare } from "@/features/share";
@@ -47,7 +47,8 @@ export default function App() {
    return (
       <Routes>
          <Route path="/" element={<MainApp />} />
-         <Route path="/batalha" element={<MainApp />} />
+         <Route path="/jogos" element={<MainApp />} />
+         <Route path="/batalha" element={<Navigate to="/jogos" replace />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
          <Route path="/perfil" element={<ProfilePage />} />
@@ -58,9 +59,8 @@ export default function App() {
 }
 
 function MainApp() {
-   const navigate = useNavigate();
    const location = useLocation();
-   const isBattlePage = location.pathname === "/batalha";
+   const isGamesPage = location.pathname === "/jogos";
    
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
@@ -94,11 +94,17 @@ function MainApp() {
       window.scrollTo(0, 0);
    }, []);
 
-   // ─── Render da Batalha ───
-   if (isBattlePage) {
+   // ─── Render da Central de Jogos ───
+   if (isGamesPage) {
       return (
          <div className={styles.page}>
-            <MovieBattle allMovies={movies} onExit={() => navigate("/")} />
+            <Container className="px-4 pb-5">
+               <GamesHub
+                  movies={movies}
+                  lists={lists}
+                  initialGame="menu"
+               />
+            </Container>
          </div>
       );
    }

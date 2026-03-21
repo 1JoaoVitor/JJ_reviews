@@ -1,5 +1,5 @@
 import styles from "./LandingPage.module.css";
-import { Star, Bookmark, Users, Share2, Swords } from "lucide-react";
+import { Star, Bookmark, Users, Share2, Gamepad2 } from "lucide-react";
 
 interface LandingPageProps {
    onLoginClick: () => void;
@@ -40,7 +40,7 @@ export function LandingPage({ onLoginClick }: LandingPageProps) {
                <p>Gere cards das suas avaliações para compartilhar facilmente nas suas redes sociais.</p>
             </div>
             <div className={styles.featureCard}>
-               <div className={styles.featureIcon}><Swords size={28} /></div>
+               <div className={styles.featureIcon}><Gamepad2 size={28} /></div>
                <h3>Modo Batalha</h3>
                <p>Coloque seus filmes frente a frente num torneio mata-mata para definir o seu favorito de verdade.</p>
             </div>

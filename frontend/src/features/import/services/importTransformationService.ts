@@ -4,6 +4,7 @@
  */
 
 import { batchMatchMovies } from "../utils/movieMatcher";
+import { getRatingBadge } from "@/utils/badges";
 import { RatingScale } from "../types/importTypes";
 import type {
   ImportFileSet,
@@ -85,12 +86,16 @@ function toProcessedMovie(
     return null;
   }
 
+  const convertedRating = convertRating(source.rating, settings.ratingScale);
+  const recommendedBadge = getRatingBadge(convertedRating);
+
   return {
     name: source.name,
     year: source.year,
     status: source.status,
-    rating: convertRating(source.rating, settings.ratingScale),
+    rating: convertedRating,
     review: source.review,
+    recommended: recommendedBadge,
     letterboxdUri: source.letterboxdUri,
     tmdbId: isMatched ? match.tmdbId : undefined,
     matchWarning: isMatched ? undefined : "Movie could not be matched with sufficient confidence",
