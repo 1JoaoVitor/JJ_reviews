@@ -16,7 +16,7 @@
 
 .hero {
   border: 1px solid var(--border-subtle);
-  background: linear-gradient(140deg, rgba(255, 216, 120, 0.12), rgba(216, 166, 35, 0.03));
+  background: var(--bg-elevated);
   border-radius: var(--radius-md);
   padding: 1rem;
 }
@@ -58,7 +58,7 @@
 
 .filePickerBtn {
   border: 1px solid var(--gold);
-  background: linear-gradient(140deg, rgba(216, 166, 35, 0.16), rgba(216, 166, 35, 0.05));
+  background: var(--bg-elevated);
   color: var(--gold);
   border-radius: var(--radius-md);
   padding: 0.58rem 0.9rem;
@@ -97,7 +97,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 0.9rem;
-  background: linear-gradient(145deg, rgba(79, 202, 125, 0.08), rgba(79, 202, 125, 0.03));
+  background: var(--bg-elevated);
   margin-top: 0.9rem;
   margin-bottom: 0.6rem;
 }
@@ -251,7 +251,6 @@
   border-radius: var(--radius-md);
   padding: 0.6rem 1rem;
   font-weight: 800;
-  box-shadow: 0 8px 20px rgba(216, 166, 35, 0.27);
 }
 
 .processBtn:disabled {
@@ -403,6 +402,82 @@
 
 .partialExportBtn:hover {
   background: rgba(210, 86, 86, 0.16);
+}
+
+.badgesInfoCard {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.9rem;
+  background: var(--bg-elevated);
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.badgeInfo {
+  margin: 0.5rem 0 0.75rem;
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  line-height: 1.6;
+}
+
+.badgesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.badgeExample {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.badgePill {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  min-width: 120px;
+}
+
+.badgeRange {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+}
+
+.badgeGreat {
+  background-color: var(--badge-great);
+  color: #0D0D0D;
+}
+
+.badgeGood {
+  background-color: var(--badge-good);
+  color: #0D0D0D;
+}
+
+.badgeOk {
+  background-color: var(--badge-ok);
+  color: #0D0D0D;
+}
+
+.badgeBad {
+  background-color: var(--badge-bad);
+  color: #0D0D0D;
+}
+
+.badgeTerrible {
+  background-color: var(--badge-terrible);
+  color: #F5F5F5;
 }
 
 

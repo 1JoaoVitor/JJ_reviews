@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Container, Form, Row, Col, ProgressBar } from "react-bootstrap";
-import { Swords, Trophy } from "lucide-react";
+import { Gamepad2, Trophy } from "lucide-react";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 
@@ -18,11 +18,17 @@ import {
 interface MovieBattleProps {
    allMovies: MovieData[];
    onExit: () => void;
+   presetMode?: {
+      criteria: SelectionCriteria;
+      quantity: number;
+      hideSetup?: boolean;
+      label?: string;
+   };
 }
 
 type BattleStage = "setup" | "battle" | "winner";
 
-export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
+export function MovieBattle({ allMovies, onExit, presetMode }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
    const [quantity, setQuantity] = useState(8);
    const [criteria, setCriteria] = useState<SelectionCriteria>("random");
@@ -55,9 +61,12 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
       });
    };
 
-   const handleStart = () => {
+   const handleStart = (forcedCriteria?: SelectionCriteria, forcedQuantity?: number) => {
       try {
-         const { fighters, byes, bracketSize } = setupTournament(availableMovies, criteria, quantity);
+         const startCriteria = forcedCriteria || criteria;
+         const startQuantity = forcedQuantity ?? quantity;
+         const sourcePool = filterMoviesByCriteria(allMovies, startCriteria);
+         const { fighters, byes, bracketSize } = setupTournament(sourcePool, startCriteria, startQuantity);
 
          preloadImages([...fighters, ...byes]);
 
@@ -70,6 +79,14 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
          if (error instanceof Error) toast.error(error.message);
       }
    };
+
+   useEffect(() => {
+      if (!presetMode?.hideSetup || stage !== "setup") {
+         return;
+      }
+
+      handleStart(presetMode.criteria, presetMode.quantity);
+   }, [presetMode, stage]);
 
    const handleVote = (winner: MovieData) => {
       const newNextRound = [...nextRoundMovies, winner];
@@ -112,7 +129,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
       <Container className={`py-4 py-md-5 ${styles.battleContainer}`}>
          <div className={styles.header}>
             <h4 className={styles.headerTitle}>
-               <Swords size={20} /> Modo Batalha
+               <Gamepad2 size={20} /> Modo Batalha
             </h4>
             <button className={styles.exitBtn} onClick={onExit}>
                Sair
@@ -120,7 +137,7 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
          </div>
 
          {/* Setup */}
-         {stage === "setup" && (
+         {stage === "setup" && !presetMode?.hideSetup && (
             <div className={styles.setupCard}>
                <h2 className={styles.setupTitle}>Configurar Torneio</h2>
 
@@ -195,6 +212,9 @@ export function MovieBattle({ allMovies, onExit }: MovieBattleProps) {
          {stage === "battle" && movieA && movieB && (
             <div>
                <div className="text-center mb-4">
+                  {presetMode?.hideSetup && presetMode.label && (
+                     <div className={styles.waitingHint}>{presetMode.label}</div>
+                  )}
                   <span className={styles.roundBadge}>{getRoundTitle()}</span>
                   {byesWaiting > 0 && currentRoundMovies.length > 0 && (
                      <div className={styles.waitingHint}>

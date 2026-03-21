@@ -1,4 +1,4 @@
-   import { Home, Plus, User, LogIn, Users, Swords } from "lucide-react";
+   import { Home, Plus, User, LogIn, Users, Gamepad2 } from "lucide-react";
    import { useNavigate } from "react-router-dom";
    import type { Session } from "@supabase/supabase-js";
    import styles from "./BottomNav.module.css";
@@ -28,9 +28,9 @@
                <span>Início</span>
             </button>
 
-            <button className={styles.navItem} onClick={() => navigate("/batalha")}>
-               <Swords size={22} />
-               <span>Batalha</span>
+            <button className={styles.navItem} onClick={() => navigate("/jogos")}>
+               <Gamepad2 size={22} />
+               <span>Jogos</span>
             </button>
 
             {/* Botão Adicionar Filme */}

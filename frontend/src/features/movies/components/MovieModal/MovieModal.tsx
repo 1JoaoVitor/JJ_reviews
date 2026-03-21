@@ -87,8 +87,8 @@ export function MovieModal({
                ))}
             </div>
 
-            <Row className="m-0">
-               <Col md={4} className="mb-3">
+            <Row className="m-0 gx-0">
+               <Col md={4} className="mb-3 ps-0 pe-md-3">
                   {movie.poster_path ? (
                      <img
                         src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
@@ -123,7 +123,7 @@ export function MovieModal({
                   )}
                </Col>
 
-               <Col md={8}>
+               <Col md={8} className="ps-0">
                   {/* Se for uma Lista Colaborativa, mostra as opiniões de todo mundo */}
                   {movie.list_type === "partial_shared" ? (
                      <div className="mb-4">

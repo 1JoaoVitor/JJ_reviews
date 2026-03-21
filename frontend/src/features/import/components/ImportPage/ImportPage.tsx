@@ -210,6 +210,35 @@ export function ImportPage() {
           </p>
         </div>
 
+        <div className={styles.badgesInfoCard}>
+          <strong className={styles.settingsTitle}>Sobre as badges de recomendação</strong>
+          <p className={styles.badgeInfo}>
+            Como o Letterboxd não possui badges de recomendação, o JJ Reviews irá <strong>converter automaticamente suas notas em badges</strong> durante a importação. Essas transformações são <strong>baseadas em intervalos</strong>, mas <strong>não são fixas</strong> — você pode editar cada filme depois para mudar sua recomendação.
+          </p>
+          <div className={styles.badgesGrid}>
+            <div className={styles.badgeExample}>
+              <span className={`${styles.badgePill} ${styles.badgeGreat}`}>Assista com certeza</span>
+              <span className={styles.badgeRange}>Nota: 10 - 9</span>
+            </div>
+            <div className={styles.badgeExample}>
+              <span className={`${styles.badgePill} ${styles.badgeGood}`}>Vale a pena assistir</span>
+              <span className={styles.badgeRange}>Nota: 8.5 - 7.5</span>
+            </div>
+            <div className={styles.badgeExample}>
+              <span className={`${styles.badgePill} ${styles.badgeOk}`}>Tem filmes melhores, mas é legal</span>
+              <span className={styles.badgeRange}>Nota: 7 - 6</span>
+            </div>
+            <div className={styles.badgeExample}>
+              <span className={`${styles.badgePill} ${styles.badgeBad}`}>Não tão bom</span>
+              <span className={styles.badgeRange}>Nota: 5.5 - 4.5</span>
+            </div>
+            <div className={styles.badgeExample}>
+              <span className={`${styles.badgePill} ${styles.badgeTerrible}`}>Não perca seu tempo</span>
+              <span className={styles.badgeRange}>Nota: ≤ 4</span>
+            </div>
+          </div>
+        </div>
+
         <div className={styles.actions}>
           <input
             id="import-file-input"
@@ -404,7 +433,7 @@ export function ImportPage() {
         )}
       </div>
 
-      {isSaving && <LoadingOverlay message="Salvando importação... Não feche a página." />}
+      {isSaving && <LoadingOverlay message="Salvando importação... Não feche a página, isso pode demorar um pouco." />}
     </section>
   );
 }
