@@ -62,3 +62,24 @@ export function calculateAverageBadge(badges: (string | undefined | null)[]): st
 
    return getBadgeTextFromValue(averageValue);
 }
+
+/**
+ * Converte uma nota numérica (0-10) em texto de badge
+ * Intervalos definidos para importação Letterboxd:
+ * 10-9: "Assista com certeza"
+ * 8.5-7.5: "Vale a pena assistir"
+ * 7-6: "Tem filmes melhores, mas é legal"
+ * 5.5-4.5: "Não tão bom"
+ * <= 4: "Não perca seu tempo"
+ */
+export function getRatingBadge(rating: number | undefined | null): string | undefined {
+   if (rating === undefined || rating === null) {
+      return undefined;
+   }
+
+   if (rating >= 9) return "Assista com certeza";
+   if (rating >= 7.5) return "Vale a pena assistir";
+   if (rating >= 6) return "Tem filmes melhores, mas é legal";
+   if (rating >= 4.5) return "Não tão bom";
+   return "Não perca seu tempo";
+}
