@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Swords, LogOut, LogIn, User, Users, Filter } from "lucide-react";
+import { Search, Gamepad2, LogOut, LogIn, User, Users, Filter } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
@@ -112,10 +112,10 @@ export function AppNavbar({
                         {showBattle && (
                            <button
                               className={styles.iconBtn}
-                              onClick={() => navigate("/batalha")}
-                              title="Modo Batalha"
+                              onClick={() => navigate("/jogos")}
+                              title="Central de Jogos"
                            >
-                              <Swords size={18} />
+                              <Gamepad2 size={18} />
                            </button>
                         )}
 
