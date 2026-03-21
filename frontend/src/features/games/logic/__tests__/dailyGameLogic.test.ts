@@ -76,6 +76,24 @@ describe("dailyGameLogic", () => {
     expect(yearField?.status).toBe("close");
   });
 
+  it("diretor fica close quando nome e substring", () => {
+    const guess = makeProfile({ director: "Christopher Nolan" });
+    const target = makeProfile({ director: "Nolan" });
+
+    const result = compareMovieProfiles(guess, target);
+    const directorField = result.fields.find((f) => f.label === "Diretor");
+    expect(directorField?.status).toBe("close");
+  });
+
+  it("genero fica close quando ha correspondencia parcial", () => {
+    const guess = makeProfile({ genres: ["Science"] });
+    const target = makeProfile({ genres: ["Science Fiction"] });
+
+    const result = compareMovieProfiles(guess, target);
+    const genreField = result.fields.find((f) => f.label === "Genero");
+    expect(genreField?.status).toBe("close");
+  });
+
   it("resumo consolida melhor status por campo", () => {
     const target = makeProfile({ tmdbId: 99, title: "Alvo", releaseYear: 2015 });
     const guess1 = compareMovieProfiles(makeProfile({ tmdbId: 1, releaseYear: 1990, director: "Outro" }), target);
