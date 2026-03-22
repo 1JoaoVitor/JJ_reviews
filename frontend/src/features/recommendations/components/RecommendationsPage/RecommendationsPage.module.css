@@ -1,0 +1,79 @@
+.wrapper {
+   display: flex;
+   flex-direction: column;
+   gap: 1.5rem;
+   padding-bottom: 1rem;
+}
+
+.header {
+   display: flex;
+   flex-direction: column;
+   gap: 0.65rem;
+}
+
+.title {
+   margin: 0;
+   font-size: clamp(1.6rem, 2.4vw, 2rem);
+   line-height: 1.2;
+   letter-spacing: -0.02em;
+}
+
+.subtitle {
+   margin: 0;
+   color: var(--text-secondary);
+   max-width: 60ch;
+}
+
+.genreRow {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 0.45rem;
+}
+
+.genreChip {
+   border: 1px solid var(--gold-dim);
+   background: var(--gold-soft-bg);
+   color: var(--gold);
+   border-radius: var(--radius-pill);
+   padding: 0.3rem 0.75rem;
+   font-size: 0.8rem;
+   font-weight: 700;
+}
+
+.loadingState {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.65rem;
+   color: var(--text-secondary);
+}
+
+.errorState {
+   border: 1px solid var(--danger);
+   background: var(--danger-dim);
+   color: #fca5a5;
+   border-radius: var(--radius-md);
+   padding: 0.75rem 0.9rem;
+}
+
+.cardWrap {
+   display: flex;
+   flex-direction: column;
+   gap: 0.6rem;
+}
+
+.reasonsList {
+   list-style: none;
+   margin: 0;
+   padding: 0;
+   display: flex;
+   flex-direction: column;
+   gap: 0.35rem;
+}
+
+.reasonsList li {
+   color: var(--text-secondary);
+   font-size: 0.82rem;
+   line-height: 1.3;
+   border-left: 2px solid var(--border-medium);
+   padding-left: 0.55rem;
+}

@@ -29,6 +29,7 @@ import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { SupportPage } from "@/features/support";
 import { DiaryPage } from "@/features/diary";
+import { RecommendationsPage } from "@/features/recommendations";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -50,6 +51,7 @@ export default function App() {
          <Route path="/" element={<MainApp />} />
          <Route path="/jogos" element={<MainApp />} />
          <Route path="/social" element={<MainApp />} />
+         <Route path="/recomendacoes" element={<MainApp />} />
          <Route path="/diary" element={<Navigate to="/social" replace />} />
          <Route path="/batalha" element={<Navigate to="/jogos" replace />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
@@ -66,6 +68,7 @@ function MainApp() {
    const location = useLocation();
    const isGamesPage = location.pathname === "/jogos";
    const isSocialPage = location.pathname === "/social";
+   const isRecommendationsPage = location.pathname === "/recomendacoes";
    
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
@@ -146,15 +149,18 @@ function MainApp() {
             onLogout={() => modals.setShowLogoutConfirm(true)}
             username={username}
             avatarUrl={avatarUrl}
-            showFilters={!!session} 
+            showFilters={!!session && !isSocialPage && !isRecommendationsPage}
             showBattle={!!session}
             onSocialClick={() => {
                navigate("/social");
             }}
+            onRecommendationsClick={() => {
+               navigate("/recomendacoes");
+            }}
          />
 
          {session && (
-            !isSocialPage && (
+            !isSocialPage && !isRecommendationsPage && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
                   <button className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("watched")}>Assistidos</button>
@@ -167,7 +173,7 @@ function MainApp() {
          
          <Container className="px-4 pb-5">
             {session && (
-               !isSocialPage && (
+               !isSocialPage && !isRecommendationsPage && (
                <>
                {!isPageLoading && !filters.searchTerm &&
                <Dashboard 
@@ -232,6 +238,8 @@ function MainApp() {
                <LandingPage onLoginClick={() => modals.setShowLoginModal(true)} />
             ) : isSocialPage ? (
                <DiaryPage userId={session.user.id} movies={movies} onOpenMovie={handleOpenModal} />
+            ) : isRecommendationsPage ? (
+               <RecommendationsPage userId={session.user.id} movies={movies} onOpenMovie={handleOpenModal} />
             ) : filters.viewMode === "lists" ? (
                modals.selectedList ? (
                   <ListDetails

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Gamepad2, LogOut, LogIn, User, Users, Filter } from "lucide-react";
+import { Search, Gamepad2, LogOut, LogIn, User, Users, Filter, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
@@ -27,6 +27,7 @@ interface AppNavbarProps {
    showFilters?: boolean;
    showBattle?: boolean;
    onSocialClick?: () => void;
+   onRecommendationsClick?: () => void;
 }
 
 export function AppNavbar({
@@ -49,6 +50,7 @@ export function AppNavbar({
    showFilters = true,
    showBattle = true,
    onSocialClick,
+   onRecommendationsClick,
 }: AppNavbarProps) {
 
    const navigate = useNavigate();
@@ -123,6 +125,13 @@ export function AppNavbar({
                            <button onClick={onSocialClick} className={styles.friendsBtn} title="Social">
                               <Users size={20} />
                               Social
+                           </button>
+                        )}
+
+                        {onRecommendationsClick && (
+                           <button onClick={onRecommendationsClick} className={styles.friendsBtn} title="Recomendacoes">
+                              <Sparkles size={20} />
+                              Recomendar
                            </button>
                         )}
 
