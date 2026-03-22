@@ -41,7 +41,9 @@ export function ImportPage() {
               : "erro",
       },
       { label: "Filmes processados", value: result.processedData?.stats.totalMovies || 0 },
+      { label: "Entradas de diary", value: result.processedData?.stats.totalDiaryEntries || 0 },
       { label: "Filmes sem correspondência", value: result.processedData?.stats.unmatchedMovies || 0 },
+      { label: "Diary sem correspondência", value: result.processedData?.stats.unmatchedDiaryEntries || 0 },
       { label: "Listas", value: result.processedData?.stats.totalLists || 0 },
       { label: "Avisos", value: result.validation.warnings.length },
       { label: "Erros", value: result.validation.errors.length },
@@ -58,7 +60,11 @@ export function ImportPage() {
       return false;
     }
 
-    return result.processedData.stats.totalMovies > 0 || result.processedData.stats.totalLists > 0;
+    return (
+      result.processedData.stats.totalMovies > 0 ||
+      result.processedData.stats.totalDiaryEntries > 0 ||
+      result.processedData.stats.totalLists > 0
+    );
   }, [result]);
 
   const hasWarnings = (result?.validation.warnings.length || 0) > 0;
@@ -202,6 +208,7 @@ export function ImportPage() {
             <li>Reviews (texto e recomendação, quando disponíveis)</li>
             <li>Watchlist</li>
             <li>Histórico de filmes assistidos (watched)</li>
+            <li>Diary (data em que você assistiu cada filme)</li>
             <li>Avaliações (ratings, convertidas de 0-5 para 0-10)</li>
             <li>Dados básicos de perfil disponíveis no export</li>
           </ul>
@@ -417,12 +424,14 @@ export function ImportPage() {
                 <strong>{saveResult.message}</strong>
                 <ul className={styles.list}>
                   <li>Filmes importados: {saveResult.stats.moviesImported}</li>
+                  <li>Diary adicionados: {saveResult.stats.diaryEntriesAdded}</li>
                   <li>Listas criadas: {saveResult.stats.listsCreated}</li>
                   <li>Reviews adicionadas: {saveResult.stats.reviewsAdded}</li>
                   <li>Watched adicionados: {saveResult.stats.watchedAdded}</li>
                   <li>Watchlist adicionados: {saveResult.stats.watchlistAdded}</li>
                   <li>Conflitos: {saveResult.stats.conflicts}</li>
                   <li>Sem match: {saveResult.stats.unmatchedMovies}</li>
+                  <li>Diary sem match: {saveResult.stats.unmatchedDiaryEntries}</li>
                 </ul>
                 {saveResult.errors && saveResult.errors.length > 0 && (
                   <p className={styles.error}>Erros: {saveResult.errors.join(" | ")}</p>

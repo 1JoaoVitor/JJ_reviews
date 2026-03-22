@@ -12,6 +12,24 @@ vi.mock("@/features/lists/services/listsService", () => ({
   fetchListMovieIds: vi.fn(),
 }));
 
+const { diaryUpsertMock, diaryFromMock } = vi.hoisted(() => {
+  const upsert = vi.fn();
+  const from = vi.fn(() => ({
+    upsert,
+  }));
+
+  return {
+    diaryUpsertMock: upsert,
+    diaryFromMock: from,
+  };
+});
+
+vi.mock("@/lib/supabase", () => ({
+  supabase: {
+    from: diaryFromMock,
+  },
+}));
+
 const { upsertPersonalReview } = await import("@/features/movies/services/moviePersistenceService");
 const { createListRecord, addMovieToListRecord, fetchOwnedLists, fetchListMovieIds } = await import("@/features/lists/services/listsService");
 
@@ -31,6 +49,7 @@ describe("importPersistenceService", () => {
     vi.mocked(fetchOwnedLists).mockResolvedValue([]);
     vi.mocked(fetchListMovieIds).mockResolvedValue([]);
     vi.mocked(upsertPersonalReview).mockResolvedValue();
+    diaryUpsertMock.mockResolvedValue({ error: null });
   });
 
   it("persists movies and lists and returns success stats", async () => {
@@ -42,6 +61,9 @@ describe("importPersistenceService", () => {
         movies: [
           { name: "The Matrix", year: 1999, tmdbId: 603, status: "watched", rating: 8.5 },
           { name: "Inception", year: 2010, tmdbId: 27205, status: "watchlist" },
+        ],
+        diaryEntries: [
+          { name: "The Matrix", year: 1999, tmdbId: 603, watchedDate: "2024-01-01" },
         ],
         lists: [
           {
@@ -57,8 +79,10 @@ describe("importPersistenceService", () => {
         ],
         stats: {
           totalMovies: 2,
+          totalDiaryEntries: 1,
           matchedMovies: 2,
           unmatchedMovies: 0,
+          unmatchedDiaryEntries: 0,
           totalLists: 1,
         },
       },
@@ -68,7 +92,10 @@ describe("importPersistenceService", () => {
     expect(upsertPersonalReview).toHaveBeenCalledTimes(2);
     expect(createListRecord).toHaveBeenCalledTimes(1);
     expect(addMovieToListRecord).toHaveBeenCalledTimes(2);
+    expect(diaryFromMock).toHaveBeenCalledWith("diary_entries");
+    expect(diaryUpsertMock).toHaveBeenCalledTimes(1);
     expect(result.stats.moviesImported).toBe(2);
+    expect(result.stats.diaryEntriesAdded).toBe(1);
     expect(result.stats.watchedAdded).toBe(1);
     expect(result.stats.watchlistAdded).toBe(1);
     expect(result.stats.reviewsAdded).toBe(1);
@@ -92,6 +119,7 @@ describe("importPersistenceService", () => {
         fileName: "letterboxd.zip",
         status: "success",
         movies: [{ name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" }],
+        diaryEntries: [],
         lists: [
           {
             id: "tmp-list",
@@ -102,8 +130,10 @@ describe("importPersistenceService", () => {
         ],
         stats: {
           totalMovies: 1,
+          totalDiaryEntries: 0,
           matchedMovies: 1,
           unmatchedMovies: 0,
+          unmatchedDiaryEntries: 0,
           totalLists: 1,
         },
       },
@@ -128,6 +158,7 @@ describe("importPersistenceService", () => {
           { name: "Unmatched", year: 2020, status: "watchlist" },
           { name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" },
         ],
+        diaryEntries: [{ name: "Unmatched", year: 2020, watchedDate: "2024-01-01" }],
         lists: [
           {
             id: "tmp-list",
@@ -138,8 +169,10 @@ describe("importPersistenceService", () => {
         ],
         stats: {
           totalMovies: 2,
+          totalDiaryEntries: 1,
           matchedMovies: 1,
           unmatchedMovies: 1,
+          unmatchedDiaryEntries: 1,
           totalLists: 1,
         },
       },
@@ -149,6 +182,7 @@ describe("importPersistenceService", () => {
     expect(result.errors).toBeDefined();
     expect(result.errors?.length).toBeGreaterThan(0);
     expect(result.stats.unmatchedMovies).toBe(1);
-    expect(result.stats.conflicts).toBe(1);
+    expect(result.stats.unmatchedDiaryEntries).toBe(1);
+    expect(result.stats.conflicts).toBe(2);
   });
 });

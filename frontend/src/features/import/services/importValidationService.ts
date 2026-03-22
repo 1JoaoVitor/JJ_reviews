@@ -9,6 +9,7 @@ import { IssueSeverity } from "../types/importTypes";
 import type {
   ValidationIssue,
   ValidationResult,
+  DiaryData,
   ProfileData,
   RatingData,
   ReviewData,
@@ -50,6 +51,11 @@ export async function validateImportFiles(
     issues.push(...watchedIssues);
   }
 
+  if (fileSet.diary && fileSet.diary.length > 0) {
+    const diaryIssues = validateDiaryData(fileSet.diary);
+    issues.push(...diaryIssues);
+  }
+
   if (fileSet.watchlist && fileSet.watchlist.length > 0) {
     const watchlistIssues = validateWatchlistData(fileSet.watchlist);
     issues.push(...watchlistIssues);
@@ -81,7 +87,7 @@ export async function validateImportFiles(
  */
 export async function parseImportCsvContent(
   csvContent: string,
-  fileType: "profile" | "ratings" | "reviews" | "watched" | "watchlist" | "list"
+  fileType: "profile" | "ratings" | "reviews" | "diary" | "watched" | "watchlist" | "list"
 ) {
   const { rows, errors } = parseCsv(csvContent);
 
@@ -98,6 +104,9 @@ export async function parseImportCsvContent(
 
     case "reviews":
       return parseReviewsCsv(rows);
+
+    case "diary":
+      return parseDiaryCsv(rows);
 
     case "watched":
       return parseWatchedCsv(rows);
@@ -201,6 +210,7 @@ function parseReviewsCsv(rows: Record<string, string>[]): ReviewData[] {
       const { value: rewatch } = getField(row, "Rewatch");
       const { value: tags } = getField(row, "Tags");
       const { value: letterboxdUri } = getField(row, "Letterboxd URI");
+      const { value: watchedDate } = getDateField(row, "Watched Date");
 
       return [{
         date: date || new Date().toISOString(),
@@ -210,7 +220,47 @@ function parseReviewsCsv(rows: Record<string, string>[]): ReviewData[] {
         review: review || undefined,
         rewatch: rewatch?.toLowerCase() === "yes",
         tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
+        watchedDate: watchedDate || undefined,
         letterboxdUri: letterboxdUri || undefined,
+      }];
+    });
+}
+
+function parseDiaryCsv(rows: Record<string, string>[]): DiaryData[] {
+  return rows
+    .flatMap((row) => {
+      const { value: name, error: nameError } = getField(row, "Name", { required: true });
+      const { value: year, error: yearError } = getNumericField(row, "Year", {
+        required: true,
+        min: 1800,
+        max: 2100,
+      });
+      const { value: watchedDate, error: watchedDateError } = getDateField(row, "Watched Date", {
+        required: true,
+      });
+
+      if (nameError || !name || yearError || !year || watchedDateError || !watchedDate) {
+        return [];
+      }
+
+      const { value: date } = getDateField(row, "Date");
+      const { value: letterboxdUri } = getField(row, "Letterboxd URI");
+      const { value: rating } = getNumericField(row, "Rating", {
+        min: 0,
+        max: 5,
+      });
+      const { value: rewatch } = getField(row, "Rewatch");
+      const { value: tags } = getField(row, "Tags");
+
+      return [{
+        date: date || watchedDate,
+        name,
+        year,
+        letterboxdUri: letterboxdUri || undefined,
+        rating: rating ?? undefined,
+        rewatch: rewatch?.toLowerCase() === "yes",
+        tags: tags ? tags.split(",").map((t) => t.trim()) : undefined,
+        watchedDate,
       }];
     });
 }
@@ -416,6 +466,41 @@ function validateWatchedData(watched: WatchedMovieData[]): ValidationIssue[] {
         section: "watched",
         lineNumber: i + 2,
         message: `Movie ${i + 1}: Invalid year`,
+      });
+    }
+  });
+
+  return issues;
+}
+
+function validateDiaryData(diary: DiaryData[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+
+  diary.forEach((entry, i) => {
+    if (!entry.name || entry.name.trim().length === 0) {
+      issues.push({
+        severity: IssueSeverity.WARNING,
+        section: "diary",
+        lineNumber: i + 2,
+        message: `Diary ${i + 1}: Missing name`,
+      });
+    }
+
+    if (entry.year < 1800 || entry.year > 2100) {
+      issues.push({
+        severity: IssueSeverity.WARNING,
+        section: "diary",
+        lineNumber: i + 2,
+        message: `Diary ${i + 1}: Invalid year`,
+      });
+    }
+
+    if (!entry.watchedDate) {
+      issues.push({
+        severity: IssueSeverity.WARNING,
+        section: "diary",
+        lineNumber: i + 2,
+        message: `Diary ${i + 1}: Missing watched date`,
       });
     }
   });

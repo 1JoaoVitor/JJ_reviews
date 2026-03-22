@@ -5,6 +5,7 @@ import {
   fetchOwnedLists,
 } from "@/features/lists/services/listsService";
 import { upsertPersonalReview } from "@/features/movies/services/moviePersistenceService";
+import { supabase } from "@/lib/supabase";
 import type { ImportCompleteResult, ProcessedImportData, ProcessedMovie } from "../types/importTypes";
 
 interface PersistImportOptions {
@@ -23,11 +24,13 @@ export async function persistImportedData(options: PersistImportOptions): Promis
 
   const stats = {
     moviesImported: 0,
+    diaryEntriesAdded: 0,
     listsCreated: 0,
     reviewsAdded: 0,
     watchedAdded: 0,
     watchlistAdded: 0,
     unmatchedMovies: processedData.stats.unmatchedMovies,
+    unmatchedDiaryEntries: processedData.stats.unmatchedDiaryEntries,
     conflicts: 0,
     duration: 0,
   };
@@ -66,6 +69,36 @@ export async function persistImportedData(options: PersistImportOptions): Promis
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown movie persistence error";
       errors.push(`Movie ${movie.name} (${movie.year}): ${message}`);
+    }
+  }
+
+  for (const diaryEntry of processedData.diaryEntries || []) {
+    if (!diaryEntry.tmdbId) {
+      stats.conflicts += 1;
+      continue;
+    }
+
+    try {
+      const { error } = await supabase.from("diary_entries").upsert(
+        {
+          user_id: userId,
+          tmdb_id: diaryEntry.tmdbId,
+          watched_date: diaryEntry.watchedDate,
+        },
+        {
+          onConflict: "user_id,tmdb_id,watched_date",
+          ignoreDuplicates: true,
+        }
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      stats.diaryEntriesAdded += 1;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown diary persistence error";
+      errors.push(`Diary ${diaryEntry.name} (${diaryEntry.year}) @ ${diaryEntry.watchedDate}: ${message}`);
     }
   }
 

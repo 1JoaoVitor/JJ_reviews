@@ -11,6 +11,7 @@ import type {
   ImportFileSet,
   ImportSettings,
   ListData,
+  DiaryData,
   ProfileData,
   RatingData,
   ReviewData,
@@ -29,7 +30,7 @@ export interface ImportPipelineResult {
   processedData: ProcessedImportData | null;
 }
 
-function fileTypeToSection(fileType: "profile" | "ratings" | "reviews" | "watched" | "watchlist" | "list" | "unknown"): ValidationIssue["section"] {
+function fileTypeToSection(fileType: "profile" | "ratings" | "reviews" | "diary" | "watched" | "watchlist" | "list" | "unknown"): ValidationIssue["section"] {
   if (fileType === "list") {
     return "lists";
   }
@@ -55,6 +56,7 @@ function mapDetectionIssues(detected: DetectedFileSet): ValidationIssue[] {
     detected.summary.profileFiles +
     detected.summary.ratingFiles +
     detected.summary.reviewFiles +
+    detected.summary.diaryFiles +
     detected.summary.watchedFiles +
     detected.summary.watchlistFiles +
     detected.summary.listFiles;
@@ -79,6 +81,7 @@ export async function processImportZip(
   const parsedData: Partial<ImportFileSet> = {
     ratings: [],
     reviews: [],
+    diary: [],
     watched: [],
     watchlist: [],
     lists: [],
@@ -106,6 +109,12 @@ export async function processImportZip(
     if (detectedFile.type === "reviews") {
       const parsed = (await parseImportCsvContent(detectedFile.content, "reviews")) as ReviewData[];
       parsedData.reviews = [...(parsedData.reviews || []), ...parsed];
+      continue;
+    }
+
+    if (detectedFile.type === "diary") {
+      const parsed = (await parseImportCsvContent(detectedFile.content, "diary")) as DiaryData[];
+      parsedData.diary = [...(parsedData.diary || []), ...parsed];
       continue;
     }
 
