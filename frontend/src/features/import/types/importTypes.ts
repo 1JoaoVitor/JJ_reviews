@@ -55,6 +55,17 @@ export interface ReviewData {
   watchedDate?: string;
 }
 
+export interface DiaryData {
+  date: string;
+  name: string;
+  year: number;
+  letterboxdUri?: string;
+  rating?: number;
+  rewatch?: boolean;
+  tags?: string[];
+  watchedDate: string;
+}
+
 export interface WatchedMovieData {
   date: string;
   name: string;
@@ -93,6 +104,7 @@ export interface ImportFileSet {
   profile?: ProfileData;
   ratings: RatingData[];
   reviews: ReviewData[];
+  diary: DiaryData[];
   watched: WatchedMovieData[];
   watchlist: WatchlistMovieData[];
   lists: ListData[];
@@ -110,6 +122,15 @@ export interface ProcessedMovie {
   matchWarning?: string; // If TMDB match failed
 }
 
+export interface ProcessedDiaryEntry {
+  name: string;
+  year: number;
+  watchedDate: string;
+  letterboxdUri?: string;
+  tmdbId?: number;
+  matchWarning?: string;
+}
+
 export interface ProcessedList {
   id: string; // UUID generated on frontend
   name: string;
@@ -123,11 +144,14 @@ export interface ProcessedImportData {
   fileName: string;
   status: "success" | "partial" | "error";
   movies: ProcessedMovie[];
+  diaryEntries: ProcessedDiaryEntry[];
   lists: ProcessedList[];
   stats: {
     totalMovies: number;
+    totalDiaryEntries: number;
     matchedMovies: number;
     unmatchedMovies: number;
+    unmatchedDiaryEntries: number;
     totalLists: number;
   };
 }
@@ -136,7 +160,7 @@ export interface ProcessedImportData {
 
 export interface ValidationIssue {
   severity: IssueSeverity;
-  section: "profile" | "ratings" | "reviews" | "watched" | "watchlist" | "lists";
+  section: "profile" | "ratings" | "reviews" | "diary" | "watched" | "watchlist" | "lists";
   fileName?: string;
   lineNumber?: number;
   message: string;
@@ -172,11 +196,13 @@ export interface ImportProgress {
 
 export interface ImportStats {
   moviesImported: number;
+  diaryEntriesAdded: number;
   listsCreated: number;
   reviewsAdded: number;
   watchedAdded: number;
   watchlistAdded: number;
   unmatchedMovies: number;
+  unmatchedDiaryEntries: number;
   conflicts: number;
   duration: number; // milliseconds
 }
@@ -193,7 +219,7 @@ export interface ImportCompleteResult {
 
 export interface DetectedFile {
   name: string;
-  type: "profile" | "ratings" | "reviews" | "watched" | "watchlist" | "list" | "unknown";
+  type: "profile" | "ratings" | "reviews" | "diary" | "watched" | "watchlist" | "list" | "unknown";
   content: string;
   size: number;
   isValid: boolean;
@@ -207,6 +233,7 @@ export interface DetectedFileSet {
     profileFiles: number;
     ratingFiles: number;
     reviewFiles: number;
+    diaryFiles: number;
     watchedFiles: number;
     watchlistFiles: number;
     listFiles: number;

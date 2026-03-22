@@ -31,7 +31,7 @@ export function Dashboard({ movies, onFilterDirector, onFilterNonUS }: Dashboard
 
    return (
       <div>
-         <h5 className={styles.heading}>Sua Jornada Cinematográfica</h5>
+         <h5 className={styles.heading}>Suas estatísticas</h5>
          <div className={styles.grid}>
             
             {/* Total de Filmes */}

@@ -1,23 +1,19 @@
 import type { FC } from "react";
-import { Clapperboard, Gamepad2, HelpCircle } from "lucide-react";
+import { Clapperboard, Gamepad2 } from "lucide-react";
 import type { GameId } from "../logic/gameHelpContent";
 import { GameModeCard } from "./GameModeCard";
 import styles from "../GamesHub.module.css";
 
 interface GamesHubHeaderMenuProps {
    activeGame: GameId;
-   showHelpButton: boolean;
    onBackHome: () => void;
-   onOpenHelp: () => void;
    onBackToMenu: () => void;
    onSelectGame: (gameId: Exclude<GameId, "menu">) => void;
 }
 
 export const GamesHubHeaderMenu: FC<GamesHubHeaderMenuProps> = ({
    activeGame,
-   showHelpButton,
    onBackHome,
-   onOpenHelp,
    onBackToMenu,
    onSelectGame,
 }) => {
@@ -29,9 +25,9 @@ export const GamesHubHeaderMenu: FC<GamesHubHeaderMenuProps> = ({
             </div>
             <div className={styles.headerActions}>
                <button type="button" className={styles.backBtn} onClick={onBackHome}>Voltar para inicio</button>
-               {showHelpButton && (
-                  <button type="button" className={styles.helpBtn} onClick={onOpenHelp}>
-                     <HelpCircle size={16} /> ?
+               {activeGame !== "menu" && (
+                  <button type="button" className={styles.backBtn} onClick={onBackToMenu}>
+                     Voltar para jogos
                   </button>
                )}
             </div>
@@ -62,13 +58,6 @@ export const GamesHubHeaderMenu: FC<GamesHubHeaderMenuProps> = ({
             </div>
          )}
 
-         {activeGame !== "menu" && (
-            <div className={styles.gameActions}>
-               <button type="button" className={styles.backBtn} onClick={onBackToMenu}>
-                  Voltar para jogos
-               </button>
-            </div>
-         )}
       </>
    );
 };

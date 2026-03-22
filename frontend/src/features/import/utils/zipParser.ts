@@ -63,6 +63,7 @@ export async function extractAndDetectZip(file: File): Promise<DetectedFileSet> 
       profileFiles: files.filter((f) => f.type === "profile").length,
       ratingFiles: files.filter((f) => f.type === "ratings").length,
       reviewFiles: files.filter((f) => f.type === "reviews").length,
+      diaryFiles: files.filter((f) => f.type === "diary").length,
       watchedFiles: files.filter((f) => f.type === "watched").length,
       watchlistFiles: files.filter((f) => f.type === "watchlist").length,
       listFiles: files.filter((f) => f.type === "list").length,
@@ -152,6 +153,22 @@ function detectFileType(fileName: string, content: string): DetectedFile {
     };
   }
 
+  // Diary detection (Letterboxd diary.csv)
+  if (
+    lowerName.includes("diary") ||
+    (headerLine?.includes("Watched Date") && headerLine?.includes("Name") && headerLine?.includes("Year"))
+  ) {
+    const validation = validateDiaryCsv(headerLine || firstLine);
+    return {
+      name: fileName,
+      type: "diary",
+      content,
+      size: content.length,
+      isValid: validation.valid,
+      validationIssue: validation.issue,
+    };
+  }
+
   // Watched detection
   if (
     lowerName.includes("watched") ||
@@ -225,7 +242,7 @@ function shouldIgnoreOptionalLetterboxdEntry(fileName: string): boolean {
     return true;
   }
 
-  const optionalCsv = new Set(["comments.csv", "diary.csv"]);
+  const optionalCsv = new Set(["comments.csv"]);
   return optionalCsv.has(baseName);
 }
 
@@ -267,6 +284,22 @@ function validateReviewsCsv(
   headerLine: string
 ): { valid: boolean; issue?: string } {
   const required = ["Name", "Year"];
+  const hasRequired = required.every((field) => headerLine.includes(field));
+
+  if (!hasRequired) {
+    return {
+      valid: false,
+      issue: `Missing required columns: ${required.join(", ")}`,
+    };
+  }
+
+  return { valid: true };
+}
+
+function validateDiaryCsv(
+  headerLine: string
+): { valid: boolean; issue?: string } {
+  const required = ["Name", "Year", "Watched Date"];
   const hasRequired = required.every((field) => headerLine.includes(field));
 
   if (!hasRequired) {

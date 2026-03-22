@@ -1,5 +1,5 @@
 import { Dropdown, Spinner } from "react-bootstrap";
-import { Bell, UserPlus, List, Film, Check } from "lucide-react";
+import { Bell, UserPlus, List, Film, Check, UserCheck, UserMinus } from "lucide-react";
 import { useNotifications } from "../../hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
 import styles from "./NotificationBell.module.css";
@@ -28,6 +28,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
    const getNotificationIcon = (type: string) => {
       switch (type) {
          case "friend_request": return <UserPlus size={20} />;
+         case "friend_accepted": return <UserCheck size={20} />;
+         case "friend_removed": return <UserMinus size={20} />;
          case "list_invite": return <List size={20} />;
          case "movie_added": return <Film size={20} />;
          default: return <Bell size={20} />;
@@ -46,11 +48,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             navigate(`/?aba=lists`);
          }
       } else if (notif.type === "movie_added") {
-         navigate(`/?aba=lists`);
-      } else if (notif.type === "friend_request") {
-         if (notif.sender?.username) {
-            navigate(`/perfil/${notif.sender.username}`);
-         }
+         navigate(`/social?tab=diary`);
+      } else if (notif.type === "friend_request" || notif.type === "friend_accepted" || notif.type === "friend_removed") {
+         navigate(`/social?tab=friends`);
       }
    };
 

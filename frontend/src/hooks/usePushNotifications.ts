@@ -3,6 +3,22 @@ import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { supabase } from '@/lib/supabase';
 
+function getPushRedirectPath(type?: string, referenceId?: string): string {
+   if (type === 'list_invite') {
+      return referenceId ? `/?aba=lists&listId=${referenceId}` : '/?aba=lists';
+   }
+
+   if (type === 'movie_added') {
+      return '/social?tab=diary';
+   }
+
+   if (type === 'friend_request' || type === 'friend_accepted' || type === 'friend_removed') {
+      return '/social?tab=friends';
+   }
+
+   return '/';
+}
+
 export function usePushNotifications(userId?: string) {
    useEffect(() => {
       // Só funciona se estivermos no mobile e se o usuário estiver logado
@@ -59,6 +75,9 @@ export function usePushNotifications(userId?: string) {
             // Ouve quando o utilizador TOCA na notificação
             pushActionHandle = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
                console.log('Utilizador tocou na notificação:', action);
+               const data = action.notification?.data as { type?: string; reference_id?: string } | undefined;
+               const targetPath = getPushRedirectPath(data?.type, data?.reference_id);
+               window.location.assign(targetPath);
             });
 
          } catch (error) {

@@ -13,16 +13,10 @@ export const DailySourceConfig: FC<DailySourceConfigProps> = ({
    setDailySourceMode,
    dailyScopeError,
 }) => {
-   const dailySourceLabel =
-      dailySourceMode === "global_daily"
-         ? "Filme do dia"
-         : dailySourceMode === "my_watched"
-            ? "Meus assistidos"
-            : "Lista selecionada";
+
 
    return (
       <div className={styles.modeCard}>
-         <strong className={styles.modeTitle}>Fonte do desafio</strong>
          <div className={styles.modeOptions}>
             <button
                type="button"
@@ -46,7 +40,6 @@ export const DailySourceConfig: FC<DailySourceConfigProps> = ({
                Lista selecionada
             </button>
          </div>
-         <small className={styles.scopeHint}>Escopo atual: {dailySourceLabel}</small>
          {dailyScopeError && <p className={styles.errorMsg}>{dailyScopeError}</p>}
       </div>
    );

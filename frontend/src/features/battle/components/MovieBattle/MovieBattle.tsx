@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Container, Form, Row, Col, ProgressBar } from "react-bootstrap";
-import { Gamepad2, Trophy } from "lucide-react";
+import { Gamepad2, HelpCircle, Trophy } from "lucide-react";
 import confetti from "canvas-confetti";
 import toast from "react-hot-toast";
 
@@ -23,7 +23,7 @@ import {
 
 interface MovieBattleProps {
    allMovies: MovieData[];
-   onExit: () => void;
+   onOpenHelp: () => void;
    userId?: string;
    presetMode?: {
       criteria: SelectionCriteria;
@@ -35,7 +35,7 @@ interface MovieBattleProps {
 
 type BattleStage = "setup" | "battle" | "winner";
 
-export function MovieBattle({ allMovies, onExit, userId, presetMode }: MovieBattleProps) {
+export function MovieBattle({ allMovies, onOpenHelp, userId, presetMode }: MovieBattleProps) {
    const [stage, setStage] = useState<BattleStage>("setup");
    const [quantity, setQuantity] = useState(8);
    const [criteria, setCriteria] = useState<SelectionCriteria>("random");
@@ -250,20 +250,6 @@ export function MovieBattle({ allMovies, onExit, userId, presetMode }: MovieBatt
       }
    };
 
-   const handleExit = async () => {
-      window.sessionStorage.removeItem(progressStorageKey);
-
-      if (sessionId && stage === "battle") {
-         await finishGameSession({
-            sessionId,
-            status: "abandoned",
-            attemptsCount: pairIndex / 2,
-            metadata: { reason: "exit_button" },
-         });
-      }
-      onExit();
-   };
-
    const getRoundTitle = () => {
       if (totalBracketSize === 2) return "Grande Final";
       if (totalBracketSize === 4) return "Semifinais";
@@ -298,8 +284,8 @@ export function MovieBattle({ allMovies, onExit, userId, presetMode }: MovieBatt
             <h4 className={styles.headerTitle}>
                <Gamepad2 size={20} /> Modo Batalha
             </h4>
-            <button className={styles.exitBtn} onClick={() => void handleExit()}>
-               Sair
+            <button type="button" className={styles.exitBtn} onClick={onOpenHelp}>
+               <HelpCircle size={16} /> ?
             </button>
          </div>
 

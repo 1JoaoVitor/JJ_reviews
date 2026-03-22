@@ -92,6 +92,13 @@
    gap: 0.5rem;
 }
 
+@media (min-width: 768px) {
+   .actionGroup {
+      min-width: 230px;
+      justify-content: flex-end;
+   }
+}
+
 .rouletteBtn {
    padding: 0.4rem 0.85rem;
    border: 1px solid var(--gold);
@@ -110,6 +117,17 @@
 .rouletteBtn:hover {
    background: var(--gold);
    color: var(--bg-page);
+}
+
+.rouletteBtnGhost {
+   visibility: hidden;
+   pointer-events: none;
+}
+
+@media (max-width: 767px) {
+   .rouletteBtnGhost {
+      display: none;
+   }
 }
 
 .addBtn {

@@ -7,9 +7,11 @@ import { batchMatchMovies } from "../utils/movieMatcher";
 import { getRatingBadge } from "@/utils/badges";
 import { RatingScale } from "../types/importTypes";
 import type {
+  DiaryData,
   ImportFileSet,
   ImportSettings,
   ListData,
+  ProcessedDiaryEntry,
   ProcessedImportData,
   ProcessedList,
   ProcessedMovie,
@@ -102,6 +104,28 @@ function toProcessedMovie(
   };
 }
 
+function toProcessedDiaryEntry(
+  source: DiaryData,
+  match: TmdbMatchResult | undefined,
+  settings: ImportSettings,
+  minConfidence: number
+): ProcessedDiaryEntry | null {
+  const isMatched = !!match?.matched && !!match?.tmdbId && match.confidence >= minConfidence;
+
+  if (!isMatched && settings.skipUnmatchedMovies) {
+    return null;
+  }
+
+  return {
+    name: source.name,
+    year: source.year,
+    watchedDate: source.watchedDate,
+    letterboxdUri: source.letterboxdUri,
+    tmdbId: isMatched ? match.tmdbId : undefined,
+    matchWarning: isMatched ? undefined : "Diary entry could not be matched with sufficient confidence",
+  };
+}
+
 function buildBaseMovieMap(data: Partial<ImportFileSet>): Map<string, MovieAccumulator> {
   const movieMap = new Map<string, MovieAccumulator>();
 
@@ -133,6 +157,16 @@ function buildBaseMovieMap(data: Partial<ImportFileSet>): Map<string, MovieAccum
     });
   }
 
+  for (const entry of data.diary || []) {
+    upsertMovie(movieMap, {
+      name: entry.name,
+      year: entry.year,
+      status: "watched",
+      rating: entry.rating,
+      letterboxdUri: entry.letterboxdUri,
+    });
+  }
+
   for (const review of data.reviews || []) {
     upsertMovie(movieMap, {
       name: review.name,
@@ -159,14 +193,16 @@ function buildListMovieSources(
   }));
 }
 
-function mapStatus(movies: ProcessedMovie[]): ProcessedImportData["status"] {
+function mapStatus(movies: ProcessedMovie[], diaryEntries: ProcessedDiaryEntry[]): ProcessedImportData["status"] {
   const unmatched = movies.filter((m) => m.matchWarning).length;
+  const unmatchedDiary = diaryEntries.filter((entry) => entry.matchWarning).length;
+  const totalItems = movies.length + diaryEntries.length;
 
-  if (movies.length === 0) {
+  if (totalItems === 0) {
     return "error";
   }
 
-  if (unmatched > 0) {
+  if (unmatched > 0 || unmatchedDiary > 0) {
     return "partial";
   }
 
@@ -218,6 +254,13 @@ export async function transformImportData(
     })
     .filter((movie): movie is ProcessedMovie => movie !== null);
 
+  const processedDiaryEntries: ProcessedDiaryEntry[] = (data.diary || [])
+    .map((entry) => {
+      const key = normalizeMovieKey(entry.name, entry.year);
+      return toProcessedDiaryEntry(entry, matchResult.results.get(key), settings, minMatchConfidence);
+    })
+    .filter((entry): entry is ProcessedDiaryEntry => entry !== null);
+
   const processedLists: ProcessedList[] = (data.lists || [])
     .flatMap((list) => {
       const transformedMovies = buildListMovieSources(list, watchedKeys)
@@ -245,16 +288,20 @@ export async function transformImportData(
 
   const unmatchedMovies = processedMovies.filter((m) => m.matchWarning).length;
   const matchedMovies = processedMovies.length - unmatchedMovies;
+  const unmatchedDiaryEntries = processedDiaryEntries.filter((entry) => entry.matchWarning).length;
 
   return {
     fileName,
-    status: mapStatus(processedMovies),
+    status: mapStatus(processedMovies, processedDiaryEntries),
     movies: processedMovies,
+    diaryEntries: processedDiaryEntries,
     lists: processedLists,
     stats: {
       totalMovies: processedMovies.length,
+      totalDiaryEntries: processedDiaryEntries.length,
       matchedMovies,
       unmatchedMovies,
+      unmatchedDiaryEntries,
       totalLists: processedLists.length,
     },
   };

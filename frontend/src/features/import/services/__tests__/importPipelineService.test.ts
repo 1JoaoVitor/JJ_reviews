@@ -41,6 +41,7 @@ describe("importPipelineService", () => {
         profileFiles: 0,
         ratingFiles: 1,
         reviewFiles: 0,
+        diaryFiles: 0,
         watchedFiles: 1,
         watchlistFiles: 0,
         listFiles: 0,
@@ -63,11 +64,14 @@ describe("importPipelineService", () => {
       fileName: "letterboxd.zip",
       status: "success",
       movies: [],
+      diaryEntries: [],
       lists: [],
       stats: {
         totalMovies: 0,
+        totalDiaryEntries: 0,
         matchedMovies: 0,
         unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
         totalLists: 0,
       },
     });
@@ -90,6 +94,7 @@ describe("importPipelineService", () => {
         profileFiles: 0,
         ratingFiles: 1,
         reviewFiles: 0,
+        diaryFiles: 0,
         watchedFiles: 0,
         watchlistFiles: 0,
         listFiles: 0,
@@ -131,6 +136,7 @@ describe("importPipelineService", () => {
         profileFiles: 0,
         ratingFiles: 0,
         reviewFiles: 0,
+        diaryFiles: 0,
         watchedFiles: 0,
         watchlistFiles: 0,
         listFiles: 2,
@@ -153,11 +159,14 @@ describe("importPipelineService", () => {
       fileName: "letterboxd.zip",
       status: "success",
       movies: [],
+      diaryEntries: [],
       lists: [],
       stats: {
         totalMovies: 0,
+        totalDiaryEntries: 0,
         matchedMovies: 0,
         unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
         totalLists: 0,
       },
     });
@@ -167,6 +176,65 @@ describe("importPipelineService", () => {
 
     expect(result.parsedData.lists).toHaveLength(2);
     expect(parseImportCsvContent).toHaveBeenCalledTimes(2);
+  });
+
+  it("should parse diary files and forward diary data to validation/transformation", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "diary.csv", type: "diary", content: "csv-diary", size: 10, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 0,
+        ratingFiles: 0,
+        reviewFiles: 0,
+        diaryFiles: 1,
+        watchedFiles: 0,
+        watchlistFiles: 0,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(parseImportCsvContent).mockResolvedValueOnce([
+      { date: "2024-01-01", name: "The Matrix", year: 1999 },
+    ]);
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "letterboxd.zip",
+      status: "success",
+      movies: [],
+      diaryEntries: [
+        { name: "The Matrix", year: 1999, watchedDate: "2024-01-01", tmdbId: 603 },
+      ],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        totalDiaryEntries: 1,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "letterboxd.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(parseImportCsvContent).toHaveBeenCalledWith("csv-diary", "diary");
+    expect(result.parsedData.diary).toHaveLength(1);
+    expect(transformImportData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ diary: expect.any(Array) }),
+      })
+    );
   });
 
   it("should parse all supported file types and merge invalid detection warnings", async () => {
@@ -183,6 +251,7 @@ describe("importPipelineService", () => {
         profileFiles: 1,
         ratingFiles: 0,
         reviewFiles: 1,
+        diaryFiles: 0,
         watchedFiles: 0,
         watchlistFiles: 1,
         listFiles: 1,
@@ -206,11 +275,14 @@ describe("importPipelineService", () => {
       fileName: "letterboxd.zip",
       status: "partial",
       movies: [],
+      diaryEntries: [],
       lists: [],
       stats: {
         totalMovies: 0,
+        totalDiaryEntries: 0,
         matchedMovies: 0,
         unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
         totalLists: 0,
       },
     });
@@ -235,6 +307,7 @@ describe("importPipelineService", () => {
         profileFiles: 1,
         ratingFiles: 0,
         reviewFiles: 0,
+        diaryFiles: 0,
         watchedFiles: 0,
         watchlistFiles: 0,
         listFiles: 0,
@@ -254,11 +327,14 @@ describe("importPipelineService", () => {
       fileName: "letterboxd.zip",
       status: "error",
       movies: [],
+      diaryEntries: [],
       lists: [],
       stats: {
         totalMovies: 0,
+        totalDiaryEntries: 0,
         matchedMovies: 0,
         unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
         totalLists: 0,
       },
     });
@@ -289,6 +365,7 @@ describe("importPipelineService", () => {
         profileFiles: 0,
         ratingFiles: 0,
         reviewFiles: 0,
+        diaryFiles: 0,
         watchedFiles: 0,
         watchlistFiles: 0,
         listFiles: 0,
@@ -307,11 +384,14 @@ describe("importPipelineService", () => {
       fileName: "random.zip",
       status: "error",
       movies: [],
+      diaryEntries: [],
       lists: [],
       stats: {
         totalMovies: 0,
+        totalDiaryEntries: 0,
         matchedMovies: 0,
         unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
         totalLists: 0,
       },
     });
@@ -320,5 +400,170 @@ describe("importPipelineService", () => {
     const result = await processImportZip(file, settings);
 
     expect(result.validation.warnings).toContain("Nenhum arquivo de importação reconhecido no ZIP. Envie o ZIP exportado diretamente do aplicativo.");
+  });
+
+  it("should process profile, ratings, reviews with correct section mapping", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "profile.csv", type: "profile", content: "csv-profile", size: 10, isValid: true },
+        { name: "ratings.csv", type: "ratings", content: "csv-ratings", size: 10, isValid: true },
+        { name: "reviews.csv", type: "reviews", content: "csv-reviews", size: 10, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 1,
+        ratingFiles: 1,
+        reviewFiles: 1,
+        diaryFiles: 0,
+        watchedFiles: 0,
+        watchlistFiles: 0,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(parseImportCsvContent)
+      .mockResolvedValueOnce({ username: "test", dateJoined: "2024-01-01" })
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "Movie 1", year: 2024 }])
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "Movie 2", year: 2020 }]);
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "test.zip",
+      status: "success",
+      movies: [],
+      diaryEntries: [],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        totalDiaryEntries: 0,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "test.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(result.parsedData.profile?.username).toBe("test");
+    expect(result.parsedData.ratings).toHaveLength(1);
+    expect(result.parsedData.reviews).toHaveLength(1);
+  });
+
+  it("should process watched and watchlist correctly", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "watched.csv", type: "watched", content: "csv-watched", size: 10, isValid: true },
+        { name: "watchlist.csv", type: "watchlist", content: "csv-watchlist", size: 10, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 0,
+        ratingFiles: 0,
+        reviewFiles: 0,
+        diaryFiles: 0,
+        watchedFiles: 1,
+        watchlistFiles: 1,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(parseImportCsvContent)
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "Watched Movie", year: 2024 }])
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "Wishlist Movie", year: 2020 }]);
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "test.zip",
+      status: "success",
+      movies: [],
+      diaryEntries: [],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        totalDiaryEntries: 0,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "test.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(result.parsedData.watched).toHaveLength(1);
+    expect(result.parsedData.watchlist).toHaveLength(1);
+  });
+
+  it("should handle profile, diary and ratings sections", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "profile.csv", type: "profile", content: "csv-profile", size: 10, isValid: true },
+        { name: "diary.csv", type: "diary", content: "csv-diary", size: 10, isValid: true },
+        { name: "ratings.csv", type: "ratings", content: "csv-ratings", size: 10, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 1,
+        ratingFiles: 1,
+        reviewFiles: 0,
+        diaryFiles: 1,
+        watchedFiles: 0,
+        watchlistFiles: 0,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(parseImportCsvContent)
+      .mockResolvedValueOnce({ username: "user", dateJoined: "2024-01-01" })
+      .mockResolvedValueOnce([{ date: "2024-01-02", name: "Watched", year: 2024 }])
+      .mockResolvedValueOnce([{ date: "2024-01-01", name: "Rated", year: 2020 }]);
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "test.zip",
+      status: "success",
+      movies: [],
+      diaryEntries: [],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        totalDiaryEntries: 0,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "test.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(result.parsedData.profile?.username).toBe("user");
+    expect(result.parsedData.diary).toBeDefined();
+    expect(result.parsedData.ratings).toBeDefined();
   });
 });

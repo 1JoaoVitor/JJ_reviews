@@ -18,6 +18,7 @@ export function ProfilePage() {
    const { session, logout, updateUsername, fetchProfile } = useAuth(); 
    const apkUrl = import.meta.env.VITE_ANDROID_APK_URL as string | undefined;
    const [activeTab, setActiveTab] = useState<TabType>("profile");
+   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
    const handleLogoutAction = async () => {
       await logout();
@@ -200,7 +201,7 @@ export function ProfilePage() {
                   )}
 
                   {activeTab === "profile" && (
-                     <button className={styles.logoutBtn} onClick={handleLogoutAction} type="button">
+                     <button className={styles.logoutBtn} onClick={() => setShowLogoutConfirm(true)} type="button">
                         <LogOut size={18} /> Sair da Conta
                      </button>
                   )}
@@ -216,6 +217,18 @@ export function ProfilePage() {
             message="Tem a certeza absoluta? Esta ação não pode ser desfeita. Todos os seus filmes, listas e avaliações serão apagados para sempre."
             confirmText="Sim, excluir"
             isProcessing={security.isDeleting}
+         />
+
+         <ConfirmModal
+            show={showLogoutConfirm}
+            onHide={() => setShowLogoutConfirm(false)}
+            onConfirm={() => {
+               setShowLogoutConfirm(false);
+               void handleLogoutAction();
+            }}
+            title="Sair da conta"
+            message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar seus filmes."
+            confirmText="Sim, sair"
          />
       </div>
    );

@@ -1,6 +1,6 @@
 import type { FC } from "react";
-import { Form } from "react-bootstrap";
-import { Clapperboard } from "lucide-react";
+import { Form, Container } from "react-bootstrap";
+import { Clapperboard, HelpCircle } from "lucide-react";
 import type { CustomList, MovieData } from "@/types";
 import type { DailySourceMode } from "@/features/games/logic/dailyGameLogic";
 import { DailyFinalReveal } from "./DailyFinalReveal";
@@ -13,6 +13,8 @@ import { useDailyMovieGame } from "../hooks/useDailyMovieGame";
 import styles from "../GamesHub.module.css";
 
 interface DailyMovieGameProps {
+   title: string;
+   onOpenHelp: () => void;
    mode: DailyMode;
    source: DailySourceMode;
    watchedMovies: MovieData[];
@@ -24,6 +26,8 @@ interface DailyMovieGameProps {
 }
 
 export const DailyMovieGame: FC<DailyMovieGameProps> = ({
+   title,
+   onOpenHelp,
    mode,
    source,
    watchedMovies,
@@ -34,8 +38,6 @@ export const DailyMovieGame: FC<DailyMovieGameProps> = ({
    userId,
 }) => {
    const {
-      dateKey,
-      sourceLabel,
       guessText,
       setGuessText,
       selectedGuess,
@@ -70,18 +72,20 @@ export const DailyMovieGame: FC<DailyMovieGameProps> = ({
    });
 
    return (
+      <Container className={`py-4 py-md-5 ${styles.battleContainer}`}>
+      <div className={styles.gameHeaderTitle}>
+         <h2 className={styles.gameSecondaryTitle}>
+            <Clapperboard size={20} /> {title}
+         </h2>
+         <button type="button" className={styles.helpBtn} onClick={onOpenHelp}>
+            <HelpCircle size={16} /> ?
+         </button>
+      </div>
+
       <div className={styles.gamePanel}>
-         <div className={styles.gameHeader}>
-            <div>
-               <h3 className={styles.gameTitle}>
-                  <Clapperboard size={18} /> Filme do Dia {mode === "cover" ? "(Capa)" : "(Enigma)"}
-               </h3>
-               <p className={styles.gameSubtitle}>Fonte: {sourceLabel} {source === "global_daily" ? `- ${dateKey}` : ""}</p>
-            </div>
-         </div>
 
          {source === "list_scope" && (
-            <div className={styles.inlineFilter}>
+            <div className={`${styles.inlineFilter} ${styles.inlineFilterSpaced}`}>
                <label htmlFor={`daily-list-${mode}`}>Lista do jogo</label>
                <Form.Select
                   id={`daily-list-${mode}`}
@@ -218,5 +222,6 @@ export const DailyMovieGame: FC<DailyMovieGameProps> = ({
             </>
          )}
       </div>
+      </Container>
    );
 };
