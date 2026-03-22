@@ -12,7 +12,7 @@ import {
 } from "./components";
 import { useGamesHubScopes, type BattleSourceMode } from "./hooks/useGamesHubScopes";
 import { GAME_HELP_MAP, type GameId } from "./logic/gameHelpContent";
-import { getTodayKey } from "./logic/dailyMovieGameLogic";
+import { getTodayKey, formatTodayKeyDDMMYYYY } from "./logic/dailyMovieGameLogic";
 import styles from "./GamesHub.module.css";
 
 interface GamesHubProps {
@@ -28,6 +28,7 @@ export function GamesHub({ movies, lists, userId, initialGame = "menu" }: GamesH
    const [dailySourceMode, setDailySourceMode] = useState<DailySourceMode>("global_daily");
    const [battleSourceMode, setBattleSourceMode] = useState<BattleSourceMode>("my_watched");
    const [battleHelpOpen, setBattleHelpOpen] = useState(false);
+   const [dailyHelpOpen, setDailyHelpOpen] = useState(false);
 
    const {
       watchedAllMovies,
@@ -43,15 +44,14 @@ export function GamesHub({ movies, lists, userId, initialGame = "menu" }: GamesH
    } = useGamesHubScopes(movies, lists, battleSourceMode);
 
    const headerHelp = activeGame !== "menu" ? GAME_HELP_MAP[activeGame as Exclude<GameId, "menu">] : null;
+   const isHelpOpen = activeGame === "battle" ? battleHelpOpen : dailyHelpOpen;
 
    return (
       <section className={styles.page}>
          <div className={styles.container}>
             <GamesHubHeaderMenu
                activeGame={activeGame}
-               showHelpButton={Boolean(headerHelp)}
                onBackHome={() => navigate("/")}
-               onOpenHelp={() => setBattleHelpOpen(true)}
                onBackToMenu={() => setActiveGame("menu")}
                onSelectGame={(gameId) => setActiveGame(gameId)}
             />
@@ -72,55 +72,71 @@ export function GamesHub({ movies, lists, userId, initialGame = "menu" }: GamesH
                   <MovieBattle
                      allMovies={battlePlayableMovies}
                      userId={userId || undefined}
-                     onExit={() => setActiveGame("menu")}
+                     onOpenHelp={() => setBattleHelpOpen(true)}
                      presetMode={battleSourceMode === "daily_16" ? {
                         criteria: "random",
                         quantity: 16,
                         hideSetup: true,
-                        label: `Rodada diaria TMDB (${getTodayKey()})`,
+                        label: `Rodada diaria TMDB (${formatTodayKeyDDMMYYYY(getTodayKey())})`,
                      } : undefined}
                   />
                </>
             )}
 
-            {(activeGame === "daily_cover" || activeGame === "daily_riddle") && (
-               <DailySourceConfig
-                  dailySourceMode={dailySourceMode}
-                  setDailySourceMode={setDailySourceMode}
-                  dailyScopeError={dailyScopeError}
-               />
-            )}
-
             {activeGame === "daily_cover" && (
-               <DailyMovieGame
-                  key={`daily-cover-${dailySourceMode}-${dailyListId}`}
-                  mode="cover"
-                  source={dailySourceMode}
-                  watchedMovies={watchedAllMovies}
-                  listMovies={dailyScopedMovies}
-                  selectedListId={dailyListId}
-                  setSelectedListId={setDailyListId}
-                  lists={lists}
-                  userId={userId}
-               />
+               <>
+                  <DailySourceConfig
+                     dailySourceMode={dailySourceMode}
+                     setDailySourceMode={setDailySourceMode}
+                     dailyScopeError={dailyScopeError}
+                  />
+                  <DailyMovieGame
+                     key={`daily-cover-${dailySourceMode}-${dailyListId}`}
+                     title="Filme do Dia (Capa)"
+                     onOpenHelp={() => setDailyHelpOpen(true)}
+                     mode="cover"
+                     source={dailySourceMode}
+                     watchedMovies={watchedAllMovies}
+                     listMovies={dailyScopedMovies}
+                     selectedListId={dailyListId}
+                     setSelectedListId={setDailyListId}
+                     lists={lists}
+                     userId={userId}
+                  />
+               </>
             )}
 
             {activeGame === "daily_riddle" && (
-               <DailyMovieGame
-                  key={`daily-riddle-${dailySourceMode}-${dailyListId}`}
-                  mode="riddle"
-                  source={dailySourceMode}
-                  watchedMovies={watchedAllMovies}
-                  listMovies={dailyScopedMovies}
-                  selectedListId={dailyListId}
-                  setSelectedListId={setDailyListId}
-                  lists={lists}
-                  userId={userId}
-               />
+               <>
+                  <DailySourceConfig
+                     dailySourceMode={dailySourceMode}
+                     setDailySourceMode={setDailySourceMode}
+                     dailyScopeError={dailyScopeError}
+                  />
+                  <DailyMovieGame
+                     key={`daily-riddle-${dailySourceMode}-${dailyListId}`}
+                     title="Filme do Dia (Enigma)"
+                     onOpenHelp={() => setDailyHelpOpen(true)}
+                     mode="riddle"
+                     source={dailySourceMode}
+                     watchedMovies={watchedAllMovies}
+                     listMovies={dailyScopedMovies}
+                     selectedListId={dailyListId}
+                     setSelectedListId={setDailyListId}
+                     lists={lists}
+                     userId={userId}
+                  />
+               </>
             )}
          </div>
 
-         <GamesHelpModal open={battleHelpOpen} onClose={() => setBattleHelpOpen(false)} help={headerHelp} />
+         <GamesHelpModal open={isHelpOpen} onClose={() => {
+            if (activeGame === "battle") {
+               setBattleHelpOpen(false);
+            } else {
+               setDailyHelpOpen(false);
+            }
+         }} help={headerHelp} />
       </section>
    );
 }

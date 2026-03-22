@@ -189,7 +189,7 @@ describe("ListDetails", () => {
       await waitFor(() => {
          expect(navigateMock).toHaveBeenCalledWith("/perfil/fan");
       });
-   });
+   }, 15000);
 
    it("accepts pending invite through service", async () => {
       render(

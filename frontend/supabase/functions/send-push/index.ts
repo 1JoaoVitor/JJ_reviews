@@ -12,6 +12,21 @@ if (getApps().length === 0) {
   initializeApp({ credential: cert(serviceAccount) });
 }
 
+function resolvePushTitle(notification: { type?: string; message?: string }): string {
+  if (notification.type === 'list_invite') return 'Novo Convite de Lista!';
+  if (notification.type === 'movie_added') return 'Novo Filme Adicionado!';
+  if (notification.type === 'friend_accepted') return 'Pedido de Amizade Aceito!';
+  if (notification.type === 'friend_removed') return 'Atualização de Amizade';
+  if (notification.type === 'friend_request') {
+    if ((notification.message || '').toLowerCase().includes('aceitou')) {
+      return 'Pedido de Amizade Aceito!';
+    }
+    return 'Novo Pedido de Amizade!';
+  }
+
+  return 'JJ Reviews';
+}
+
 Deno.serve(async (req: Request) => {
   try {
     const payload = await req.json();
@@ -44,23 +59,33 @@ Deno.serve(async (req: Request) => {
       .from('fcm_tokens')
       .select('token')
       .eq('user_id', notification.user_id)
-      .single();
+      .limit(10);
 
-    if (tokenError || !tokenData) {
+    if (tokenError || !tokenData || tokenData.length === 0) {
       console.log("O utilizador não tem a aplicação instalada ou token registado:", notification.user_id);
       return new Response("Sem token FCM", { status: 200 });
     }
 
-    let title = "JJ Reviews";
-    if (notification.type === 'list_invite') title = "Novo Convite de Lista! 🍿";
-    else if (notification.type === 'movie_added') title = "Novo Filme Adicionado! 🎬";
-    else if (notification.type === 'friend_request') title = "Novo Pedido de Amizade! 🤝";
+    const tokens = Array.from(
+      new Set(
+        tokenData
+          .map((row) => row.token)
+          .filter((token): token is string => !!token)
+      )
+    );
+
+    if (tokens.length === 0) {
+      console.log("Sem tokens válidos para envio:", notification.user_id);
+      return new Response("Sem token FCM", { status: 200 });
+    }
+
+    const title = resolvePushTitle(notification);
 
     // ─── JUNTAR O NOME À MENSAGEM ───
     const finalBodyMessage = `${senderName} ${notification.message}`;
 
     const message = {
-      token: tokenData.token,
+      tokens,
       notification: {
          title: title,
          body: finalBodyMessage,
@@ -71,8 +96,13 @@ Deno.serve(async (req: Request) => {
       }
     };
 
-    const response = await getMessaging().send(message);
-    console.log("Notificação enviada com sucesso para o telemóvel:", response);
+    const response = await getMessaging().sendEachForMulticast(message);
+    console.log("Push enviado:", {
+      userId: notification.user_id,
+      totalTokens: tokens.length,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+    });
 
     return new Response(JSON.stringify({ success: true }), { 
        status: 200, 

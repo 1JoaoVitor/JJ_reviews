@@ -82,13 +82,28 @@ export interface FriendProfile {
   is_requester: boolean; 
 }
 
+export interface DiaryEntry {
+   id: string;
+   user_id: string;
+   tmdb_id: number;
+   watched_date: string;
+   created_at: string;
+}
+
+export interface FriendDiaryActivity extends DiaryEntry {
+   friend_id: string;
+   friend_username: string;
+   friend_avatar_url: string | null;
+   rating: number | null;
+}
+
 
 export interface AppNotification {
    id: string;
    user_id: string;
    sender_id?: string;
    reference_id?: string;
-   type: "friend_request" | "list_invite" | "movie_added" | "general";
+   type: "friend_request" | "friend_accepted" | "friend_removed" | "list_invite" | "movie_added" | "general";
    message: string;
    is_read: boolean;
    created_at: string;

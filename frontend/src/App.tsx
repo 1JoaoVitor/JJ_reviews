@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { Container } from "react-bootstrap";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Dices, Plus} from "lucide-react";
+import { Dices, Plus } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ─── Features ───
@@ -28,6 +28,8 @@ import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { SupportPage } from "@/features/support";
+import { DiaryPage } from "@/features/diary";
+import { RecommendationsPage } from "@/features/recommendations";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -48,6 +50,9 @@ export default function App() {
       <Routes>
          <Route path="/" element={<MainApp />} />
          <Route path="/jogos" element={<MainApp />} />
+         <Route path="/social" element={<MainApp />} />
+         <Route path="/recomendacoes" element={<MainApp />} />
+         <Route path="/diary" element={<Navigate to="/social" replace />} />
          <Route path="/batalha" element={<Navigate to="/jogos" replace />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
@@ -59,8 +64,11 @@ export default function App() {
 }
 
 function MainApp() {
+   const navigate = useNavigate();
    const location = useLocation();
    const isGamesPage = location.pathname === "/jogos";
+   const isSocialPage = location.pathname === "/social";
+   const isRecommendationsPage = location.pathname === "/recomendacoes";
    
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
@@ -141,12 +149,18 @@ function MainApp() {
             onLogout={() => modals.setShowLogoutConfirm(true)}
             username={username}
             avatarUrl={avatarUrl}
-            showFilters={!!session} 
+            showFilters={!!session && !isSocialPage && !isRecommendationsPage}
             showBattle={!!session}
-            onFriendsClick={() => modals.setShowFriendsModal(true)}
+            onSocialClick={() => {
+               navigate("/social");
+            }}
+            onRecommendationsClick={() => {
+               navigate("/recomendacoes");
+            }}
          />
 
          {session && (
+            !isSocialPage && !isRecommendationsPage && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
                   <button className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("watched")}>Assistidos</button>
@@ -154,10 +168,12 @@ function MainApp() {
                   <button className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("lists")}>Listas</button>
                </div>
             </div>
+            )
          )}
          
          <Container className="px-4 pb-5">
             {session && (
+               !isSocialPage && !isRecommendationsPage && (
                <>
                {!isPageLoading && !filters.searchTerm &&
                <Dashboard 
@@ -194,11 +210,19 @@ function MainApp() {
                      </div>
 
                      <div className={styles.actionGroup}>
-                        {filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist") && (
-                           <button className={styles.rouletteBtn} onClick={() => modals.setShowRoulette(true)} title="Sortear um filme aleatório">
-                              <Dices size={16} /><span className="d-none d-md-inline">Sortear</span>
-                           </button>
-                        )}
+                        <button
+                           className={`${styles.rouletteBtn} ${
+                              filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist")
+                                 ? ""
+                                 : styles.rouletteBtnGhost
+                           }`}
+                           onClick={() => modals.setShowRoulette(true)}
+                           title="Sortear um filme aleatório"
+                           aria-hidden={!(filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist"))}
+                           tabIndex={filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist") ? 0 : -1}
+                        >
+                           <Dices size={16} /><span className="d-none d-md-inline">Sortear</span>
+                        </button>
 
                         {session && filters.viewMode !== "lists" && (
                            <button className={styles.addBtn} onClick={() => modals.openAddMovie(null, "")}>
@@ -211,6 +235,7 @@ function MainApp() {
                   </div>
                </div>
                </>
+               )
             )}
 
             {isPageLoading && movies.length === 0 ? (
@@ -219,6 +244,10 @@ function MainApp() {
                </div>
             ) : !session ? (
                <LandingPage onLoginClick={() => modals.setShowLoginModal(true)} />
+            ) : isSocialPage ? (
+               <DiaryPage userId={session.user.id} movies={movies} onOpenMovie={handleOpenModal} />
+            ) : isRecommendationsPage ? (
+               <RecommendationsPage userId={session.user.id} movies={movies} onOpenMovie={handleOpenModal} />
             ) : filters.viewMode === "lists" ? (
                modals.selectedList ? (
                   <ListDetails
@@ -326,7 +355,6 @@ function MainApp() {
             avatarUrl={avatarUrl}
             onAddClick={() => modals.openAddMovie(null, "")}
             onLoginClick={() => modals.setShowLoginModal(true)}
-            onFriendsClick={() => modals.setShowFriendsModal(true)}
          />
       </div>
    );

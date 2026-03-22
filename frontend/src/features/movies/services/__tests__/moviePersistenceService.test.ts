@@ -8,8 +8,10 @@ const {
    maybeSingleMock,
    updateMock,
    insertMock,
+   upsertMock,
    isMock,
    rpcMock,
+   notifyFriendsDiaryActivityMock,
    storageUploadMock,
    storagePublicUrlMock,
 } = vi.hoisted(() => ({
@@ -20,10 +22,16 @@ const {
    maybeSingleMock: vi.fn(),
    updateMock: vi.fn(),
    insertMock: vi.fn(),
+   upsertMock: vi.fn(),
    isMock: vi.fn(),
    rpcMock: vi.fn(),
+   notifyFriendsDiaryActivityMock: vi.fn(),
    storageUploadMock: vi.fn(),
    storagePublicUrlMock: vi.fn(),
+}));
+
+vi.mock("@/features/diary/services/diaryService", () => ({
+   notifyFriendsDiaryActivity: notifyFriendsDiaryActivityMock,
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -67,11 +75,14 @@ describe("moviePersistenceService", () => {
       });
       isMock.mockReturnValue({ maybeSingle: maybeSingleMock });
       updateMock.mockReturnValue({ eq: eqMock });
+      upsertMock.mockResolvedValue({ error: null });
+      notifyFriendsDiaryActivityMock.mockResolvedValue(undefined);
 
       fromMock.mockReturnValue({
          select: selectMock,
          update: updateMock,
          insert: insertMock,
+         upsert: upsertMock,
       });
    });
 
@@ -214,6 +225,51 @@ describe("moviePersistenceService", () => {
             attachment_url: null,
          })
       ).resolves.toBeUndefined();
+   });
+
+   it("does not create diary entry when personal status is watchlist", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      insertMock.mockResolvedValue({ error: null });
+
+      await expect(
+         upsertPersonalReview("u1", 99, {
+            rating: null,
+            review: null,
+            recommended: null,
+            runtime: 0,
+            location: null,
+            status: "watchlist",
+            attachment_url: null,
+         }),
+      ).resolves.toBeUndefined();
+
+      expect(upsertMock).not.toHaveBeenCalled();
+      expect(notifyFriendsDiaryActivityMock).not.toHaveBeenCalled();
+   });
+
+   it("keeps success flow when diary notification fails", async () => {
+      maybeSingleMock.mockResolvedValue({ data: null, error: null });
+      insertMock
+         .mockResolvedValueOnce({ error: null })
+         .mockResolvedValueOnce({ error: null });
+      notifyFriendsDiaryActivityMock.mockRejectedValueOnce(new Error("notify-failed"));
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      await expect(
+         upsertPersonalReview("u1", 77, {
+            rating: 9,
+            review: "excelente",
+            recommended: "Assista com certeza",
+            runtime: 120,
+            location: "Cinema",
+            status: "watched",
+            attachment_url: null,
+         }),
+      ).resolves.toBeUndefined();
+
+      expect(notifyFriendsDiaryActivityMock).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
    });
 
    it("throws when sync rpc returns error", async () => {

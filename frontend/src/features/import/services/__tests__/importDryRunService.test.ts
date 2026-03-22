@@ -30,10 +30,13 @@ describe("importDryRunService", () => {
             movies: [{ name: "Inception", year: 2010, tmdbId: 27205, status: "watchlist" }],
           },
         ],
+        diaryEntries: [],
         stats: {
           totalMovies: 3,
+          totalDiaryEntries: 0,
           matchedMovies: 2,
           unmatchedMovies: 1,
+          unmatchedDiaryEntries: 0,
           totalLists: 2,
         },
       },

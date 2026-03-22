@@ -64,10 +64,19 @@ interface TmdbDiscoverMovieResult {
    poster_path?: string | null;
    overview?: string;
    vote_average?: number;
+   vote_count?: number;
+   genre_ids?: number[];
 }
 
 interface TmdbDiscoverResponse {
    results: TmdbDiscoverMovieResult[];
+}
+
+interface DiscoverMovieOptions {
+   page?: number;
+   withGenres?: number[];
+   sortBy?: "popularity.desc" | "vote_average.desc" | "primary_release_date.desc";
+   voteCountGte?: number;
 }
 
 function buildSeed(source: string): number {
@@ -98,6 +107,28 @@ function toMovieDataFromDiscover(item: TmdbDiscoverMovieResult, dateKey: string)
    };
 }
 
+export async function discoverMovies(options: DiscoverMovieOptions = {}): Promise<TmdbDiscoverMovieResult[]> {
+   const {
+      page = 1,
+      withGenres = [],
+      sortBy = "popularity.desc",
+      voteCountGte = 0,
+   } = options;
+
+   try {
+      const withGenresParam = withGenres.length > 0 ? `&with_genres=${withGenres.join(",")}` : "";
+
+      const { data } = await axios.get<TmdbDiscoverResponse>(
+         `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=pt-BR&sort_by=${sortBy}&include_adult=false&include_video=false&page=${page}&vote_count.gte=${voteCountGte}${withGenresParam}`
+      );
+
+      return data.results || [];
+   } catch (error) {
+      console.error("Erro ao buscar filmes discover do TMDB:", error);
+      return [];
+   }
+}
+
 export async function getDailyBattleTmdbPool(dateKey: string, count = 16): Promise<MovieData[]> {
    try {
       const baseSeed = buildSeed(`battle-daily-16|${dateKey}`);
@@ -106,13 +137,15 @@ export async function getDailyBattleTmdbPool(dateKey: string, count = 16): Promi
 
       const responses = await Promise.all(
          pages.map((page) =>
-            axios.get<TmdbDiscoverResponse>(
-               `${BASE_URL}/discover/movie?api_key=${API_KEY}&language=pt-BR&sort_by=popularity.desc&include_adult=false&include_video=false&vote_count.gte=250&page=${page}`
-            )
+            discoverMovies({
+               page,
+               sortBy: "popularity.desc",
+               voteCountGte: 250,
+            })
          )
       );
 
-      const pool = responses.flatMap((response) => response.data.results || []).filter((item) => item?.id && item.poster_path);
+      const pool = responses.flatMap((results) => results).filter((item) => item?.id && item.poster_path);
       const unique = pool.filter((item, index, arr) => arr.findIndex((other) => other.id === item.id) === index);
 
       if (unique.length === 0) {

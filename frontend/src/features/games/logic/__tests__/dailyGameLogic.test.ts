@@ -130,4 +130,43 @@ describe("dailyGameLogic", () => {
     expect(win.blurPx).toBe(0);
     expect(win.revealTiles).toBe(win.totalTiles);
   });
+
+  it("fallback de pais e campos sem dados ficam como wrong/nao informado", () => {
+    const guess = makeProfile({
+      countries: ["Atlantis"],
+      director: undefined,
+      releaseYear: undefined,
+      genres: [],
+      cast: [],
+      runtime: undefined,
+    });
+    const target = makeProfile({
+      countries: ["Unknownland"],
+      director: undefined,
+      releaseYear: undefined,
+      genres: ["Drama"],
+      cast: ["Actor A"],
+      runtime: undefined,
+    });
+
+    expect(normalizeCountriesToPtBr(["Atlantis"])).toEqual(["Atlantis"]);
+
+    const result = compareMovieProfiles(guess, target);
+
+    expect(result.isCorrect).toBe(true);
+    expect(result.fields.find((f) => f.label === "Diretor")?.guessed).toBe("Nao informado");
+    expect(result.fields.find((f) => f.label === "Ano")?.status).toBe("wrong");
+    expect(result.fields.find((f) => f.label === "Duracao")?.status).toBe("wrong");
+    expect(result.fields.find((f) => f.label === "Genero")?.status).toBe("wrong");
+  });
+
+  it("runtime fica close para diferenca moderada", () => {
+    const guess = makeProfile({ runtime: 130 });
+    const target = makeProfile({ runtime: 146 });
+
+    const result = compareMovieProfiles(guess, target);
+    const runtime = result.fields.find((f) => f.label === "Duracao");
+
+    expect(runtime?.status).toBe("close");
+  });
 });

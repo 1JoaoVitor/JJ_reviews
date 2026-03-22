@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Gamepad2, LogOut, LogIn, User, Users, Filter } from "lucide-react";
+import { Search, Gamepad2, LogOut, LogIn, User, Users, Filter, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Dropdown } from "react-bootstrap";
 import type { Session } from "@supabase/supabase-js";
@@ -26,7 +26,8 @@ interface AppNavbarProps {
    avatarUrl?: string | null;
    showFilters?: boolean;
    showBattle?: boolean;
-   onFriendsClick?: () => void;
+   onSocialClick?: () => void;
+   onRecommendationsClick?: () => void;
 }
 
 export function AppNavbar({
@@ -48,11 +49,13 @@ export function AppNavbar({
    avatarUrl,
    showFilters = true,
    showBattle = true,
-   onFriendsClick,
+   onSocialClick,
+   onRecommendationsClick,
 }: AppNavbarProps) {
 
    const navigate = useNavigate();
    const [isFiltersOpen, setIsFiltersOpen] = useState(false); 
+   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
    const sortOptions: Record<string, string> = {
       default: "Recentes",
@@ -72,34 +75,56 @@ export function AppNavbar({
                <span className={`${styles.brandText} d-none d-sm-inline`}>Reviews</span>
             </Link>
 
-            {/* BUSCA + FILTRO */}
-            <div className={styles.searchWrapper}>
-               <div className={styles.searchRow}>
-                  <div className={styles.searchInputWrap}>
-                     <Search size={16} className={styles.searchIcon} />
-                     <input
-                        type="search"
-                        placeholder="Buscar filmes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className={styles.searchInput}
-                     />
-                  </div>
-                  
+            {session && (showFilters || !!onRecommendationsClick) && (
+               <div className={styles.mobileHeaderActions}>
+                  {showFilters && (
+                     <div className={`${styles.searchInline} ${isSearchOpen ? styles.searchInlineOpen : ""}`}>
+                        <button
+                           type="button"
+                           className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                           onClick={() => setIsSearchOpen((prev) => !prev)}
+                           title="Buscar"
+                        >
+                           <Search size={18} />
+                        </button>
+
+                        <div className={styles.searchInlineInputWrap}>
+                           <Search size={14} className={styles.searchInlineIcon} />
+                           <input
+                              type="search"
+                              placeholder="Buscar..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className={styles.searchInlineInput}
+                              autoFocus={isSearchOpen}
+                           />
+                        </div>
+                     </div>
+                  )}
+
                   {showFilters && (
                      <button
                         type="button"
-                        onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                        className={`${styles.filterToggleBtn} ${isFiltersOpen ? styles.filterToggleBtnActive : ""}`}
+                        className={`${styles.iconBtn} ${isFiltersOpen ? styles.iconBtnActive : ""}`}
+                        onClick={() => setIsFiltersOpen((prev) => !prev)}
+                        title="Filtros"
                      >
-                        <Filter size={16} />
-                        <span className={`d-none d-lg-inline ${styles.filterToggleText}`}>
-                           Filtros
-                        </span>
+                        <Filter size={18} />
+                     </button>
+                  )}
+
+                  {onRecommendationsClick && (
+                     <button
+                        type="button"
+                        className={styles.iconBtn}
+                        onClick={onRecommendationsClick}
+                        title="Recomendar"
+                     >
+                        <Sparkles size={18} />
                      </button>
                   )}
                </div>
-            </div>
+            )}
 
             {/*AÇÕES DO USUÁRIO */}
             <div className={styles.userActions}>
@@ -109,6 +134,42 @@ export function AppNavbar({
 
                      {/* ELEMENTOS EXCLUSIVOS DO DESKTOP */}
                      <div className="d-none d-md-flex align-items-center gap-2">
+                        {showFilters && (
+                           <div className={`${styles.searchInline} ${isSearchOpen ? styles.searchInlineOpen : ""}`}>
+                              <button
+                                 type="button"
+                                 className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                                 onClick={() => setIsSearchOpen((prev) => !prev)}
+                                 title="Buscar"
+                              >
+                                 <Search size={18} />
+                              </button>
+
+                              <div className={styles.searchInlineInputWrap}>
+                                 <Search size={14} className={styles.searchInlineIcon} />
+                                 <input
+                                    type="search"
+                                    placeholder="Buscar filmes..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={styles.searchInlineInput}
+                                    autoFocus={isSearchOpen}
+                                 />
+                              </div>
+                           </div>
+                        )}
+
+                        {showFilters && (
+                           <button
+                              type="button"
+                              className={`${styles.iconBtn} ${isFiltersOpen ? styles.iconBtnActive : ""}`}
+                              onClick={() => setIsFiltersOpen((prev) => !prev)}
+                              title="Filtros"
+                           >
+                              <Filter size={18} />
+                           </button>
+                        )}
+
                         {showBattle && (
                            <button
                               className={styles.iconBtn}
@@ -119,10 +180,17 @@ export function AppNavbar({
                            </button>
                         )}
 
-                        {onFriendsClick && (
-                           <button onClick={onFriendsClick} className={styles.friendsBtn} title="Central de Amigos">
+                        {onSocialClick && (
+                           <button onClick={onSocialClick} className={styles.friendsBtn} title="Social">
                               <Users size={20} />
-                              Amigos
+                              Social
+                           </button>
+                        )}
+
+                        {onRecommendationsClick && (
+                           <button onClick={onRecommendationsClick} className={styles.friendsBtn} title="Recomendar">
+                              <Sparkles size={20} />
+                              Recomendar
                            </button>
                         )}
 

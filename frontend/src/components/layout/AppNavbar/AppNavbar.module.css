@@ -18,6 +18,7 @@
    width: 100%;
    gap: 1rem;
    padding: 0.75rem 1.25rem;
+   min-width: 0;
 }
 
 .brand {
@@ -50,50 +51,46 @@
 }
 
 /* Search */
-.searchWrapper {
-   flex: 1;
-   min-width: 0;
-   max-width: 400px;
-   margin: 0 auto;
+.searchInline {
+   display: inline-flex;
+   align-items: center;
+   gap: 0.35rem;
 }
 
-.searchRow {
+.searchInlineInputWrap {
    position: relative;
-   display: flex;
-   gap: 0.5rem;
-   width: 100%;
+   width: 0;
+   overflow: hidden;
+   transition: width 220ms ease;
 }
 
-.searchInputWrap {
-   position: relative;
-   flex: 1;
-   min-width: 0;
+.searchInlineOpen .searchInlineInputWrap {
+   width: 230px;
 }
 
-.searchInput {
-   width: 100%;
-   background-color: var(--bg-elevated) !important;
-   border: 1px solid var(--border-subtle) !important;
-   border-radius: var(--radius-pill) !important;
-   padding: 0.5rem 1rem 0.5rem 2.5rem;
-   color: var(--text-primary) !important;
-   font-size: var(--font-sm);
-   text-overflow: ellipsis;
-   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.searchInput:focus {
-   border-color: var(--gold) !important;
-   box-shadow: 0 0 0 3px var(--gold-glow) !important;
-}
-
-.searchIcon {
+.searchInlineIcon {
    position: absolute;
-   left: 0.85rem;
+   left: 0.65rem;
    top: 50%;
    transform: translateY(-50%);
    color: var(--text-muted);
    pointer-events: none;
+}
+
+.searchInlineInput {
+   width: 100%;
+   background-color: var(--bg-elevated) !important;
+   border: 1px solid var(--border-subtle) !important;
+   border-radius: var(--radius-pill) !important;
+   padding: 0.38rem 0.75rem 0.38rem 1.95rem;
+   color: var(--text-primary) !important;
+   font-size: 0.82rem;
+   line-height: 1.2;
+}
+
+.searchInlineInput:focus {
+   border-color: var(--gold) !important;
+   box-shadow: 0 0 0 2px var(--gold-glow) !important;
 }
 
 /* User actions */
@@ -323,6 +320,19 @@
    background: var(--gold-soft-bg);
 }
 
+.iconBtnActive {
+   border-color: var(--gold);
+   color: var(--gold);
+   background: var(--gold-soft-bg);
+}
+
+.mobileHeaderActions {
+   display: none;
+   align-items: center;
+   gap: 0.35rem;
+   margin-left: auto;
+}
+
 /* Primary CTA button (gold) */
 .btnPrimary {
    display: inline-flex;
@@ -376,11 +386,40 @@
 @media (max-width: 767px) {
    .topRow {
       padding: 0.6rem 0.75rem;
-      gap: 0.5rem;
+      gap: 0.35rem;
    }
 
-   .searchWrapper {
-      max-width: none;
+   .mobileHeaderActions {
+      display: inline-flex;
+      position: relative;
+      margin-left: auto;
+      flex: 0 1 auto;
+      min-width: 36px;
+      gap: 0.35rem;
+   }
+
+   /* Abre a busca ao lado do botão */
+   .mobileHeaderActions .searchInline {
+      position: relative;
+      gap: 0;
+      flex: 0 1 auto;
+      min-width: 36px;
+   }
+
+   .mobileHeaderActions .searchInlineInputWrap {
+      position: relative;
+      width: 0;
+      overflow: hidden;
+      transition: width 220ms ease;
+   }
+
+   .mobileHeaderActions .searchInlineOpen .searchInlineInputWrap {
+      width: min(50vw, 180px);
+   }
+
+   .mobileHeaderActions .searchInlineInput {
+      height: 36px;
+      background-color: var(--bg-surface) !important;
    }
 
    .brandText {
@@ -397,8 +436,12 @@
    }
 
    .userActions {
-      display: none;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
    }
+
    .dropdownGroup {
       width: 100%; 
       margin-top: 0.25rem;
