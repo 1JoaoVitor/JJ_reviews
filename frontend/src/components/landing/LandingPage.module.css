@@ -76,20 +76,22 @@
    justify-content: center;
    gap: 2rem;
    width: 100%;
-   max-width: 1100px;
+   max-width: 1150px; 
    margin-top: 2rem;
    padding: 0 1rem;
 }
 
 .featureCard {
-   flex: 1 1 300px; /* Permite crescer e encolher, com tamanho base de 300px */
-   max-width: 340px; /* Evita que os cards de baixo fiquem gigantescos */
+   flex: 1 1 300px;
+   max-width: 350px;
    background: var(--bg-surface);
    border: 1px solid var(--border-subtle);
    border-radius: var(--radius-lg);
    padding: 2.5rem 2rem;
    text-align: center;
    transition: transform var(--transition-normal), border-color var(--transition-normal);
+   display: flex;
+   flex-direction: column;
 }
 
 .featureCard:hover {
@@ -123,6 +125,7 @@
    line-height: 1.6;
    margin: 0;
    font-size: var(--font-base);
+   flex-grow: 1;
 }
 
 @keyframes fadeIn {

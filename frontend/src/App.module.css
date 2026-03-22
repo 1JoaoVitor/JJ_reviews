@@ -49,6 +49,14 @@
    margin-bottom: 1.5rem;
 }
 
+.subheaderInner {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   width: 100%;
+   position: relative;
+}
+
 .movieCount {
    color: var(--gold);
    font-size: var(--font-sm);
@@ -58,14 +66,17 @@
 /* Desktop view mode toggle */
 .viewToggle {
    display: none;
-   border: 1px solid var(--border-subtle);
-   border-radius: var(--radius-md);
-   overflow: hidden;
 }
 
-@media (min-width: 767px) {
+@media (min-width: 768px) {
    .viewToggle {
       display: inline-flex;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
    }
 }
 
@@ -94,7 +105,6 @@
 
 @media (min-width: 768px) {
    .actionGroup {
-      min-width: 230px;
       justify-content: flex-end;
    }
 }

@@ -189,7 +189,7 @@ function MainApp() {
                />}
 
                <div className={styles.subheader}>
-                  <div className="d-flex align-items-center justify-content-between w-100 w-md-auto">
+                  <div className={styles.subheaderInner}>
                      <span className={styles.movieCount}>
                         {filters.viewMode === "lists" 
                            ? (listsLoading ? "Carregando..." : `Exibindo ${lists.length} listas`)
