@@ -178,6 +178,65 @@ describe("importPipelineService", () => {
     expect(parseImportCsvContent).toHaveBeenCalledTimes(2);
   });
 
+  it("should parse diary files and forward diary data to validation/transformation", async () => {
+    vi.mocked(extractAndDetectZip).mockResolvedValue({
+      files: [
+        { name: "diary.csv", type: "diary", content: "csv-diary", size: 10, isValid: true },
+      ],
+      allValid: true,
+      summary: {
+        profileFiles: 0,
+        ratingFiles: 0,
+        reviewFiles: 0,
+        diaryFiles: 1,
+        watchedFiles: 0,
+        watchlistFiles: 0,
+        listFiles: 0,
+      },
+    });
+
+    vi.mocked(parseImportCsvContent).mockResolvedValueOnce([
+      { date: "2024-01-01", name: "The Matrix", year: 1999 },
+    ]);
+
+    vi.mocked(validateImportFiles).mockResolvedValue({
+      isValid: true,
+      canProceed: true,
+      issues: [],
+      errors: [],
+      warnings: [],
+    });
+
+    vi.mocked(transformImportData).mockResolvedValue({
+      fileName: "letterboxd.zip",
+      status: "success",
+      movies: [],
+      diaryEntries: [
+        { name: "The Matrix", year: 1999, watchedDate: "2024-01-01", tmdbId: 603 },
+      ],
+      lists: [],
+      stats: {
+        totalMovies: 0,
+        totalDiaryEntries: 1,
+        matchedMovies: 0,
+        unmatchedMovies: 0,
+        unmatchedDiaryEntries: 0,
+        totalLists: 0,
+      },
+    });
+
+    const file = new File(["zip"], "letterboxd.zip", { type: "application/zip" });
+    const result = await processImportZip(file, settings);
+
+    expect(parseImportCsvContent).toHaveBeenCalledWith("csv-diary", "diary");
+    expect(result.parsedData.diary).toHaveLength(1);
+    expect(transformImportData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ diary: expect.any(Array) }),
+      })
+    );
+  });
+
   it("should parse all supported file types and merge invalid detection warnings", async () => {
     vi.mocked(extractAndDetectZip).mockResolvedValue({
       files: [

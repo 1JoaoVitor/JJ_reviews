@@ -103,7 +103,7 @@ export interface AppNotification {
    user_id: string;
    sender_id?: string;
    reference_id?: string;
-   type: "friend_request" | "list_invite" | "movie_added" | "general";
+   type: "friend_request" | "friend_accepted" | "friend_removed" | "list_invite" | "movie_added" | "general";
    message: string;
    is_read: boolean;
    created_at: string;

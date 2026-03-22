@@ -4,6 +4,7 @@ import {
   GLOBAL_DAILY_TMDB_IDS,
   MAX_LIVES,
   buildDailySeed,
+  formatTodayKeyDDMMYYYY,
   getListLabel,
   getTodayKey,
   normalizeText,
@@ -56,6 +57,11 @@ describe("dailyMovieGameLogic", () => {
     vi.useRealTimers();
   });
 
+  it("formatTodayKeyDDMMYYYY converte para DD/MM/YYYY e preserva valor invalido", () => {
+    expect(formatTodayKeyDDMMYYYY("2026-03-22")).toBe("22/03/2026");
+    expect(formatTodayKeyDDMMYYYY("data-invalida")).toBe("data-invalida");
+  });
+
   it("normalizeText remove acentos e espacos extras", () => {
     expect(normalizeText("  Coração Valente  ")).toBe("coracao valente");
     expect(normalizeText(undefined)).toBe("");
@@ -94,6 +100,48 @@ describe("dailyMovieGameLogic", () => {
     expect(profile.genres).toEqual(["Drama", "Sci-Fi"]);
     expect(profile.countries).toEqual(["Japao"]);
     expect(profile.cast).toEqual(["A1", "A2", "A3", "A4", "A5"]);
+  });
+
+  it("toMovieProfileFromApp aplica fallbacks quando campos opcionais estao ausentes", () => {
+    const profile = toMovieProfileFromApp(
+      makeMovie({
+        release_date: "xx",
+        countries: [],
+        cast: [],
+        poster_path: undefined,
+      })
+    );
+
+    expect(profile.releaseYear).toBeUndefined();
+    expect(profile.countries).toEqual([]);
+    expect(profile.cast).toEqual([]);
+    expect(profile.posterPath).toBeUndefined();
+  });
+
+  it("toMovieProfileFromTmdb lida com credits e campos vazios", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 7,
+      title: undefined,
+      release_date: "",
+      runtime: 0,
+      poster_path: "",
+      genres: [{ name: "" }],
+      production_countries: [{ name: "" }],
+      credits: {
+        crew: [{ job: "Writer", name: "W" }],
+        cast: [{ name: "" }],
+      },
+    });
+
+    expect(profile.tmdbId).toBe(7);
+    expect(profile.title).toBe("Sem titulo");
+    expect(profile.releaseYear).toBeUndefined();
+    expect(profile.director).toBeUndefined();
+    expect(profile.genres).toEqual([]);
+    expect(profile.countries).toEqual([]);
+    expect(profile.cast).toEqual([]);
+    expect(profile.runtime).toBeUndefined();
+    expect(profile.posterPath).toBeUndefined();
   });
 
   it("pickDeterministicMovie retorna null para pool vazio e item por seed", () => {

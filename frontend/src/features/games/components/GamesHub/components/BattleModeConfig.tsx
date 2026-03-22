@@ -2,7 +2,7 @@ import type { FC } from "react";
 import { Form } from "react-bootstrap";
 import type { CustomList, MovieData } from "@/types";
 import type { BattleSourceMode } from "../hooks/useGamesHubScopes";
-import { getTodayKey } from "../logic/dailyMovieGameLogic";
+import { getTodayKey, formatTodayKeyDDMMYYYY } from "../logic/dailyMovieGameLogic";
 import styles from "../GamesHub.module.css";
 
 interface BattleModeConfigProps {
@@ -28,7 +28,6 @@ export const BattleModeConfig: FC<BattleModeConfigProps> = ({
 }) => {
    return (
       <div className={styles.modeCard}>
-         <strong className={styles.modeTitle}>Configuracao da batalha</strong>
          <div className={styles.modeOptions}>
             <button
                type="button"
@@ -75,7 +74,7 @@ export const BattleModeConfig: FC<BattleModeConfigProps> = ({
          )}
 
          <small className={styles.scopeHint}>Filmes disponiveis: <strong>{battlePlayableMovies.length}</strong></small>
-         {battleSourceMode === "daily_16" && <small className={styles.scopeHint}>Fonte diaria: TMDB ({getTodayKey()})</small>}
+         {battleSourceMode === "daily_16" && <small className={styles.scopeHint}>Fonte diaria: TMDB ({formatTodayKeyDDMMYYYY(getTodayKey())})</small>}
          {battleDailyLoading && battleSourceMode === "daily_16" && <p className={styles.emptyMsg}>Montando rodada diaria...</p>}
          {battleScopeError && <p className={styles.errorMsg}>{battleScopeError}</p>}
       </div>

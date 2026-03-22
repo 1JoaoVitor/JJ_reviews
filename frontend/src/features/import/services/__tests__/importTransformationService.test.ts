@@ -192,4 +192,68 @@ describe("importTransformationService", () => {
     expect(result.lists[0].movies).toHaveLength(2);
     expect(result.lists[0].movies[0].tmdbId).toBe(603);
   });
+
+  it("should keep unmatched diary entries with warning when skipUnmatchedMovies is false", async () => {
+    vi.mocked(batchMatchMovies).mockResolvedValue({
+      successful: 0,
+      failed: 1,
+      cacheHits: 0,
+      results: new Map([
+        ["unknown diary|2024", { query: "Unknown Diary (2024)", matched: false, confidence: 0 }],
+      ]),
+    });
+
+    const result = await transformImportData({
+      fileName: "diary.csv",
+      settings: {
+        ...defaultSettings,
+        skipUnmatchedMovies: false,
+      },
+      data: {
+        watched: [],
+        ratings: [],
+        reviews: [],
+        watchlist: [],
+        lists: [],
+        diary: [{ date: "2024-01-01", watchedDate: "2024-01-01", name: "Unknown Diary", year: 2024 }],
+      },
+    });
+
+    expect(result.status).toBe("partial");
+    expect(result.diaryEntries).toHaveLength(1);
+    expect(result.diaryEntries[0].tmdbId).toBeUndefined();
+    expect(result.diaryEntries[0].matchWarning).toBeTruthy();
+  });
+
+  it("should return error when every movie and diary entry is filtered out", async () => {
+    vi.mocked(batchMatchMovies).mockResolvedValue({
+      successful: 0,
+      failed: 2,
+      cacheHits: 0,
+      results: new Map([
+        ["x|2024", { query: "X (2024)", matched: false, confidence: 0 }],
+        ["y|2024", { query: "Y (2024)", matched: false, confidence: 0 }],
+      ]),
+    });
+
+    const result = await transformImportData({
+      fileName: "empty-after-filter.zip",
+      settings: {
+        ...defaultSettings,
+        skipUnmatchedMovies: true,
+      },
+      data: {
+        watched: [{ date: "2024-01-01", name: "X", year: 2024 }],
+        diary: [{ date: "2024-01-02", watchedDate: "2024-01-02", name: "Y", year: 2024 }],
+        ratings: [],
+        reviews: [],
+        watchlist: [],
+        lists: [],
+      },
+    });
+
+    expect(result.status).toBe("error");
+    expect(result.movies).toHaveLength(0);
+    expect(result.diaryEntries).toHaveLength(0);
+  });
 });

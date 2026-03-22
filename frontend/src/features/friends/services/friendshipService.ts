@@ -60,7 +60,7 @@ export async function notifyFriendRequest(receiverId: string, senderId: string):
       user_id: receiverId,
       sender_id: senderId,
       type: "friend_request",
-      message: "enviou-te um pedido de amizade!",
+      message: "te enviou um pedido de amizade!",
    });
 }
 
@@ -77,8 +77,8 @@ export async function notifyFriendAccepted(requesterId: string, senderId: string
    await supabase.from("notifications").insert({
       user_id: requesterId,
       sender_id: senderId,
-      type: "friend_request",
-      message: "aceitou o teu pedido de amizade!",
+      type: "friend_accepted",
+      message: "aceitou o seu pedido de amizade!",
    });
 }
 

@@ -8,8 +8,10 @@ const {
    maybeSingleMock,
    updateMock,
    insertMock,
+   upsertMock,
    isMock,
    rpcMock,
+   notifyFriendsDiaryActivityMock,
    storageUploadMock,
    storagePublicUrlMock,
 } = vi.hoisted(() => ({
@@ -20,10 +22,16 @@ const {
    maybeSingleMock: vi.fn(),
    updateMock: vi.fn(),
    insertMock: vi.fn(),
+   upsertMock: vi.fn(),
    isMock: vi.fn(),
    rpcMock: vi.fn(),
+   notifyFriendsDiaryActivityMock: vi.fn(),
    storageUploadMock: vi.fn(),
    storagePublicUrlMock: vi.fn(),
+}));
+
+vi.mock("@/features/diary/services/diaryService", () => ({
+   notifyFriendsDiaryActivity: notifyFriendsDiaryActivityMock,
 }));
 
 vi.mock("@/lib/supabase", () => ({
@@ -67,11 +75,14 @@ describe("moviePersistenceService", () => {
       });
       isMock.mockReturnValue({ maybeSingle: maybeSingleMock });
       updateMock.mockReturnValue({ eq: eqMock });
+      upsertMock.mockResolvedValue({ error: null });
+      notifyFriendsDiaryActivityMock.mockResolvedValue(undefined);
 
       fromMock.mockReturnValue({
          select: selectMock,
          update: updateMock,
          insert: insertMock,
+         upsert: upsertMock,
       });
    });
 

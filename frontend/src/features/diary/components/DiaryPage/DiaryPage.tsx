@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Users2, BellRing, BellOff, Trash2, Search, UserPlus, UserCheck, Clock4, XCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { MovieData } from "@/types";
 import { getMovieDetails } from "@/features/movies/services/tmdbService";
 import { mapFriendshipStatus } from "@/features/friends/logic/mapFriendshipStatus";
@@ -35,15 +35,16 @@ interface FriendEntry extends UserProfile {
   isRequester: boolean;
 }
 
+type SocialTab = "diary" | "friends";
+
 function formatDate(value: string): string {
   const date = new Date(`${value}T00:00:00`);
-  return Number.isNaN(date.getTime())
-    ? value
-    : date.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+  if (Number.isNaN(date.getTime())) return value;
+  
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 function resolveMovieLabel(tmdbId: number, moviesByTmdbId: Map<number, MovieData>) {
@@ -57,6 +58,11 @@ function resolveMovieLabel(tmdbId: number, moviesByTmdbId: Map<number, MovieData
 
 export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<SocialTab>("diary");
+  const [friendActivityMovieMeta, setFriendActivityMovieMeta] = useState<
+    Record<number, { title: string; posterPath: string | null }>
+  >({});
   const [searchQuery, setSearchQuery] = useState("");
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
@@ -87,6 +93,78 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
     }
     return map;
   }, [movies]);
+
+  const tabParam = searchParams.get("tab");
+
+  useEffect(() => {
+    if (tabParam === "friends" || tabParam === "diary") {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  useEffect(() => {
+    if (tabParam === activeTab) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", activeTab);
+    setSearchParams(nextParams, { replace: true });
+  }, [activeTab, tabParam, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const activityTmdbIds = Array.from(new Set(activities.map((activity) => activity.tmdb_id)));
+    const missingDetailsIds = activityTmdbIds.filter((tmdbId) => !friendActivityMovieMeta[tmdbId]);
+
+    if (missingDetailsIds.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchMovieDetails = async () => {
+      const resolved = await Promise.all(
+        missingDetailsIds.map(async (tmdbId) => {
+          try {
+            const details = await getMovieDetails(tmdbId);
+            if (!details) {
+              return [tmdbId, null] as const;
+            }
+
+            return [
+              tmdbId,
+              {
+                title: details.title || `Filme #${tmdbId}`,
+                posterPath: details.poster_path || null,
+              },
+            ] as const;
+          } catch {
+            return [tmdbId, null] as const;
+          }
+        })
+      );
+
+      if (cancelled) {
+        return;
+      }
+
+      setFriendActivityMovieMeta((previous) => {
+        const next = { ...previous };
+        for (const [tmdbId, meta] of resolved) {
+          if (meta) {
+            next[tmdbId] = meta;
+          }
+        }
+        return next;
+      });
+    };
+
+    void fetchMovieDetails();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activities, friendActivityMovieMeta]);
 
   const fetchFriends = useCallback(async () => {
     if (!userId) {
@@ -282,34 +360,67 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
     );
   }
 
+  const handleRefresh = () => {
+    if (activeTab === "friends") {
+      void fetchFriends();
+      return;
+    }
+
+    refresh();
+    refreshActivities();
+  };
+
   return (
     <section className={styles.page}>
       <div className={styles.headerRow}>
         <div>
           <h2 className={styles.title}>Social</h2>
-          <p className={styles.subtitle}>Diary + amigos em uma única central.</p>
         </div>
 
         <div className={styles.headerActions}>
-          <button className={styles.refreshBtn} type="button" onClick={() => { refresh(); refreshActivities(); }}>
+          <button className={styles.refreshBtn} type="button" onClick={handleRefresh}>
             <span className={styles.desktopText}>Atualizar</span>
             <span className={styles.mobileText}>Sync</span>
           </button>
-          <button
-            className={styles.notifyBtn}
-            type="button"
-            onClick={() => setNotifyFriendActivity(!notifyFriendActivity)}
-            title={notifyFriendActivity ? "Notificações de amigos ativadas" : "Notificações de amigos desativadas"}
-          >
-            {notifyFriendActivity ? <BellRing size={16} /> : <BellOff size={16} />}
-            <span className={styles.desktopText}>{notifyFriendActivity ? "Notificações ON" : "Notificações OFF"}</span>
-            <span className={styles.mobileText}>{notifyFriendActivity ? "ON" : "OFF"}</span>
-          </button>
+          {activeTab === "diary" && (
+            <button
+              className={styles.notifyBtn}
+              type="button"
+              onClick={() => setNotifyFriendActivity(!notifyFriendActivity)}
+              title={notifyFriendActivity ? "Notificações de amigos ativadas" : "Notificações de amigos desativadas"}
+            >
+              {notifyFriendActivity ? <BellRing size={16} /> : <BellOff size={16} />}
+              <span className={styles.desktopText}>{notifyFriendActivity ? "Notificações ON" : "Notificações OFF"}</span>
+              <span className={styles.mobileText}>{notifyFriendActivity ? "ON" : "OFF"}</span>
+            </button>
+          )}
         </div>
       </div>
 
-      <div className={styles.grid}>
-        <section className={styles.panel}>
+      <div className={styles.hubTabs} role="tablist" aria-label="Navegação do hub social">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "diary"}
+          className={`${styles.hubTabBtn} ${activeTab === "diary" ? styles.hubTabBtnActive : ""}`}
+          onClick={() => setActiveTab("diary")}
+        >
+          Diary
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "friends"}
+          className={`${styles.hubTabBtn} ${activeTab === "friends" ? styles.hubTabBtnActive : ""}`}
+          onClick={() => setActiveTab("friends")}
+        >
+          Amigos
+        </button>
+      </div>
+
+      {activeTab === "diary" && (
+        <div className={styles.grid}>
+          <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <h3>
               <CalendarDays size={16} /> Sua atividade
@@ -364,12 +475,12 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
               );
             })}
           </div>
-        </section>
+          </section>
 
-        <section className={styles.panel}>
+          <section className={styles.panel}>
           <div className={styles.panelHeader}>
             <h3>
-              <Users2 size={16} /> Amigos
+              <Users2 size={16} /> Atividade dos amigos
             </h3>
           </div>
 
@@ -382,7 +493,14 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
 
           <div className={styles.timelineList}>
             {activities.map((activity) => {
-              const movie = resolveMovieLabel(activity.tmdb_id, moviesByTmdbId);
+              const movieFromActivity = friendActivityMovieMeta[activity.tmdb_id];
+              const movie = movieFromActivity
+                ? {
+                    title: movieFromActivity.title,
+                    posterPath: movieFromActivity.posterPath,
+                    rating: null,
+                  }
+                : resolveMovieLabel(activity.tmdb_id, moviesByTmdbId);
               return (
                 <article key={activity.id} className={styles.item}>
                   <button
@@ -414,9 +532,13 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
               );
             })}
           </div>
-        </section>
+          </section>
+        </div>
+      )}
 
-        <section className={`${styles.panel} ${styles.panelWide}`}>
+      {activeTab === "friends" && (
+        <div className={styles.grid}>
+          <section className={`${styles.panel} ${styles.panelWide}`}>
           <div className={styles.panelHeader}>
             <h3>
               <Users2 size={16} /> Gerenciar amigos
@@ -542,8 +664,9 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
               </div>
             )}
           </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

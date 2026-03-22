@@ -205,6 +205,24 @@ describe("importValidationService", () => {
       const result = await validateImportFiles({ ratings });
       expect(result.warnings.some((w) => w.includes("TMDB matching failed"))).toBe(true);
     });
+
+    it("should validate diary entries and keep canProceed when only warnings exist", async () => {
+      const diary = [
+        {
+          date: "2024-01-01T00:00:00.000Z",
+          name: "",
+          year: 1700,
+          watchedDate: "",
+        },
+      ];
+
+      const result = await validateImportFiles({ diary });
+
+      expect(result.isValid).toBe(true);
+      expect(result.canProceed).toBe(true);
+      expect(result.warnings.length).toBeGreaterThan(0);
+      expect(result.issues.some((i) => i.section === "diary")).toBe(true);
+    });
   });
 
   describe("parseImportCsvContent", () => {

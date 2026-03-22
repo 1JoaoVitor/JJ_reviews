@@ -75,7 +75,7 @@ export async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate
   if (error) throw error;
 
   try {
-    await notifyFriendsDiaryActivity(userId, tmdbId, watchedDate);
+    await notifyFriendsDiaryActivity(userId, watchedDate);
   } catch (notifyError) {
     console.error("Falha ao notificar amigos sobre atividade no diary:", notifyError);
   }
@@ -83,7 +83,6 @@ export async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate
 
 export async function notifyFriendsDiaryActivity(
   senderId: string,
-  tmdbId: number,
   watchedDate: string
 ): Promise<void> {
   const { data: friendshipData, error: friendshipError } = await supabase
@@ -97,25 +96,45 @@ export async function notifyFriendsDiaryActivity(
   const friends = buildFriendIds(senderId, (friendshipData as FriendshipRow[]) || []);
   if (friends.length === 0) return;
 
-  const { data: preferenceData, error: preferenceError } = await supabase
-    .from("diary_preferences")
-    .select("user_id, notify_friend_activity")
-    .in("user_id", friends);
+  let optedInFriendIds = [...friends];
+  try {
+    const { data: preferenceData, error: preferenceError } = await supabase
+      .from("diary_preferences")
+      .select("user_id, notify_friend_activity")
+      .in("user_id", friends);
 
-  if (preferenceError) throw preferenceError;
+    if (preferenceError) {
+      throw preferenceError;
+    }
 
-  const optedInFriendIds = ((preferenceData as Array<{ user_id: string; notify_friend_activity: boolean }>) || [])
-    .filter((row) => row.notify_friend_activity)
-    .map((row) => row.user_id);
+    const preferenceMap = new Map<string, boolean>();
+    for (const row of ((preferenceData as Array<{ user_id: string; notify_friend_activity: boolean }>) || [])) {
+      preferenceMap.set(row.user_id, row.notify_friend_activity);
+    }
+
+    // Missing preference row defaults to enabled to avoid silently breaking local/dev environments.
+    optedInFriendIds = friends.filter((friendId) => preferenceMap.get(friendId) !== false);
+  } catch (preferenceLookupError) {
+    console.warn("Falha ao carregar diary_preferences; enviando notificação para todos os amigos aceitos.", preferenceLookupError);
+  }
 
   if (optedInFriendIds.length === 0) return;
+
+  // Format date to DD/MM/YYYY
+  const formattedDate = (() => {
+    const date = new Date(`${watchedDate}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return watchedDate;
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  })();
 
   const payload = optedInFriendIds.map((userId) => ({
     user_id: userId,
     sender_id: senderId,
     type: "movie_added",
-    reference_id: String(tmdbId),
-    message: `registrou um filme no diary em ${watchedDate}.`,
+    message: `registrou um filme no diary em ${formattedDate}.`,
   }));
 
   const { error: notifyError } = await supabase.from("notifications").insert(payload);

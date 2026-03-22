@@ -157,7 +157,7 @@ async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate?: stri
    }
 
    try {
-      await notifyFriendsDiaryActivity(userId, tmdbId, normalizedDate);
+      await notifyFriendsDiaryActivity(userId, normalizedDate);
    } catch (notifyError) {
       console.error("Falha ao notificar amigos sobre watch no diary:", notifyError);
    }

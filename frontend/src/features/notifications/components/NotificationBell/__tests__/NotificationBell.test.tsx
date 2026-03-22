@@ -43,7 +43,7 @@ describe("NotificationBell", () => {
     vi.clearAllMocks();
   });
 
-  it("navigates to /social when clicking movie_added notification", async () => {
+  it("navigates to /social diary tab when clicking movie_added notification", async () => {
     render(<NotificationBell userId="u1" />);
 
     await userEvent.click(screen.getByRole("button"));
@@ -52,6 +52,6 @@ describe("NotificationBell", () => {
     await userEvent.click(notificationMessage.closest("div") || notificationMessage);
 
     expect(markAsReadMock).toHaveBeenCalledWith("n1");
-    expect(navigateMock).toHaveBeenCalledWith("/social");
+    expect(navigateMock).toHaveBeenCalledWith("/social?tab=diary");
   });
 });

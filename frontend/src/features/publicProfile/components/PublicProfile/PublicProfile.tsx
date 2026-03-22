@@ -1,7 +1,7 @@
 import { useState, useEffect} from "react";
-import { useParams, useSearchParams} from "react-router-dom";
+import { useNavigate, useParams, useSearchParams} from "react-router-dom";
 import { Container, Spinner } from "react-bootstrap";
-import { ArrowLeft, UserPlus, UserCheck, Clock, X} from "lucide-react";
+import { ArrowLeft, UserPlus, UserCheck, Clock } from "lucide-react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
 import { MovieCard, MovieModal, AddMovieModal, useMovieFilters } from "@/features/movies";
 import { Dashboard } from "@/features/dashboard";
@@ -13,7 +13,7 @@ import type { MovieData } from "@/types";
 import styles from "./PublicProfile.module.css";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 
-import { useFriendship, FriendsModal} from "@/features/friends"; 
+import { useFriendship } from "@/features/friends"; 
 import { useLists, ListDetails } from "@/features/lists";
 import { toast } from "react-hot-toast";
 
@@ -21,6 +21,7 @@ import { toast } from "react-hot-toast";
 
 
 export function PublicProfile() {
+   const navigate = useNavigate();
    const { username: profileUsername } = useParams<{ username: string }>();
    
    const { movies, loading, error, profileName, profileAvatar, profileId } = usePublicProfile(profileUsername);
@@ -37,15 +38,12 @@ export function PublicProfile() {
 
    const [showLoginModal, setShowLoginModal] = useState(false);
 
-   const { status: friendStatus, loading: friendLoading, sendRequest, acceptRequest, removeOrCancel, rejectRequest } = 
+   const { status: friendStatus, loading: friendLoading, sendRequest } = 
       useFriendship(session?.user.id, profileId ?? undefined);
 
    const [showAddModal, setShowAddModal] = useState(false);
    const [movieToEdit, setMovieToEdit] = useState<MovieData | null>(null);
    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-   const [showFriendsModal, setShowFriendsModal] = useState(false);
-   const [showRemoveFriend, setShowRemoveFriend] = useState(false);
 
 
    const movieIdInUrl = searchParams.get("movie");
@@ -78,24 +76,6 @@ export function PublicProfile() {
       const { success, error } = await sendRequest();
       if (success) toast.success("Pedido enviado!");
       else toast.error(error || "Erro ao enviar pedido.");
-   };
-
-   const handleAcceptRequest = async () => {
-      const { success, error } = await acceptRequest();
-      if (success) toast.success("Pedido aceite! Agora vocês são amigos.");
-      else toast.error(error || "Erro ao aceitar pedido.");
-   };
-
-   const handleRejectRequest = async () => {
-      const { success, error } = await rejectRequest();
-      if (success) toast.success("Pedido recusado.");
-      else toast.error(error || "Erro ao recusar pedido.");
-   };
-
-   const handleRemoveOrCancel = async () => {
-      const { success, error } = await removeOrCancel();
-      if (success) toast.success("Amizade/Pedido desfeito.");
-      else toast.error(error || "Erro ao processar ação.");
    };
 
    useEffect(() => {
@@ -193,23 +173,18 @@ export function PublicProfile() {
                            </button>
                         )}
                         {friendStatus === "request_sent" && (
-                           <button className={styles.pendingBtn} onClick={handleRemoveOrCancel}>
+                           <button className={styles.pendingBtn} type="button" onClick={() => navigate("/social?tab=friends")}>
                               <Clock size={18} /> Pendente
                            </button>
                         )}
                         {friendStatus === "request_received" && (
-                           <div className="d-flex gap-2">
-                              <button className={styles.acceptBtn} onClick={handleAcceptRequest}>
-                                 <UserCheck size={18} /> Aceitar
-                              </button>
-                              <button className={`${styles.pendingBtn} ${styles.rejectFriendBtn}`} onClick={handleRejectRequest}>
-                                 <X size={18} /> Recusar
-                              </button>
-                           </div>
+                           <button className={styles.acceptBtn} onClick={() => navigate("/social?tab=friends") }>
+                              <UserCheck size={18} /> Responder no Social
+                           </button>
                         )}
                         {friendStatus === "friends" && (
-                           <button className={styles.friendsBtn} onClick={() => setShowRemoveFriend(true)}>
-                              <UserCheck size={18} /> Amigos
+                           <button className={styles.friendsBtn} type="button" onClick={() => navigate("/social?tab=friends") }>
+                              <UserCheck size={18} /> Gerenciar no Social
                            </button>
                         )}
                      </>
@@ -439,12 +414,6 @@ export function PublicProfile() {
             onHide={() => setShowLoginModal(false)}
          />
 
-         <FriendsModal 
-            show={showFriendsModal} 
-            onHide={() => setShowFriendsModal(false)} 
-            session={session} 
-         />
-
          <BottomNav
             session={session}
             avatarUrl={loggedInAvatar}
@@ -465,18 +434,6 @@ export function PublicProfile() {
             title="Sair da conta"
             message="Tem certeza que deseja sair? Você precisará fazer login novamente para acessar seus filmes."
             confirmText="Sim, sair"
-         />
-
-         <ConfirmModal
-            show={showRemoveFriend}
-            onHide={() => setShowRemoveFriend(false)}
-            onConfirm={async () => {
-               setShowRemoveFriend(false);
-               await handleRemoveOrCancel();
-            }}
-            title="Desfazer Amizade"
-            message={`Tem certeza que deseja desfazer a amizade com @${profileName}?`}
-            confirmText="Sim, desfazer"
          />
       </div>
    );

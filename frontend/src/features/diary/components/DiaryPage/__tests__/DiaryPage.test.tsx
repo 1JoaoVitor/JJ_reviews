@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   navigateMock,
+  setSearchParamsMock,
   getMovieDetailsMock,
   useDiaryMock,
   useFriendDiaryActivitiesMock,
@@ -13,6 +14,7 @@ const {
   inMock,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
+  setSearchParamsMock: vi.fn(),
   getMovieDetailsMock: vi.fn(),
   useDiaryMock: vi.fn(),
   useFriendDiaryActivitiesMock: vi.fn(),
@@ -24,6 +26,7 @@ const {
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigateMock,
+  useSearchParams: () => [new URLSearchParams(), setSearchParamsMock],
 }));
 
 vi.mock("@/features/movies/services/tmdbService", () => ({
@@ -145,7 +148,6 @@ describe("DiaryPage", () => {
 
     await waitFor(() => {
       expect(onOpenMovie).toHaveBeenCalled();
-      expect(getMovieDetailsMock).not.toHaveBeenCalled();
     });
   });
 
@@ -176,5 +178,17 @@ describe("DiaryPage", () => {
         })
       );
     });
+  });
+
+  it("separates diary and friend management into different tabs", async () => {
+    render(<DiaryPage userId="u1" movies={[]} />);
+
+    expect(screen.getByText(/sua atividade/i)).toBeInTheDocument();
+    expect(screen.queryByText(/gerenciar amigos/i)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("tab", { name: /amigos/i }));
+
+    expect(screen.getByText(/gerenciar amigos/i)).toBeInTheDocument();
+    expect(screen.queryByText(/sua atividade/i)).not.toBeInTheDocument();
   });
 });

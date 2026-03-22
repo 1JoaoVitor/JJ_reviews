@@ -185,4 +185,38 @@ describe("importPersistenceService", () => {
     expect(result.stats.unmatchedDiaryEntries).toBe(1);
     expect(result.stats.conflicts).toBe(2);
   });
+
+  it("collects list movie persistence errors and continues import", async () => {
+    vi.mocked(addMovieToListRecord).mockRejectedValueOnce(new Error("add-movie-failed"));
+
+    const result = await persistImportedData({
+      userId: "user-1",
+      processedData: {
+        fileName: "letterboxd.zip",
+        status: "success",
+        movies: [{ name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" }],
+        diaryEntries: [],
+        lists: [
+          {
+            id: "tmp-list",
+            name: "Sci-Fi",
+            type: "private",
+            movies: [{ name: "The Matrix", year: 1999, tmdbId: 603, status: "watched" }],
+          },
+        ],
+        stats: {
+          totalMovies: 1,
+          totalDiaryEntries: 0,
+          matchedMovies: 1,
+          unmatchedMovies: 0,
+          unmatchedDiaryEntries: 0,
+          totalLists: 1,
+        },
+      },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.errors?.some((message) => message.includes("add-movie-failed"))).toBe(true);
+    expect(createListRecord).toHaveBeenCalledTimes(1);
+  });
 });
