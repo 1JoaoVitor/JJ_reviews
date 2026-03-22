@@ -453,7 +453,6 @@ export function PublicProfile() {
                setShowAddModal(true);
             }}
             onLoginClick={() => setShowLoginModal(true)}
-            onFriendsClick={() => setShowFriendsModal(true)}
          />
 
          <ConfirmModal

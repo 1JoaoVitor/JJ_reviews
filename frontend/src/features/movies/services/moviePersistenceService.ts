@@ -13,6 +13,7 @@ interface PersonalReviewPayload {
    location: string | null;
    status: "watched" | "watchlist";
    attachment_url: string | null;
+   watched_date?: string;
 }
 
 interface FullSharedListReviewPayload {
@@ -115,14 +116,44 @@ export async function upsertPersonalReview(
       ...payload,
    };
 
+   const watchedDate = payload.watched_date;
+   delete (reviewPayload as { watched_date?: string }).watched_date;
+
    if (existingPersonalReview) {
       const { error } = await supabase.from("reviews").update(reviewPayload).eq("id", existingPersonalReview.id);
       if (error) throw error;
+      if (payload.status === "watched") {
+         await saveDiaryEntry(userId, tmdbId, watchedDate);
+      }
       return;
    }
 
    const { error } = await supabase.from("reviews").insert([reviewPayload]);
    if (error) throw error;
+
+   if (payload.status === "watched") {
+      await saveDiaryEntry(userId, tmdbId, watchedDate);
+   }
+}
+
+async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate?: string): Promise<void> {
+   const normalizedDate = watchedDate || new Date().toISOString().slice(0, 10);
+
+   const { error } = await supabase.from("diary_entries").upsert(
+      {
+         user_id: userId,
+         tmdb_id: tmdbId,
+         watched_date: normalizedDate,
+      },
+      {
+         onConflict: "user_id,tmdb_id,watched_date",
+         ignoreDuplicates: true,
+      }
+   );
+
+   if (error) {
+      throw error;
+   }
 }
 
 export async function upsertFullSharedListReview(

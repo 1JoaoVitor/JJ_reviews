@@ -82,6 +82,21 @@ export interface FriendProfile {
   is_requester: boolean; 
 }
 
+export interface DiaryEntry {
+   id: string;
+   user_id: string;
+   tmdb_id: number;
+   watched_date: string;
+   created_at: string;
+}
+
+export interface FriendDiaryActivity extends DiaryEntry {
+   friend_id: string;
+   friend_username: string;
+   friend_avatar_url: string | null;
+   rating: number | null;
+}
+
 
 export interface AppNotification {
    id: string;

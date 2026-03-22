@@ -53,6 +53,7 @@ export function AddMovieModal({
    const [review, setReview] = useState("");
    const [recommended, setRecommended] = useState("Vale a pena assistir");
    const [location, setLocation] = useState("");
+   const [watchedDate, setWatchedDate] = useState(() => new Date().toISOString().slice(0, 10));
    const [saving, setSaving] = useState(false);
    const [formStatus, setFormStatus] = useState<"watched" | "watchlist">("watched");
 
@@ -79,6 +80,7 @@ export function AddMovieModal({
          setReview(movieToEdit.review || "");
          setRecommended(movieToEdit.recommended || "Vale a pena assistir");
          setLocation(movieToEdit.location || "");
+         setWatchedDate(new Date().toISOString().slice(0, 10));
          setFormStatus(movieToEdit.status || "watched");
          
          // Se estiver editando e já tiver uma imagem, mostra o preview
@@ -100,6 +102,7 @@ export function AddMovieModal({
          setReview("");
          setRecommended("Vale a pena assistir");
          setLocation("");
+         setWatchedDate(new Date().toISOString().slice(0, 10));
          setFormStatus("watched");
          setExclusiveToList(false);
          
@@ -220,6 +223,7 @@ export function AddMovieModal({
                runtime: movieRuntime,
                location: formStatus === "watched" ? location : null,
                status: formStatus,
+               watched_date: formStatus === "watched" ? watchedDate : undefined,
                attachment_url: formStatus === "watched" ? finalAttachmentUrl : null, // 👈 Anexo aqui!
             });
          }
@@ -420,6 +424,15 @@ export function AddMovieModal({
                               <option value="Cinemark" />
                               <option value="Cinépolis" />
                            </datalist>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                           <Form.Label className={styles.formLabel}>Quando Assistiu?</Form.Label>
+                           <Form.Control
+                              type="date"
+                              value={watchedDate}
+                              onChange={(event) => setWatchedDate(event.target.value)}
+                           />
                         </Form.Group>
 
                         <Form.Group className="mb-3">

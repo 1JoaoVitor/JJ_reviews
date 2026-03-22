@@ -28,6 +28,7 @@ import { useLists, CreateListModal, ListDetails } from "@/features/lists";
 import { BottomNav } from "@/components/layout/BottomNav/BottomNav";
 import { ConfirmModal } from "@/components/ui/ConfirmModal/ConfirmModal";
 import { SupportPage } from "@/features/support";
+import { DiaryPage } from "@/features/diary";
 
 // ─── Layout & UI ───
 import { AppNavbar } from "@/components/layout/AppNavbar/AppNavbar";
@@ -48,6 +49,7 @@ export default function App() {
       <Routes>
          <Route path="/" element={<MainApp />} />
          <Route path="/jogos" element={<MainApp />} />
+         <Route path="/diary" element={<MainApp />} />
          <Route path="/batalha" element={<Navigate to="/jogos" replace />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
@@ -61,6 +63,7 @@ export default function App() {
 function MainApp() {
    const location = useLocation();
    const isGamesPage = location.pathname === "/jogos";
+   const isDiaryPage = location.pathname === "/diary";
    
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
@@ -147,6 +150,7 @@ function MainApp() {
          />
 
          {session && (
+            !isDiaryPage && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
                   <button className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("watched")}>Assistidos</button>
@@ -154,10 +158,12 @@ function MainApp() {
                   <button className={`${styles.mobileTab} ${filters.viewMode === "lists" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("lists")}>Listas</button>
                </div>
             </div>
+            )
          )}
          
          <Container className="px-4 pb-5">
             {session && (
+               !isDiaryPage && (
                <>
                {!isPageLoading && !filters.searchTerm &&
                <Dashboard 
@@ -211,6 +217,7 @@ function MainApp() {
                   </div>
                </div>
                </>
+               )
             )}
 
             {isPageLoading && movies.length === 0 ? (
@@ -219,6 +226,8 @@ function MainApp() {
                </div>
             ) : !session ? (
                <LandingPage onLoginClick={() => modals.setShowLoginModal(true)} />
+            ) : isDiaryPage ? (
+               <DiaryPage userId={session.user.id} movies={movies} />
             ) : filters.viewMode === "lists" ? (
                modals.selectedList ? (
                   <ListDetails
@@ -326,7 +335,6 @@ function MainApp() {
             avatarUrl={avatarUrl}
             onAddClick={() => modals.openAddMovie(null, "")}
             onLoginClick={() => modals.setShowLoginModal(true)}
-            onFriendsClick={() => modals.setShowFriendsModal(true)}
          />
       </div>
    );

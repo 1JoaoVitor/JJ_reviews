@@ -1,4 +1,4 @@
-   import { Home, Plus, User, LogIn, Users, Gamepad2 } from "lucide-react";
+   import { Home, Plus, User, LogIn, CalendarDays, Gamepad2 } from "lucide-react";
    import { useNavigate } from "react-router-dom";
    import type { Session } from "@supabase/supabase-js";
    import styles from "./BottomNav.module.css";
@@ -8,7 +8,6 @@
       avatarUrl?: string | null;
       onAddClick: () => void;
       onLoginClick: () => void;
-      onFriendsClick: () => void;
    }
 
    export function BottomNav({
@@ -16,7 +15,6 @@
       avatarUrl,
       onAddClick,
       onLoginClick,
-      onFriendsClick,
    }: BottomNavProps) {
 
       const navigate = useNavigate();
@@ -41,9 +39,9 @@
 
             {session ? (
                <>
-                  <button className={styles.navItem} onClick={onFriendsClick}>
-                     <Users size={22} />
-                     <span>Amigos</span>
+                  <button className={styles.navItem} onClick={() => navigate("/diary")}>
+                     <CalendarDays size={22} />
+                     <span>Diary</span>
                   </button>
 
                   <button className={styles.navItem} onClick={() => navigate("/perfil")}>
