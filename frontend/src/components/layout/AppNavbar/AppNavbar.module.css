@@ -51,17 +51,28 @@
 
 /* Search */
 .searchWrapper {
-   flex: 1;
-   min-width: 0;
-   max-width: 400px;
-   margin: 0 auto;
+   display: none;
+}
+
+.searchOpen {
+   display: block;
+   position: absolute;
+   right: 1.25rem;
+   top: 50%;
+   transform: translateY(-50%);
+   width: min(380px, calc(100% - 340px));
+   z-index: 6;
 }
 
 .searchRow {
-   position: relative;
    display: flex;
-   gap: 0.5rem;
+   align-items: center;
    width: 100%;
+   background: var(--bg-surface);
+   border: 1px solid var(--border-subtle);
+   border-radius: var(--radius-pill);
+   padding: 0.25rem;
+   box-shadow: var(--shadow-lg);
 }
 
 .searchInputWrap {
@@ -72,10 +83,10 @@
 
 .searchInput {
    width: 100%;
-   background-color: var(--bg-elevated) !important;
-   border: 1px solid var(--border-subtle) !important;
+   background-color: transparent !important;
+   border: none !important;
    border-radius: var(--radius-pill) !important;
-   padding: 0.5rem 1rem 0.5rem 2.5rem;
+   padding: 0.4rem 0.8rem 0.4rem 2.2rem;
    color: var(--text-primary) !important;
    font-size: var(--font-sm);
    text-overflow: ellipsis;
@@ -83,8 +94,7 @@
 }
 
 .searchInput:focus {
-   border-color: var(--gold) !important;
-   box-shadow: 0 0 0 3px var(--gold-glow) !important;
+   box-shadow: none !important;
 }
 
 .searchIcon {
@@ -323,6 +333,19 @@
    background: var(--gold-soft-bg);
 }
 
+.iconBtnActive {
+   border-color: var(--gold);
+   color: var(--gold);
+   background: var(--gold-soft-bg);
+}
+
+.mobileHeaderActions {
+   display: none;
+   align-items: center;
+   gap: 0.35rem;
+   margin-left: auto;
+}
+
 /* Primary CTA button (gold) */
 .btnPrimary {
    display: inline-flex;
@@ -377,10 +400,25 @@
    .topRow {
       padding: 0.6rem 0.75rem;
       gap: 0.5rem;
+      position: relative;
    }
 
    .searchWrapper {
-      max-width: none;
+      width: auto;
+   }
+
+   .searchOpen {
+      right: 8rem;
+      left: 3rem;
+      width: auto;
+   }
+
+   .searchRow {
+      padding: 0.2rem;
+   }
+
+   .mobileHeaderActions {
+      display: inline-flex;
    }
 
    .brandText {

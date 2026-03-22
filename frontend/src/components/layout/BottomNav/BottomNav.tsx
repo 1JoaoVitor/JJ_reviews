@@ -1,4 +1,4 @@
-   import { Home, Plus, User, LogIn, CalendarDays, Gamepad2, Sparkles } from "lucide-react";
+   import { Home, Plus, User, LogIn, CalendarDays, Gamepad2 } from "lucide-react";
    import { useNavigate } from "react-router-dom";
    import type { Session } from "@supabase/supabase-js";
    import styles from "./BottomNav.module.css";
@@ -42,11 +42,6 @@
                   <button className={styles.navItem} onClick={() => navigate("/social")}>
                      <CalendarDays size={22} />
                      <span>Social</span>
-                  </button>
-
-                  <button className={styles.navItem} onClick={() => navigate("/recomendacoes")}>
-                     <Sparkles size={22} />
-                     <span>Sugestoes</span>
                   </button>
 
                   <button className={styles.navItem} onClick={() => navigate("/perfil")}>

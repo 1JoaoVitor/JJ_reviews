@@ -55,6 +55,7 @@ export function AppNavbar({
 
    const navigate = useNavigate();
    const [isFiltersOpen, setIsFiltersOpen] = useState(false); 
+   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
    const sortOptions: Record<string, string> = {
       default: "Recentes",
@@ -75,7 +76,7 @@ export function AppNavbar({
             </Link>
 
             {/* BUSCA + FILTRO */}
-            <div className={styles.searchWrapper}>
+            <div className={`${styles.searchWrapper} ${isSearchOpen ? styles.searchOpen : ""}`}>
                <div className={styles.searchRow}>
                   <div className={styles.searchInputWrap}>
                      <Search size={16} className={styles.searchIcon} />
@@ -85,23 +86,48 @@ export function AppNavbar({
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className={styles.searchInput}
+                        autoFocus={isSearchOpen}
                      />
                   </div>
-                  
+               </div>
+            </div>
+
+            {session && (showFilters || !!onRecommendationsClick) && (
+               <div className={styles.mobileHeaderActions}>
                   {showFilters && (
                      <button
                         type="button"
-                        onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                        className={`${styles.filterToggleBtn} ${isFiltersOpen ? styles.filterToggleBtnActive : ""}`}
+                        className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                        onClick={() => setIsSearchOpen((prev) => !prev)}
+                        title="Buscar"
                      >
-                        <Filter size={16} />
-                        <span className={`d-none d-lg-inline ${styles.filterToggleText}`}>
-                           Filtros
-                        </span>
+                        <Search size={18} />
+                     </button>
+                  )}
+
+                  {showFilters && (
+                     <button
+                        type="button"
+                        className={`${styles.iconBtn} ${isFiltersOpen ? styles.iconBtnActive : ""}`}
+                        onClick={() => setIsFiltersOpen((prev) => !prev)}
+                        title="Filtros"
+                     >
+                        <Filter size={18} />
+                     </button>
+                  )}
+
+                  {onRecommendationsClick && (
+                     <button
+                        type="button"
+                        className={styles.iconBtn}
+                        onClick={onRecommendationsClick}
+                        title="Recomendar"
+                     >
+                        <Sparkles size={18} />
                      </button>
                   )}
                </div>
-            </div>
+            )}
 
             {/*AÇÕES DO USUÁRIO */}
             <div className={styles.userActions}>
@@ -111,6 +137,28 @@ export function AppNavbar({
 
                      {/* ELEMENTOS EXCLUSIVOS DO DESKTOP */}
                      <div className="d-none d-md-flex align-items-center gap-2">
+                        {showFilters && (
+                           <button
+                              type="button"
+                              className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                              onClick={() => setIsSearchOpen((prev) => !prev)}
+                              title="Buscar"
+                           >
+                              <Search size={18} />
+                           </button>
+                        )}
+
+                        {showFilters && (
+                           <button
+                              type="button"
+                              className={`${styles.iconBtn} ${isFiltersOpen ? styles.iconBtnActive : ""}`}
+                              onClick={() => setIsFiltersOpen((prev) => !prev)}
+                              title="Filtros"
+                           >
+                              <Filter size={18} />
+                           </button>
+                        )}
+
                         {showBattle && (
                            <button
                               className={styles.iconBtn}
@@ -129,7 +177,7 @@ export function AppNavbar({
                         )}
 
                         {onRecommendationsClick && (
-                           <button onClick={onRecommendationsClick} className={styles.friendsBtn} title="Recomendacoes">
+                           <button onClick={onRecommendationsClick} className={styles.friendsBtn} title="Recomendar">
                               <Sparkles size={20} />
                               Recomendar
                            </button>

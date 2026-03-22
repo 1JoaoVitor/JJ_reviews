@@ -18,10 +18,16 @@ export interface RecommendationItem {
    reasons: string[];
 }
 
+export interface RecommendationFeedbackProfile {
+   genreAdjustments: Record<number, number>;
+   dislikedMovieIds: number[];
+}
+
 interface RecommendationProfile {
    favoriteGenreIds: number[];
    favoriteGenreLabels: string[];
    genreWeights: Map<number, number>;
+   decadeWeights: Map<number, number>;
    ratedMoviesCount: number;
 }
 
@@ -93,17 +99,48 @@ function normalizeGenreName(value: string): string {
       .replace(/[^a-z]/g, "");
 }
 
-function toWeight(rating?: number | null): number {
-   if (typeof rating !== "number") {
-      return 1;
-   }
-
-   return Math.max(0.5, rating - 1.5);
+export function getGenreIdFromLabel(label: string): number | null {
+   return GENRE_LABEL_TO_ID[normalizeGenreName(label)] || null;
 }
 
-function buildProfile(movies: MovieData[]): RecommendationProfile {
+export function getGenreLabelFromId(genreId: number): string {
+   return GENRE_ID_TO_LABEL[genreId] || "Genero";
+}
+
+function toWeight(rating?: number | null): number {
+   if (typeof rating !== "number") {
+      return 0.25;
+   }
+
+   // Nota do usuario direciona o perfil: >=4 fortalece genero, <=2.5 enfraquece.
+   if (rating >= 4) {
+      return (rating - 3) * 2;
+   }
+
+   if (rating <= 2.5) {
+      return (rating - 3) * 2;
+   }
+
+   return 0;
+}
+
+function getDecadeFromReleaseDate(releaseDate?: string): number | null {
+   if (!releaseDate) {
+      return null;
+   }
+
+   const year = Number(releaseDate.split("-")[0]);
+   if (Number.isNaN(year) || year < 1900) {
+      return null;
+   }
+
+   return Math.floor(year / 10) * 10;
+}
+
+function buildProfile(movies: MovieData[], feedback?: RecommendationFeedbackProfile): RecommendationProfile {
    const ratedMovies = movies.filter((movie) => movie.status === "watched");
    const genreWeights = new Map<number, number>();
+   const decadeWeights = new Map<number, number>();
 
    for (const movie of ratedMovies) {
       const weight = toWeight(movie.rating);
@@ -116,6 +153,22 @@ function buildProfile(movies: MovieData[]): RecommendationProfile {
 
          genreWeights.set(genreId, (genreWeights.get(genreId) ?? 0) + weight);
       }
+
+      const decade = getDecadeFromReleaseDate(movie.release_date);
+      if (decade) {
+         decadeWeights.set(decade, (decadeWeights.get(decade) ?? 0) + weight);
+      }
+   }
+
+   if (feedback?.genreAdjustments) {
+      for (const [genreIdRaw, adjustment] of Object.entries(feedback.genreAdjustments)) {
+         const genreId = Number(genreIdRaw);
+         if (Number.isNaN(genreId) || typeof adjustment !== "number") {
+            continue;
+         }
+
+         genreWeights.set(genreId, (genreWeights.get(genreId) ?? 0) + adjustment);
+      }
    }
 
    const sortedGenres = Array.from(genreWeights.entries())
@@ -125,8 +178,9 @@ function buildProfile(movies: MovieData[]): RecommendationProfile {
 
    return {
       favoriteGenreIds: sortedGenres,
-      favoriteGenreLabels: sortedGenres.map((genreId) => GENRE_ID_TO_LABEL[genreId] || "Genero"),
+      favoriteGenreLabels: sortedGenres.map((genreId) => getGenreLabelFromId(genreId)),
       genreWeights,
+      decadeWeights,
       ratedMoviesCount: ratedMovies.length,
    };
 }
@@ -145,7 +199,7 @@ function toRecommendedMovie(item: DiscoverCandidate): MovieData {
       overview: item.overview || undefined,
       director: "Nao informado",
       status: "watchlist",
-      genres: (item.genre_ids || []).map((genreId) => GENRE_ID_TO_LABEL[genreId]).filter(Boolean) as string[],
+      genres: (item.genre_ids || []).map((genreId) => getGenreLabelFromId(genreId)),
       countries: [],
       cast: [],
    };
@@ -155,7 +209,7 @@ function buildReasons(item: DiscoverCandidate, profile: RecommendationProfile): 
    const reasons: string[] = [];
    const matchedGenres = (item.genre_ids || [])
       .filter((genreId) => profile.favoriteGenreIds.includes(genreId))
-      .map((genreId) => GENRE_ID_TO_LABEL[genreId])
+      .map((genreId) => getGenreLabelFromId(genreId))
       .filter(Boolean)
       .slice(0, 2);
 
@@ -183,10 +237,13 @@ function buildReasons(item: DiscoverCandidate, profile: RecommendationProfile): 
 
 function scoreCandidate(item: DiscoverCandidate, profile: RecommendationProfile): number {
    const genreScore = (item.genre_ids || []).reduce((sum, genreId) => sum + (profile.genreWeights.get(genreId) ?? 0), 0);
+   const candidateDecade = getDecadeFromReleaseDate(item.release_date);
+   const decadeScore = candidateDecade ? (profile.decadeWeights.get(candidateDecade) ?? 0) : 0;
    const ratingScore = typeof item.vote_average === "number" ? item.vote_average : 0;
-   const confidenceScore = typeof item.vote_count === "number" ? Math.min(item.vote_count / 1000, 2) : 0;
+   const confidenceScore = typeof item.vote_count === "number" ? Math.min(item.vote_count / 2000, 1) : 0;
 
-   return genreScore * 1.4 + ratingScore + confidenceScore;
+   // Predominantemente perfil do usuario; TMDB serve apenas como desempate leve.
+   return genreScore * 2.4 + decadeScore * 1.2 + ratingScore * 0.35 + confidenceScore * 0.2;
 }
 
 async function fetchCandidatePool(profile: RecommendationProfile): Promise<DiscoverCandidate[]> {
@@ -208,15 +265,21 @@ async function fetchCandidatePool(profile: RecommendationProfile): Promise<Disco
    return results.flat();
 }
 
-export async function getPersonalizedRecommendations(movies: MovieData[], limit = 20): Promise<RecommendationItem[]> {
+export async function getPersonalizedRecommendations(
+   movies: MovieData[],
+   limit = 20,
+   feedback?: RecommendationFeedbackProfile,
+): Promise<RecommendationItem[]> {
    const knownMovieIds = new Set(movies.map((movie) => movie.tmdb_id));
-   const profile = buildProfile(movies);
+   const profile = buildProfile(movies, feedback);
    const candidates = await fetchCandidatePool(profile);
+   const dislikedMovieIds = new Set(feedback?.dislikedMovieIds || []);
 
    const uniqueCandidates = candidates.filter(
       (candidate, index, arr) =>
          candidate.id > 0 &&
          !knownMovieIds.has(candidate.id) &&
+         !dislikedMovieIds.has(candidate.id) &&
          arr.findIndex((other) => other.id === candidate.id) === index,
    );
 
@@ -240,6 +303,6 @@ export async function getPersonalizedRecommendations(movies: MovieData[], limit 
    return ranked;
 }
 
-export function getFavoriteGenreLabels(movies: MovieData[]): string[] {
-   return buildProfile(movies).favoriteGenreLabels;
+export function getFavoriteGenreLabels(movies: MovieData[], feedback?: RecommendationFeedbackProfile): string[] {
+   return buildProfile(movies, feedback).favoriteGenreLabels;
 }

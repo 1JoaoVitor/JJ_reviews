@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Container } from "react-bootstrap";
 import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Dices, Plus} from "lucide-react";
+import { Dices, Plus } from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // ─── Features ───
