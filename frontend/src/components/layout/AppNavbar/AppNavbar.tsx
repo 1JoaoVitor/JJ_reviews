@@ -26,7 +26,7 @@ interface AppNavbarProps {
    avatarUrl?: string | null;
    showFilters?: boolean;
    showBattle?: boolean;
-   onFriendsClick?: () => void;
+   onSocialClick?: () => void;
 }
 
 export function AppNavbar({
@@ -48,7 +48,7 @@ export function AppNavbar({
    avatarUrl,
    showFilters = true,
    showBattle = true,
-   onFriendsClick,
+   onSocialClick,
 }: AppNavbarProps) {
 
    const navigate = useNavigate();
@@ -119,10 +119,10 @@ export function AppNavbar({
                            </button>
                         )}
 
-                        {onFriendsClick && (
-                           <button onClick={onFriendsClick} className={styles.friendsBtn} title="Central de Amigos">
+                        {onSocialClick && (
+                           <button onClick={onSocialClick} className={styles.friendsBtn} title="Social">
                               <Users size={20} />
-                              Amigos
+                              Social
                            </button>
                         )}
 

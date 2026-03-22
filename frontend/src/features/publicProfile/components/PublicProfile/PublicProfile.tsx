@@ -132,7 +132,7 @@ export function PublicProfile() {
             onLogout={() => setShowLogoutConfirm(true)}
             username={loggedInUsername}
             avatarUrl={loggedInAvatar}
-            onFriendsClick={() => setShowFriendsModal(true)}
+            onSocialClick={() => navigate("/social")}
          />
 
          {/* Mobile tabs */}

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Container } from "react-bootstrap";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { Dices, Plus} from "lucide-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -49,7 +49,8 @@ export default function App() {
       <Routes>
          <Route path="/" element={<MainApp />} />
          <Route path="/jogos" element={<MainApp />} />
-         <Route path="/diary" element={<MainApp />} />
+         <Route path="/social" element={<MainApp />} />
+         <Route path="/diary" element={<Navigate to="/social" replace />} />
          <Route path="/batalha" element={<Navigate to="/jogos" replace />} />
          <Route path="/perfil/:username" element={<PublicProfile />} />
          <Route path="/reset-password" element={<ResetPassword />} />
@@ -61,9 +62,10 @@ export default function App() {
 }
 
 function MainApp() {
+   const navigate = useNavigate();
    const location = useLocation();
    const isGamesPage = location.pathname === "/jogos";
-   const isDiaryPage = location.pathname === "/diary";
+   const isSocialPage = location.pathname === "/social";
    
    // Core Hooks
    const { session, username, avatarUrl, logout, loading: authLoading } = useAuth();
@@ -146,11 +148,13 @@ function MainApp() {
             avatarUrl={avatarUrl}
             showFilters={!!session} 
             showBattle={!!session}
-            onFriendsClick={() => modals.setShowFriendsModal(true)}
+            onSocialClick={() => {
+               navigate("/social");
+            }}
          />
 
          {session && (
-            !isDiaryPage && (
+            !isSocialPage && (
             <div className={`d-md-none ${styles.mobileTabsWrapper}`}>
                <div className={styles.mobileTabsInner}>
                   <button className={`${styles.mobileTab} ${filters.viewMode === "watched" ? styles.mobileTabActive : ""}`} onClick={() => filters.setViewMode("watched")}>Assistidos</button>
@@ -163,7 +167,7 @@ function MainApp() {
          
          <Container className="px-4 pb-5">
             {session && (
-               !isDiaryPage && (
+               !isSocialPage && (
                <>
                {!isPageLoading && !filters.searchTerm &&
                <Dashboard 
@@ -226,8 +230,8 @@ function MainApp() {
                </div>
             ) : !session ? (
                <LandingPage onLoginClick={() => modals.setShowLoginModal(true)} />
-            ) : isDiaryPage ? (
-               <DiaryPage userId={session.user.id} movies={movies} />
+            ) : isSocialPage ? (
+               <DiaryPage userId={session.user.id} movies={movies} onOpenMovie={handleOpenModal} />
             ) : filters.viewMode === "lists" ? (
                modals.selectedList ? (
                   <ListDetails

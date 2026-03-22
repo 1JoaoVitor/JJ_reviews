@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { notifyFriendsDiaryActivity } from "@/features/diary/services/diaryService";
 
 interface ExistingProfileReview {
    id: string;
@@ -153,6 +154,12 @@ async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate?: stri
 
    if (error) {
       throw error;
+   }
+
+   try {
+      await notifyFriendsDiaryActivity(userId, tmdbId, normalizedDate);
+   } catch (notifyError) {
+      console.error("Falha ao notificar amigos sobre watch no diary:", notifyError);
    }
 }
 

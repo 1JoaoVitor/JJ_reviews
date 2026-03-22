@@ -46,7 +46,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             navigate(`/?aba=lists`);
          }
       } else if (notif.type === "movie_added") {
-         navigate(`/?aba=lists`);
+         navigate(`/social`);
       } else if (notif.type === "friend_request") {
          if (notif.sender?.username) {
             navigate(`/perfil/${notif.sender.username}`);

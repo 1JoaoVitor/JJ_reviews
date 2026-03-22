@@ -39,9 +39,9 @@
 
             {session ? (
                <>
-                  <button className={styles.navItem} onClick={() => navigate("/diary")}>
+                  <button className={styles.navItem} onClick={() => navigate("/social")}>
                      <CalendarDays size={22} />
-                     <span>Diary</span>
+                     <span>Social</span>
                   </button>
 
                   <button className={styles.navItem} onClick={() => navigate("/perfil")}>

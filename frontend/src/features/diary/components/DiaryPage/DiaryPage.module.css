@@ -26,6 +26,8 @@
 .headerActions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .refreshBtn,
@@ -42,6 +44,14 @@
   gap: 0.35rem;
 }
 
+.desktopText {
+  display: inline;
+}
+
+.mobileText {
+  display: none;
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -53,6 +63,10 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 0.9rem;
+}
+
+.panelWide {
+  grid-column: 1 / -1;
 }
 
 .panelHeader {
@@ -144,6 +158,159 @@
   justify-content: center;
 }
 
+.friendSearchRow {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.friendSearchInputWrap {
+  position: relative;
+  flex: 1;
+}
+
+.friendSearchIcon {
+  position: absolute;
+  left: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.friendSearchInput {
+  width: 100%;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem 0.5rem 2rem;
+  font-size: 0.85rem;
+}
+
+.friendSearchButton {
+  border: none;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--bg-page);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.5rem 0.9rem;
+}
+
+.friendSearchButton:disabled {
+  opacity: 0.6;
+}
+
+.friendSection {
+  margin-top: 0.8rem;
+}
+
+.friendSectionTitle {
+  display: inline-block;
+  margin-bottom: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.friendList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.friendItem {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.friendProfileBtn {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0;
+}
+
+.friendAvatar,
+.friendAvatarFallback {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.friendAvatar {
+  object-fit: cover;
+}
+
+.friendAvatarFallback {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.friendName {
+  color: var(--text-primary);
+  font-size: 0.87rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.friendActionGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.friendActionBtn,
+.friendActionBtnMuted {
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 0.32rem 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.friendActionBtn {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.friendBadge,
+.friendBadgeMuted {
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.friendBadge {
+  color: var(--success, #10b981);
+}
+
+.friendBadgeMuted {
+  color: var(--text-muted);
+}
+
 .error {
   color: var(--danger, #ef4444);
   font-size: 0.85rem;
@@ -157,5 +324,68 @@
 @media (min-width: 992px) {
   .grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerActions {
+    justify-content: flex-start;
+  }
+
+  .desktopText {
+    display: none;
+  }
+
+  .mobileText {
+    display: inline;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .item {
+    grid-template-columns: 50px 1fr auto;
+  }
+
+  .poster,
+  .posterFallback {
+    width: 50px;
+    height: 74px;
+  }
+
+  .itemTitle {
+    font-size: 0.88rem;
+  }
+
+  .meta {
+    font-size: 0.75rem;
+  }
+
+  .friendSearchRow {
+    flex-direction: column;
+  }
+
+  .friendSearchButton {
+    width: 100%;
+  }
+
+  .friendItem {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .friendActionGroup {
+    width: 100%;
+    justify-content: flex-start;
   }
 }

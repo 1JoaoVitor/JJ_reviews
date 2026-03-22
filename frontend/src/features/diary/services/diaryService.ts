@@ -73,6 +73,53 @@ export async function saveDiaryEntry(userId: string, tmdbId: number, watchedDate
   );
 
   if (error) throw error;
+
+  try {
+    await notifyFriendsDiaryActivity(userId, tmdbId, watchedDate);
+  } catch (notifyError) {
+    console.error("Falha ao notificar amigos sobre atividade no diary:", notifyError);
+  }
+}
+
+export async function notifyFriendsDiaryActivity(
+  senderId: string,
+  tmdbId: number,
+  watchedDate: string
+): Promise<void> {
+  const { data: friendshipData, error: friendshipError } = await supabase
+    .from("friendships")
+    .select("requester_id, receiver_id")
+    .eq("status", "accepted")
+    .or(`requester_id.eq.${senderId},receiver_id.eq.${senderId}`);
+
+  if (friendshipError) throw friendshipError;
+
+  const friends = buildFriendIds(senderId, (friendshipData as FriendshipRow[]) || []);
+  if (friends.length === 0) return;
+
+  const { data: preferenceData, error: preferenceError } = await supabase
+    .from("diary_preferences")
+    .select("user_id, notify_friend_activity")
+    .in("user_id", friends);
+
+  if (preferenceError) throw preferenceError;
+
+  const optedInFriendIds = ((preferenceData as Array<{ user_id: string; notify_friend_activity: boolean }>) || [])
+    .filter((row) => row.notify_friend_activity)
+    .map((row) => row.user_id);
+
+  if (optedInFriendIds.length === 0) return;
+
+  const payload = optedInFriendIds.map((userId) => ({
+    user_id: userId,
+    sender_id: senderId,
+    type: "movie_added",
+    reference_id: String(tmdbId),
+    message: `registrou um filme no diary em ${watchedDate}.`,
+  }));
+
+  const { error: notifyError } = await supabase.from("notifications").insert(payload);
+  if (notifyError) throw notifyError;
 }
 
 export async function deleteDiaryEntry(userId: string, entryId: string): Promise<void> {
