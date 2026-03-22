@@ -547,17 +547,19 @@ export function AddMovieModal({
             )}
          </Modal.Body>
 
-         <Modal.Footer className="border-0">
+         <Modal.Footer className={`border-0 ${styles.modalFooter}`}>
             {step === "form" && !movieToEdit && (
                <button className={styles.backBtn} onClick={() => setStep("search")}>
                   <ArrowLeft size={16} /> Buscar Outro
                </button>
             )}
             
-            <div className="ms-auto d-flex gap-2 align-items-center">
-               <button className={styles.closeBtn} onClick={onHide}>
-                  Cancelar
-               </button>
+            <div className={styles.footerActions}>
+               {step === "form" && (
+                  <button className={styles.closeBtn} onClick={onHide}>
+                     Cancelar
+                  </button>
+               )}
                
                {step === "form" && !movieToEdit && (
                   <button 
@@ -566,7 +568,7 @@ export function AddMovieModal({
                      disabled={saving}
                      title="Salva este filme e volta para buscar o próximo"
                   >
-                     {saving ? "..." : "Salvar e Adicionar Outro"}
+                     {saving ? "..." : "Salvar + Outro"}
                   </button>
                )}
                

@@ -256,4 +256,38 @@ describe("importTransformationService", () => {
     expect(result.movies).toHaveLength(0);
     expect(result.diaryEntries).toHaveLength(0);
   });
+
+  it("should drop list when all its movies are unmatched and skipUnmatchedMovies is true", async () => {
+    vi.mocked(batchMatchMovies).mockResolvedValue({
+      successful: 0,
+      failed: 1,
+      cacheHits: 0,
+      results: new Map([
+        ["unknown in list|2024", { query: "Unknown In List (2024)", matched: false, confidence: 0 }],
+      ]),
+    });
+
+    const result = await transformImportData({
+      fileName: "lists.csv",
+      settings: {
+        ...defaultSettings,
+        skipUnmatchedMovies: true,
+      },
+      data: {
+        watched: [],
+        ratings: [],
+        reviews: [],
+        watchlist: [],
+        lists: [
+          {
+            date: "2024-01-01",
+            name: "Only Unmatched",
+            movies: [{ position: 1, name: "Unknown In List", year: 2024 }],
+          },
+        ],
+      },
+    });
+
+    expect(result.lists).toHaveLength(0);
+  });
 });

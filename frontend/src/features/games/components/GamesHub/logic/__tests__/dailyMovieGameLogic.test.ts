@@ -149,6 +149,116 @@ describe("dailyMovieGameLogic", () => {
     expect(pickDeterministicMovie([10, 20, 30], 4)).toBe(20);
   });
 
+  it("parseYear with short date returns undefined", () => {
+    const profile1 = toMovieProfileFromApp(makeMovie({ release_date: "20" }));
+    const profile2 = toMovieProfileFromApp(makeMovie({ release_date: "" }));
+    const profile3 = toMovieProfileFromApp(makeMovie({ release_date: undefined }));
+
+    expect(profile1.releaseYear).toBeUndefined();
+    expect(profile2.releaseYear).toBeUndefined();
+    expect(profile3.releaseYear).toBeUndefined();
+  });
+
+  it("toMovieProfileFromApp with minimal cast array", () => {
+    const profile = toMovieProfileFromApp(makeMovie({ cast: ["A"] }));
+    expect(profile.cast).toEqual(["A"]);
+  });
+
+  it("toMovieProfileFromTmdb with empty credits array", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 42,
+      title: "Test",
+      credits: {
+        crew: [],
+        cast: [],
+      },
+    });
+
+    expect(profile.director).toBeUndefined();
+    expect(profile.cast).toEqual([]);
+  });
+
+  it("toMovieProfileFromTmdb with missing credentials object", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 42,
+      title: "Test",
+      credits: undefined,
+    });
+
+    expect(profile.director).toBeUndefined();
+    expect(profile.cast).toEqual([]);
+  });
+
+  it("toMovieProfileFromTmdb with undefined credits", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 42,
+      title: "Test",
+      credits: undefined,
+    });
+
+    expect(profile.director).toBeUndefined();
+    expect(profile.cast).toEqual([]);
+  });
+
+  it("getListLabel with empty array returns Nao informado", () => {
+    expect(getListLabel([])).toBe("Nao informado");
+    expect(getListLabel(["A", "B"])).toBe("A, B");
+  });
+
+  it("parseYear handles string length exactly 4", () => {
+    const profile = toMovieProfileFromApp(makeMovie({ release_date: "2020" }));
+    expect(profile.releaseYear).toBe(2020);
+  });
+
+  it("toMovieProfileFromApp with single cast member", () => {
+    const profile = toMovieProfileFromApp(makeMovie({ cast: ["Solo"] }));
+    expect(profile.cast).toEqual(["Solo"]);
+    expect(profile.cast.length).toBe(1);
+  });
+
+  it("toMovieProfileFromApp with 6 cast members returns only 5", () => {
+    const profile = toMovieProfileFromApp(makeMovie({ cast: ["A", "B", "C", "D", "E", "F"] }));
+    expect(profile.cast.length).toBe(5);
+    expect(profile.cast).toEqual(["A", "B", "C", "D", "E"]);
+  });
+
+  it("toMovieProfileFromTmdb with crew array has Array.isArray true condition", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 1,
+      credits: {
+        crew: [{ job: "Director", name: "Christopher Nolan" }],
+        cast: [],
+      },
+    });
+
+    expect(profile.director).toBe("Christopher Nolan");
+  });
+
+  it("toMovieProfileFromTmdb crew with no director still filters", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 1,
+      credits: {
+        crew: [{ job: "Producer", name: "Producer Name" }, { job: "Writer", name: "Writer Name" }],
+        cast: [],
+      },
+    });
+
+    expect(profile.director).toBeUndefined();
+  });
+
+  it("toMovieProfileFromTmdb cast map and filter chain", () => {
+    const profile = toMovieProfileFromTmdb({
+      id: 1,
+      credits: {
+        crew: [],
+        cast: [{ name: "A" }, { name: "" }, { name: "B" }, { name: "C" }, { name: "D" }, { name: "E" }],
+      },
+    });
+
+    expect(profile.cast.filter((x) => x).length).toBeGreaterThan(0);
+    expect(profile.cast.length).toBeLessThanOrEqual(5);
+  });
+
   it("getListLabel monta texto ou fallback", () => {
     expect(getListLabel(["A", "B"])).toBe("A, B");
     expect(getListLabel([])).toBe("Nao informado");

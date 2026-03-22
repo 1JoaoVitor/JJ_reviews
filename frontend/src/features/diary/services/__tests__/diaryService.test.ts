@@ -143,6 +143,75 @@ describe("diaryService", () => {
     warnSpy.mockRestore();
   });
 
+  it("notifyFriendsDiaryActivity retorna sem inserir quando nao ha amigos", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({ data: [], error: null });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+    const insertMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "notifications") return { insert: insertMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(notifyFriendsDiaryActivity("sender", "2026-03-22")).resolves.toBeUndefined();
+
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("notifyFriendsDiaryActivity retorna sem inserir quando todos estao opt-out", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "sender", receiver_id: "friend-off" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({
+      data: [{ user_id: "friend-off", notify_friend_activity: false }],
+      error: null,
+    });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+    const insertMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "notifications") return { insert: insertMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(notifyFriendsDiaryActivity("sender", "2026-03-22")).resolves.toBeUndefined();
+
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it("notifyFriendsDiaryActivity usa data original quando formato e invalido", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "sender", receiver_id: "friend-on" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({ data: [], error: null });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+    const insertMock = vi.fn().mockResolvedValue({ error: null });
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "notifications") return { insert: insertMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(notifyFriendsDiaryActivity("sender", "2026-99-99")).resolves.toBeUndefined();
+
+    const payload = insertMock.mock.calls[0][0] as Array<{ message: string }>;
+    expect(payload[0].message).toContain("2026-99-99");
+  });
+
   it("deleteDiaryEntry remove entrada do usuario", async () => {
     const eqUserMock = vi.fn().mockResolvedValue({ error: null });
     const eqIdMock = vi.fn(() => ({ eq: eqUserMock }));
@@ -344,5 +413,238 @@ describe("diaryService", () => {
     expect(activities[0].friend_username).toBe("usuario");
     expect(activities[0].friend_avatar_url).toBeNull();
     expect(activities[0].rating).toBeNull();
+  });
+
+  it("getFriendDiaryActivities lida com visibilidade defaults para amigos sem prefs", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "u1", receiver_id: "f3" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const diaryLimitMock = vi.fn().mockResolvedValue({
+      data: [{ id: "d3", user_id: "f3", tmdb_id: 680, watched_date: "2026-03-20", created_at: "2026-03-21" }],
+      error: null,
+    });
+    const diaryOrderMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diaryInMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diarySelectMock = vi.fn(() => ({ in: diaryInMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({ data: [], error: null });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+
+    const profileInMock = vi.fn().mockResolvedValue({
+      data: [{ id: "f3", username: "friend3", avatar_url: null }],
+      error: null,
+    });
+    const profileSelectMock = vi.fn(() => ({ in: profileInMock }));
+
+    const reviewInSecondMock = vi.fn().mockResolvedValue({ data: null, error: null });
+    const reviewInFirstMock = vi.fn(() => ({ in: reviewInSecondMock }));
+    const reviewSelectMock = vi.fn(() => ({ in: reviewInFirstMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_entries") return { select: diarySelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "profiles") return { select: profileSelectMock };
+      if (table === "reviews") return { select: reviewSelectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    const activities = await getFriendDiaryActivities("u1", 20);
+    expect(activities).toHaveLength(1);
+  });
+
+  it("updateDiaryPreference throws quando upsert falha", async () => {
+    const upsertMock = vi.fn().mockResolvedValue({ error: new Error("upsert-failed") });
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "diary_preferences") {
+        return { upsert: upsertMock };
+      }
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(updateDiaryPreference("u1", { share_diary_activity: false })).rejects.toThrow();
+  });
+
+  it("getFriendDiaryActivities throws quando profileError ocorre", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "u1", receiver_id: "f4" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const diaryLimitMock = vi.fn().mockResolvedValue({
+      data: [{ id: "d4", user_id: "f4", tmdb_id: 680, watched_date: "2026-03-20", created_at: "2026-03-21" }],
+      error: null,
+    });
+    const diaryOrderMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diaryInMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diarySelectMock = vi.fn(() => ({ in: diaryInMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({
+      data: [{ user_id: "f4", share_diary_activity: true }],
+      error: null,
+    });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+
+    const profileInMock = vi.fn().mockResolvedValue({
+      data: null,
+      error: new Error("profile-error"),
+    });
+    const profileSelectMock = vi.fn(() => ({ in: profileInMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_entries") return { select: diarySelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "profiles") return { select: profileSelectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(getFriendDiaryActivities("u1", 20)).rejects.toThrow();
+  });
+
+  it("getFriendDiaryActivities throws quando reviewError ocorre", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "u1", receiver_id: "f5" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const diaryLimitMock = vi.fn().mockResolvedValue({
+      data: [{ id: "d5", user_id: "f5", tmdb_id: 680, watched_date: "2026-03-20", created_at: "2026-03-21" }],
+      error: null,
+    });
+    const diaryOrderMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diaryInMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diarySelectMock = vi.fn(() => ({ in: diaryInMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({
+      data: [{ user_id: "f5", share_diary_activity: true }],
+      error: null,
+    });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+
+    const profileInMock = vi.fn().mockResolvedValue({
+      data: [{ id: "f5", username: "friend5", avatar_url: null }],
+      error: null,
+    });
+    const profileSelectMock = vi.fn(() => ({ in: profileInMock }));
+
+    const reviewInSecondMock = vi.fn().mockResolvedValue({
+      data: null,
+      error: new Error("review-error"),
+    });
+    const reviewInFirstMock = vi.fn(() => ({ in: reviewInSecondMock }));
+    const reviewSelectMock = vi.fn(() => ({ in: reviewInFirstMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_entries") return { select: diarySelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "profiles") return { select: profileSelectMock };
+      if (table === "reviews") return { select: reviewSelectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(getFriendDiaryActivities("u1", 20)).rejects.toThrow();
+  });
+
+  it("getDiaryPreference returns populated row when data exists", async () => {
+    const maybeSingleMock = vi.fn().mockResolvedValue({
+      data: { user_id: "u-has-pref", share_diary_activity: false, notify_friend_activity: true },
+      error: null,
+    });
+    const eqMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }));
+    const selectMock = vi.fn(() => ({ eq: eqMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "diary_preferences") return { select: selectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    const pref = await getDiaryPreference("u-has-pref");
+
+    expect(pref.user_id).toBe("u-has-pref");
+    expect(pref.share_diary_activity).toBe(false);
+    expect(pref.notify_friend_activity).toBe(true);
+  });
+
+  it("saveDiaryEntry handles null friendship data gracefully", async () => {
+    const upsertMock = vi.fn().mockResolvedValue({ error: null });
+    const friendshipOrMock = vi.fn().mockResolvedValue({ data: null, error: null });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "diary_entries") return { upsert: upsertMock };
+      if (table === "friendships") return { select: friendshipSelectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    await expect(saveDiaryEntry("u1", 603, "2026-03-22")).resolves.toBeUndefined();
+    expect(upsertMock).toHaveBeenCalled();
+  });
+
+  it("getFriendDiaryActivities filters entries by visibility status correctly", async () => {
+    const friendshipOrMock = vi.fn().mockResolvedValue({
+      data: [{ requester_id: "u1", receiver_id: "f6" }, { requester_id: "f7", receiver_id: "u1" }],
+      error: null,
+    });
+    const friendshipEqMock = vi.fn(() => ({ or: friendshipOrMock }));
+    const friendshipSelectMock = vi.fn(() => ({ eq: friendshipEqMock }));
+
+    const diaryLimitMock = vi.fn().mockResolvedValue({
+      data: [
+        { id: "d6", user_id: "f6", tmdb_id: 603, watched_date: "2026-03-20", created_at: "2026-03-21" },
+        { id: "d7", user_id: "f7", tmdb_id: 680, watched_date: "2026-03-21", created_at: "2026-03-22" },
+      ],
+      error: null,
+    });
+    const diaryOrderMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diaryInMock = vi.fn(() => ({ order: diaryOrderMock, limit: diaryLimitMock }));
+    const diarySelectMock = vi.fn(() => ({ in: diaryInMock }));
+
+    const prefInMock = vi.fn().mockResolvedValue({
+      data: [{ user_id: "f6", share_diary_activity: true }],
+      error: null,
+    });
+    const prefSelectMock = vi.fn(() => ({ in: prefInMock }));
+
+    const profileInMock = vi.fn().mockResolvedValue({
+      data: [
+        { id: "f6", username: "friend6", avatar_url: "a.jpg" },
+        { id: "f7", username: "friend7", avatar_url: "b.jpg" },
+      ],
+      error: null,
+    });
+    const profileSelectMock = vi.fn(() => ({ in: profileInMock }));
+
+    const reviewInSecondMock = vi.fn().mockResolvedValue({
+      data: [{ user_id: "f6", tmdb_id: 603, rating: 4 }],
+      error: null,
+    });
+    const reviewInFirstMock = vi.fn(() => ({ in: reviewInSecondMock }));
+    const reviewSelectMock = vi.fn(() => ({ in: reviewInFirstMock }));
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "friendships") return { select: friendshipSelectMock };
+      if (table === "diary_entries") return { select: diarySelectMock };
+      if (table === "diary_preferences") return { select: prefSelectMock };
+      if (table === "profiles") return { select: profileSelectMock };
+      if (table === "reviews") return { select: reviewSelectMock };
+      throw new Error(`Tabela inesperada: ${table}`);
+    });
+
+    const activities = await getFriendDiaryActivities("u1", 20);
+
+    expect(activities.length).toBeGreaterThan(0);
+    expect(activities.some((a) => a.friend_id === "f6")).toBe(true);
   });
 });

@@ -11,6 +11,23 @@
   margin-bottom: 1rem;
 }
 
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 0.55rem;
+  transition: color 0.2s;
+}
+
+.backBtn:hover {
+  color: var(--text-primary);
+}
+
 .title {
   margin: 0;
   font-size: 1.4rem;

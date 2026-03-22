@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Users2, BellRing, BellOff, Trash2, Search, UserPlus, UserCheck, Clock4, XCircle } from "lucide-react";
+import { CalendarDays, Users2, BellRing, BellOff, Trash2, Search, UserPlus, UserCheck, Clock4, XCircle, ArrowLeft } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { MovieData } from "@/types";
 import { getMovieDetails } from "@/features/movies/services/tmdbService";
@@ -325,7 +325,7 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
             overview: details.overview || undefined,
             director:
               details.credits?.crew?.find((member: { job?: string; name?: string }) => member.job === "Director")?.name ||
-              "Nao informado",
+              "Não informado",
             cast: (details.credits?.cast || []).slice(0, 8).map((member: { name?: string }) => member.name || ""),
             countries: (details.production_countries || []).map((country: { name?: string }) => country.name || "").filter(Boolean),
             genres: (details.genres || []).map((genre: { name?: string }) => genre.name || "").filter(Boolean),
@@ -374,6 +374,10 @@ export function DiaryPage({ userId, movies, onOpenMovie }: DiaryPageProps) {
     <section className={styles.page}>
       <div className={styles.headerRow}>
         <div>
+          <button type="button" className={styles.backBtn} onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} />
+            Voltar
+          </button>
           <h2 className={styles.title}>Social</h2>
         </div>
 

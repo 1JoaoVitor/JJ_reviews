@@ -210,11 +210,19 @@ function MainApp() {
                      </div>
 
                      <div className={styles.actionGroup}>
-                        {filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist") && (
-                           <button className={styles.rouletteBtn} onClick={() => modals.setShowRoulette(true)} title="Sortear um filme aleatório">
-                              <Dices size={16} /><span className="d-none d-md-inline">Sortear</span>
-                           </button>
-                        )}
+                        <button
+                           className={`${styles.rouletteBtn} ${
+                              filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist")
+                                 ? ""
+                                 : styles.rouletteBtnGhost
+                           }`}
+                           onClick={() => modals.setShowRoulette(true)}
+                           title="Sortear um filme aleatório"
+                           aria-hidden={!(filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist"))}
+                           tabIndex={filters.viewMode === "watchlist" && movies.some((m) => m.status === "watchlist") ? 0 : -1}
+                        >
+                           <Dices size={16} /><span className="d-none d-md-inline">Sortear</span>
+                        </button>
 
                         {session && filters.viewMode !== "lists" && (
                            <button className={styles.addBtn} onClick={() => modals.openAddMovie(null, "")}>

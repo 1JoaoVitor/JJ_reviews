@@ -109,15 +109,15 @@ export function useRecommendations(userId: string | null | undefined, movies: Mo
          setError(null);
 
          try {
-            const result = await getPersonalizedRecommendations(movies, 4, feedbackProfile);
+            const result = await getPersonalizedRecommendations(movies, 12, feedbackProfile);
             if (!cancelled) {
                setRecommendations(result);
             }
          } catch (err) {
-            console.error("Erro ao gerar recomendacoes personalizadas:", err);
+            console.error("Erro ao gerar recomendações personalizadas:", err);
             if (!cancelled) {
                setRecommendations([]);
-               setError("Nao foi possivel carregar suas recomendacoes agora.");
+               setError("Não foi possível carregar suas recomendações agora.");
             }
          } finally {
             if (!cancelled) {
@@ -156,7 +156,7 @@ export function useRecommendations(userId: string | null | undefined, movies: Mo
          });
          setFeedbackVersion((prev) => prev + 1);
       } catch (error) {
-         console.error("Erro ao persistir feedback de recomendacao:", error);
+         console.error("Erro ao persistir feedback de recomendação:", error);
          setFeedbackVersion((prev) => prev + 1);
          throw error;
       }

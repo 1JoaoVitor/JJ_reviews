@@ -104,7 +104,7 @@ export function getGenreIdFromLabel(label: string): number | null {
 }
 
 export function getGenreLabelFromId(genreId: number): string {
-   return GENRE_ID_TO_LABEL[genreId] || "Genero";
+   return GENRE_ID_TO_LABEL[genreId] || "Gênero";
 }
 
 function toWeight(rating?: number | null): number {
@@ -112,7 +112,7 @@ function toWeight(rating?: number | null): number {
       return 0.25;
    }
 
-   // Nota do usuario direciona o perfil: >=4 fortalece genero, <=2.5 enfraquece.
+   // Nota do usuário direciona o perfil: >=4 fortalece gênero, <=2.5 enfraquece.
    if (rating >= 4) {
       return (rating - 3) * 2;
    }
@@ -197,7 +197,7 @@ function toRecommendedMovie(item: DiscoverCandidate): MovieData {
       poster_path: item.poster_path || undefined,
       release_date: item.release_date || undefined,
       overview: item.overview || undefined,
-      director: "Nao informado",
+      director: "Não informado",
       status: "watchlist",
       genres: (item.genre_ids || []).map((genreId) => getGenreLabelFromId(genreId)),
       countries: [],
@@ -224,12 +224,12 @@ function buildReasons(item: DiscoverCandidate, profile: RecommendationProfile): 
    if (item.release_date) {
       const releaseYear = Number(item.release_date.split("-")[0]);
       if (!Number.isNaN(releaseYear) && releaseYear >= 2020) {
-         reasons.push("Lancamento recente");
+         reasons.push("Lançamento recente");
       }
    }
 
    if (reasons.length === 0) {
-      reasons.push("Combinacao de popularidade e potencial para seu perfil");
+      reasons.push("Combinação de popularidade e potencial para seu perfil");
    }
 
    return reasons;
@@ -287,7 +287,7 @@ export async function getPersonalizedRecommendations(
       return uniqueCandidates.slice(0, limit).map((candidate) => ({
          movie: toRecommendedMovie(candidate),
          score: typeof candidate.vote_average === "number" ? candidate.vote_average : 0,
-         reasons: ["Sugestao inicial baseada em filmes populares"],
+         reasons: ["Sugestão inicial baseada em filmes populares"],
       }));
    }
 

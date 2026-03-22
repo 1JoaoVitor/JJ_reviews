@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { validateImportFiles, parseImportCsvContent } from "../importValidationService";
-import type { ProfileData, RatingData, WatchedMovieData, ListData } from "../../types/importTypes";
+import type { ProfileData, RatingData, WatchedMovieData, ListData, DiaryData } from "../../types/importTypes";
 
 // Mock the movieMatcher module
 vi.mock("../../utils/movieMatcher", () => ({
@@ -290,6 +290,40 @@ testuser,2024-01-01,John`;
       const list = (await parseImportCsvContent(csv, "list")) as ListData;
       expect(list.movies).toHaveLength(2);
       expect(list.movies[0].name).toBe("The Matrix");
+    });
+
+    it("should skip invalid diary rows without watched date", async () => {
+      const csv = `Name,Year,Date,Watched Date
+"Valid",2024,2024-01-01,2024-01-01
+"Invalid",2024,2024-01-02,`;
+
+      const diary = (await parseImportCsvContent(csv, "diary")) as DiaryData[];
+      expect(diary).toHaveLength(1);
+      expect(diary[0]?.name).toBe("Valid");
+    });
+
+    it("should parse list metadata format and ignore embedded movie header row", async () => {
+      const csv = `Date,Name,Tags,URL,Description
+2026-03-20,Minha Lista,,https://boxd.it/abc,desc
+Position,Name,Year,URL,Description
+1,Movie One,2024,https://boxd.it/1,
+2,Movie Two,2023,https://boxd.it/2,`;
+
+      const list = (await parseImportCsvContent(csv, "list")) as ListData;
+      expect(list.name).toBe("Minha Lista");
+      expect(list.movies).toHaveLength(2);
+      expect(list.movies[0].name).toBe("Movie One");
+    });
+
+    it("should fallback to Date/Tags columns for list position/year", async () => {
+      const csv = `Date,Name,Tags,URL,Description
+1,Movie One,2024,https://boxd.it/1,
+2,Movie Two,2023,https://boxd.it/2,`;
+
+      const list = (await parseImportCsvContent(csv, "list")) as ListData;
+      expect(list.movies).toHaveLength(1);
+      expect(list.movies[0].position).toBe(2);
+      expect(list.movies[0].year).toBe(2023);
     });
 
     it("should throw error for invalid CSV content", async () => {

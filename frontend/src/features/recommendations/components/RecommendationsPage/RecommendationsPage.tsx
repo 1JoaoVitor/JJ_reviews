@@ -22,17 +22,22 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
    const [savingWatchlistId, setSavingWatchlistId] = useState<number | null>(null);
    const [refreshing, setRefreshing] = useState(false);
    const [reactedMovieIds, setReactedMovieIds] = useState<Record<number, "like" | "dislike" | "watchlist">>({});
+   const [hiddenWatchlistMovieIds, setHiddenWatchlistMovieIds] = useState<Set<number>>(new Set());
    const [showResetConfirm, setShowResetConfirm] = useState(false);
    const [showNewRecommendationsConfirm, setShowNewRecommendationsConfirm] = useState(false);
 
    const knownMovieIds = useMemo(() => new Set(movies.map((movie) => movie.tmdb_id)), [movies]);
+   const visibleRecommendations = useMemo(
+      () => recommendations.filter((item) => !hiddenWatchlistMovieIds.has(item.movie.tmdb_id)).slice(0, 4),
+      [hiddenWatchlistMovieIds, recommendations],
+   );
 
    const handleReaction = async (movie: MovieData, reaction: "like" | "dislike") => {
       try {
          await registerReaction(movie, reaction);
          setReactedMovieIds((prev) => ({ ...prev, [movie.tmdb_id]: reaction }));
       } catch {
-         toast.error("Nao foi possivel salvar seu feedback agora.");
+         toast.error("Não foi possível salvar seu feedback agora.");
       }
    };
 
@@ -42,7 +47,7 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
       }
 
       if (knownMovieIds.has(movie.tmdb_id)) {
-         toast("Esse filme ja esta no seu perfil.");
+         toast("Esse filme já está no seu perfil.");
          return;
       }
 
@@ -50,7 +55,7 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
       try {
          const alreadyExists = await hasUserReview(userId, movie.tmdb_id);
          if (alreadyExists) {
-            toast("Esse filme ja foi salvo antes.");
+            toast("Esse filme já foi salvo antes.");
             return;
          }
 
@@ -66,11 +71,16 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
 
          await registerReaction(movie, "watchlist");
          setReactedMovieIds((prev) => ({ ...prev, [movie.tmdb_id]: "watchlist" }));
+         setHiddenWatchlistMovieIds((prev) => {
+            const next = new Set(prev);
+            next.add(movie.tmdb_id);
+            return next;
+         });
          toast.success("Filme salvo na watchlist.");
          refreshRecommendations();
       } catch (error) {
-         console.error("Erro ao salvar recomendacao na watchlist:", error);
-         toast.error("Nao foi possivel salvar na watchlist.");
+         console.error("Erro ao salvar recomendação na watchlist:", error);
+         toast.error("Não foi possível salvar na watchlist.");
       } finally {
          setSavingWatchlistId(null);
       }
@@ -81,32 +91,34 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
          setRefreshing(true);
          await resetFeedback();
          setReactedMovieIds({});
+         setHiddenWatchlistMovieIds(new Set());
          refreshRecommendations();
-         toast.success("Preferencias de recomendacao resetadas.");
+         toast.success("Preferências de recomendação resetadas.");
       } catch {
-         toast.error("Nao foi possivel resetar suas preferencias agora.");
+         toast.error("Não foi possível resetar suas preferências agora.");
       } finally {
          setRefreshing(false);
       }
    };
 
    const handleNewRecommendations = async () => {
-      if (recommendations.length === 0) {
+      if (visibleRecommendations.length === 0) {
          return;
       }
 
       try {
          setRefreshing(true);
-         await dislikeMany(recommendations.map((item) => item.movie));
-         const nextFlags = recommendations.reduce<Record<number, "dislike">>((acc, item) => {
+         await dislikeMany(visibleRecommendations.map((item) => item.movie));
+         const nextFlags = visibleRecommendations.reduce<Record<number, "dislike">>((acc, item) => {
             acc[item.movie.tmdb_id] = "dislike";
             return acc;
          }, {});
          setReactedMovieIds((prev) => ({ ...prev, ...nextFlags }));
+         setHiddenWatchlistMovieIds(new Set());
          refreshRecommendations();
-         toast.success("Gerando novas recomendacoes...");
+         toast.success("Gerando novas recomendações...");
       } catch {
-         toast.error("Nao foi possivel atualizar as recomendacoes agora.");
+         toast.error("Não foi possível atualizar as recomendações agora.");
       } finally {
          setRefreshing(false);
       }
@@ -115,8 +127,10 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
    if (!userId) {
       return (
          <EmptyState
-            title="Entre para ver recomendacoes"
-            message="As recomendacoes personalizadas aparecem quando voce estiver logado."
+            title="Entre para ver recomendações"
+            message="As recomendações personalizadas aparecem quando você estiver logado."
+            actionText="Voltar"
+            onAction={() => navigate(-1)}
          />
       );
    }
@@ -128,10 +142,7 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
                <ArrowLeft size={16} />
                Voltar
             </button>
-            <h1 className={styles.title}>Recomendacoes para voce</h1>
-            <p className={styles.subtitle}>
-               Sugestoes geradas com base nos filmes que voce ja avaliou e assistiu.
-            </p>
+            <h1 className={styles.title}>Recomendações para você</h1>
 
             <div className={styles.headerActions}>
                <button
@@ -146,32 +157,34 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
                   type="button"
                   className={`${styles.feedbackBtn} ${styles.feedbackBtnWatchlist}`}
                   onClick={() => setShowNewRecommendationsConfirm(true)}
-                  disabled={refreshing || recommendations.length === 0}
+                  disabled={refreshing || visibleRecommendations.length === 0}
                >
-                  {refreshing ? "Atualizando..." : "Novas recomendacoes"}
+                  {refreshing ? "Atualizando..." : "Novas recomendações"}
                </button>
             </div>
          </header>
 
          {loading && (
             <div className={styles.loadingState}>
-               <div className="spinner-border" role="status" aria-label="Carregando recomendacoes" />
-               <span>Calculando suas proximas escolhas...</span>
+               <div className="spinner-border" role="status" aria-label="Carregando recomendações" />
+               <span>Calculando suas próximas escolhas...</span>
             </div>
          )}
 
          {error && !loading && <div className={styles.errorState}>{error}</div>}
 
-         {!loading && !error && recommendations.length === 0 && (
+         {!loading && !error && visibleRecommendations.length === 0 && (
             <EmptyState
-               title="Ainda sem recomendacoes"
-               message="Adicione e avalie alguns filmes para melhorar as sugestoes automaticas."
+               title="Ainda sem recomendações"
+               message="Adicione e avalie alguns filmes para melhorar as sugestões automáticas."
+               actionText="Atualizar recomendações"
+               onAction={() => refreshRecommendations()}
             />
          )}
 
-         {!loading && !error && recommendations.length > 0 && (
+         {!loading && !error && visibleRecommendations.length > 0 && (
             <div className="movie-grid">
-               {recommendations.map((recommendation) => (
+               {visibleRecommendations.map((recommendation) => (
                   <article key={recommendation.movie.tmdb_id} className={styles.cardWrap}>
                      <MovieCard movie={recommendation.movie} onClick={onOpenMovie} />
                      <div className={styles.feedbackRow}>
@@ -191,7 +204,7 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
                               void handleReaction(recommendation.movie, "dislike");
                            }}
                         >
-                           Nao curti
+                           Não curti
                         </button>
                         <button
                            type="button"
@@ -218,8 +231,8 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
                setShowResetConfirm(false);
                void handleResetRecommendations();
             }}
-            title="Resetar perfil de recomendacao"
-            message="Tem certeza? Isso vai apagar o feedback salvo e recalcular as sugestoes do zero."
+            title="Resetar perfil de recomendação"
+            message="Tem certeza? Isso vai apagar o feedback salvo e recalcular as sugestões do zero."
             confirmText="Sim, resetar"
             isProcessing={refreshing}
          />
@@ -231,8 +244,8 @@ export function RecommendationsPage({ userId, movies, onOpenMovie }: Recommendat
                setShowNewRecommendationsConfirm(false);
                void handleNewRecommendations();
             }}
-            title="Gerar novas recomendacoes"
-            message="Isso vai marcar as 4 recomendacoes atuais como nao gostei e carregar 4 novas. Deseja continuar?"
+            title="Gerar novas recomendações"
+            message="Isso vai marcar as 4 recomendações atuais como não gostei e carregar 4 novas. Deseja continuar?"
             confirmText="Sim, gerar novas"
             isProcessing={refreshing}
          />

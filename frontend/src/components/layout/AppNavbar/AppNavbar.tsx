@@ -75,34 +75,31 @@ export function AppNavbar({
                <span className={`${styles.brandText} d-none d-sm-inline`}>Reviews</span>
             </Link>
 
-            {/* BUSCA + FILTRO */}
-            <div className={`${styles.searchWrapper} ${isSearchOpen ? styles.searchOpen : ""}`}>
-               <div className={styles.searchRow}>
-                  <div className={styles.searchInputWrap}>
-                     <Search size={16} className={styles.searchIcon} />
-                     <input
-                        type="search"
-                        placeholder="Buscar filmes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className={styles.searchInput}
-                        autoFocus={isSearchOpen}
-                     />
-                  </div>
-               </div>
-            </div>
-
             {session && (showFilters || !!onRecommendationsClick) && (
                <div className={styles.mobileHeaderActions}>
                   {showFilters && (
-                     <button
-                        type="button"
-                        className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
-                        onClick={() => setIsSearchOpen((prev) => !prev)}
-                        title="Buscar"
-                     >
-                        <Search size={18} />
-                     </button>
+                     <div className={`${styles.searchInline} ${isSearchOpen ? styles.searchInlineOpen : ""}`}>
+                        <button
+                           type="button"
+                           className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                           onClick={() => setIsSearchOpen((prev) => !prev)}
+                           title="Buscar"
+                        >
+                           <Search size={18} />
+                        </button>
+
+                        <div className={styles.searchInlineInputWrap}>
+                           <Search size={14} className={styles.searchInlineIcon} />
+                           <input
+                              type="search"
+                              placeholder="Buscar..."
+                              value={searchTerm}
+                              onChange={(e) => setSearchTerm(e.target.value)}
+                              className={styles.searchInlineInput}
+                              autoFocus={isSearchOpen}
+                           />
+                        </div>
+                     </div>
                   )}
 
                   {showFilters && (
@@ -138,14 +135,28 @@ export function AppNavbar({
                      {/* ELEMENTOS EXCLUSIVOS DO DESKTOP */}
                      <div className="d-none d-md-flex align-items-center gap-2">
                         {showFilters && (
-                           <button
-                              type="button"
-                              className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
-                              onClick={() => setIsSearchOpen((prev) => !prev)}
-                              title="Buscar"
-                           >
-                              <Search size={18} />
-                           </button>
+                           <div className={`${styles.searchInline} ${isSearchOpen ? styles.searchInlineOpen : ""}`}>
+                              <button
+                                 type="button"
+                                 className={`${styles.iconBtn} ${isSearchOpen ? styles.iconBtnActive : ""}`}
+                                 onClick={() => setIsSearchOpen((prev) => !prev)}
+                                 title="Buscar"
+                              >
+                                 <Search size={18} />
+                              </button>
+
+                              <div className={styles.searchInlineInputWrap}>
+                                 <Search size={14} className={styles.searchInlineIcon} />
+                                 <input
+                                    type="search"
+                                    placeholder="Buscar filmes..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={styles.searchInlineInput}
+                                    autoFocus={isSearchOpen}
+                                 />
+                              </div>
+                           </div>
                         )}
 
                         {showFilters && (
